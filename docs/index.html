@@ -199,7 +199,10 @@
       <h2>Deep Researchへ貼る</h2>
       <p class="hint">Step 6の回答から、Deep Researchに貼る完成プロンプトだけを抽出します。</p>
       <textarea id="deepResearchPromptText" class="markdown compact" readonly></textarea>
-      <button id="copyDeepResearchPromptButton" class="primary wide" type="button">Deep Research用プロンプトをコピー</button>
+      <div class="button-grid">
+        <button id="copyDeepResearchPromptButton" class="primary" type="button">Deep Research用プロンプトをコピー</button>
+        <button id="shortcutDeepResearchChatGptButton" type="button">コピーしてChatGPTショートカット</button>
+      </div>
       <p id="deepResearchCopyStatus" class="status" aria-live="polite"></p>
     </section>
 

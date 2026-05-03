@@ -574,6 +574,7 @@ const els = {
   deepResearchCopyPanel: document.getElementById("deepResearchCopyPanel"),
   deepResearchPromptText: document.getElementById("deepResearchPromptText"),
   copyDeepResearchPromptButton: document.getElementById("copyDeepResearchPromptButton"),
+  shortcutDeepResearchChatGptButton: document.getElementById("shortcutDeepResearchChatGptButton"),
   deepResearchCopyStatus: document.getElementById("deepResearchCopyStatus"),
   markdownText: document.getElementById("markdownText"),
   copyMarkdownButton: document.getElementById("copyMarkdownButton"),
@@ -635,6 +636,7 @@ function bindEvents() {
   els.steeringText.addEventListener("input", saveCurrentSteeringNote);
   els.saveAnswerButton.addEventListener("click", saveAnswerAndNext);
   els.copyDeepResearchPromptButton.addEventListener("click", copyDeepResearchPrompt);
+  els.shortcutDeepResearchChatGptButton.addEventListener("click", copyDeepResearchPromptAndRunChatGptShortcut);
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.shareMarkdownButton.addEventListener("click", shareMarkdown);
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
@@ -1185,6 +1187,15 @@ async function copyDeepResearchPrompt() {
     return;
   }
   await copyText(prompt, els.deepResearchPromptText, els.deepResearchCopyStatus);
+}
+
+async function copyDeepResearchPromptAndRunChatGptShortcut() {
+  const prompt = els.deepResearchPromptText.value.trim();
+  if (!prompt) {
+    setStatus(els.deepResearchCopyStatus, "コピーできるDeep Research用プロンプトがまだありません。", "warn");
+    return;
+  }
+  await copyTextAndRunShortcut("chatgpt", prompt, els.deepResearchPromptText, els.deepResearchCopyStatus);
 }
 
 function extractDeepResearchPrompt() {
