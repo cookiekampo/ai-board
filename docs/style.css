@@ -223,6 +223,12 @@ button.wide {
   margin-bottom: 3px;
 }
 
+.step-target {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
 .badge {
   border: 1px solid var(--line);
   border-radius: 999px;

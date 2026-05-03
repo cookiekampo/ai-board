@@ -393,6 +393,7 @@ const els = {
   topicCard: document.getElementById("topicCard"),
   saveStatus: document.getElementById("saveStatus"),
   stepTitle: document.getElementById("stepTitle"),
+  stepTarget: document.getElementById("stepTarget"),
   completionBadge: document.getElementById("completionBadge"),
   progressBar: document.getElementById("progressBar"),
   backStepButton: document.getElementById("backStepButton"),
@@ -671,6 +672,7 @@ function render() {
   const complete = isComplete();
   els.modeSelect.value = state.mode;
   els.stepTitle.textContent = `Step ${state.currentStep}: ${step.role} - ${step.title}`;
+  els.stepTarget.textContent = `推奨AI: ${step.target}`;
   els.completionBadge.textContent = complete ? "会議完了" : "進行中";
   els.progressBar.style.width = `${Math.round((countCompletedAnswers() / TOTAL_STEPS) * 100)}%`;
   els.promptText.value = generatePrompt(state.currentStep, state.topicCard, state.answers, state.steeringNotes);
@@ -680,6 +682,7 @@ function render() {
   els.saveAnswerButton.disabled = false;
   els.backStepButton.disabled = state.currentStep <= 1;
   els.retryStepButton.disabled = !hasCurrentStepWork();
+  updateRecommendedAiButtons(step.target);
   els.logPreview.textContent = buildMeetingLog(state.answers, state.steeringNotes) || "まだ会議ログはありません。";
   els.markdownText.value = generateMarkdown();
 }
@@ -698,6 +701,19 @@ function hasCurrentStepWork() {
     (state.answers[key] && String(state.answers[key]).trim()) ||
     (state.steeringNotes[key] && String(state.steeringNotes[key]).trim())
   );
+}
+
+function updateRecommendedAiButtons(target) {
+  const buttons = [
+    { service: "ChatGPT", el: els.shortcutChatGptButton },
+    { service: "Claude", el: els.shortcutClaudeButton },
+    { service: "Gemini", el: els.shortcutGeminiButton }
+  ];
+  buttons.forEach(({ service, el }) => {
+    const recommended = target.includes(service);
+    el.classList.toggle("primary", recommended);
+    el.textContent = recommended ? `推奨: ${service}アプリ` : `iPhone: ${service}アプリ`;
+  });
 }
 
 function generatePrompt(stepNumber, topicCard, answers, steeringNotes) {
