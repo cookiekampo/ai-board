@@ -18,6 +18,19 @@
 
     <section class="panel">
       <details>
+        <summary>iPhoneアプリで開くための初回設定</summary>
+        <p class="hint">「iPhone: ChatGPTアプリ」ボタンは、Appleショートカット経由でアプリを開きます。初回だけ、ショートカットアプリで以下の名前のショートカットを作ってください。</p>
+        <ul class="setup-list">
+          <li>AI会議 ChatGPT: ChatGPTアプリを開く</li>
+          <li>AI会議 Claude: Claudeアプリを開く</li>
+          <li>AI会議 Gemini: Geminiアプリを開く</li>
+        </ul>
+        <p class="hint">ボタンを押すと、プロンプトをコピーしてから対応するショートカットを起動します。自動貼り付け・自動送信はしません。</p>
+      </details>
+    </section>
+
+    <section class="panel">
+      <details>
         <summary>Step 0: 雑なテーマから議題カードを作る</summary>
         <div class="step-zero">
           <p class="hint">迷ったらここを使います。雑に書く → AIに貼る → AIの返答を貼る → 議題カードへ反映、の順番です。</p>
@@ -31,6 +44,9 @@
             <button id="openTopicChatGptButton" type="button">コピーしてChatGPTを開く</button>
             <button id="openTopicClaudeButton" type="button">コピーしてClaudeを開く</button>
             <button id="openTopicGeminiButton" type="button">コピーしてGeminiを開く</button>
+            <button id="shortcutTopicChatGptButton" type="button">iPhone: ChatGPTアプリ</button>
+            <button id="shortcutTopicClaudeButton" type="button">iPhone: Claudeアプリ</button>
+            <button id="shortcutTopicGeminiButton" type="button">iPhone: Geminiアプリ</button>
             <button id="draftTopicCardButton" type="button">AIを使わず仮カードにする</button>
           </div>
           <p id="topicPromptStatus" class="status" aria-live="polite"></p>
@@ -77,6 +93,9 @@
         <button id="openChatGptButton" type="button">コピーしてChatGPTを開く</button>
         <button id="openClaudeButton" type="button">コピーしてClaudeを開く</button>
         <button id="openGeminiButton" type="button">コピーしてGeminiを開く</button>
+        <button id="shortcutChatGptButton" type="button">iPhone: ChatGPTアプリ</button>
+        <button id="shortcutClaudeButton" type="button">iPhone: Claudeアプリ</button>
+        <button id="shortcutGeminiButton" type="button">iPhone: Geminiアプリ</button>
       </div>
       <p id="copyStatus" class="status" aria-live="polite"></p>
     </section>

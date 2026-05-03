@@ -165,6 +165,12 @@ const aiUrls = {
   gemini: "https://gemini.google.com/"
 };
 
+const shortcutNames = {
+  chatgpt: "AI会議 ChatGPT",
+  claude: "AI会議 Claude",
+  gemini: "AI会議 Gemini"
+};
+
 const state = loadState();
 
 const els = {
@@ -174,6 +180,9 @@ const els = {
   openTopicChatGptButton: document.getElementById("openTopicChatGptButton"),
   openTopicClaudeButton: document.getElementById("openTopicClaudeButton"),
   openTopicGeminiButton: document.getElementById("openTopicGeminiButton"),
+  shortcutTopicChatGptButton: document.getElementById("shortcutTopicChatGptButton"),
+  shortcutTopicClaudeButton: document.getElementById("shortcutTopicClaudeButton"),
+  shortcutTopicGeminiButton: document.getElementById("shortcutTopicGeminiButton"),
   draftTopicCardButton: document.getElementById("draftTopicCardButton"),
   topicPromptStatus: document.getElementById("topicPromptStatus"),
   generatedTopicCard: document.getElementById("generatedTopicCard"),
@@ -190,6 +199,9 @@ const els = {
   openChatGptButton: document.getElementById("openChatGptButton"),
   openClaudeButton: document.getElementById("openClaudeButton"),
   openGeminiButton: document.getElementById("openGeminiButton"),
+  shortcutChatGptButton: document.getElementById("shortcutChatGptButton"),
+  shortcutClaudeButton: document.getElementById("shortcutClaudeButton"),
+  shortcutGeminiButton: document.getElementById("shortcutGeminiButton"),
   copyStatus: document.getElementById("copyStatus"),
   answerText: document.getElementById("answerText"),
   saveAnswerButton: document.getElementById("saveAnswerButton"),
@@ -219,6 +231,9 @@ function bindEvents() {
   els.openTopicChatGptButton.addEventListener("click", () => copyTopicPromptAndOpen("chatgpt"));
   els.openTopicClaudeButton.addEventListener("click", () => copyTopicPromptAndOpen("claude"));
   els.openTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndOpen("gemini"));
+  els.shortcutTopicChatGptButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("chatgpt"));
+  els.shortcutTopicClaudeButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("claude"));
+  els.shortcutTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("gemini"));
   els.draftTopicCardButton.addEventListener("click", draftTopicCardFromRoughTopic);
   els.applyGeneratedTopicButton.addEventListener("click", applyGeneratedTopicCard);
   els.templateSelect.addEventListener("change", applyTemplate);
@@ -231,6 +246,9 @@ function bindEvents() {
   els.openChatGptButton.addEventListener("click", () => copyAndOpen("chatgpt"));
   els.openClaudeButton.addEventListener("click", () => copyAndOpen("claude"));
   els.openGeminiButton.addEventListener("click", () => copyAndOpen("gemini"));
+  els.shortcutChatGptButton.addEventListener("click", () => copyAndRunShortcut("chatgpt"));
+  els.shortcutClaudeButton.addEventListener("click", () => copyAndRunShortcut("claude"));
+  els.shortcutGeminiButton.addEventListener("click", () => copyAndRunShortcut("gemini"));
   els.saveAnswerButton.addEventListener("click", saveAnswerAndNext);
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
@@ -285,6 +303,10 @@ async function copyTopicPromptAndOpen(service) {
     return;
   }
   window.open(aiUrls[service], "_blank", "noopener,noreferrer");
+}
+
+async function copyTopicPromptAndRunShortcut(service) {
+  await copyTextAndRunShortcut(service, els.topicPromptText.value, els.topicPromptText, els.topicPromptStatus);
 }
 
 function applyGeneratedTopicCard() {
@@ -502,6 +524,22 @@ async function copyAndOpen(service) {
     return;
   }
   window.open(aiUrls[service], "_blank", "noopener,noreferrer");
+}
+
+async function copyAndRunShortcut(service) {
+  await copyTextAndRunShortcut(service, els.promptText.value, els.promptText, els.copyStatus);
+}
+
+async function copyTextAndRunShortcut(service, text, sourceEl, statusEl) {
+  const ok = await copyText(text, sourceEl, statusEl, false);
+  if (!ok) {
+    setStatus(statusEl, "コピーに失敗しました。先に手動でプロンプトをコピーしてください。", "error");
+    return;
+  }
+  const shortcutName = shortcutNames[service];
+  const shortcutUrl = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}&input=clipboard`;
+  setStatus(statusEl, `コピーしました。${shortcutName}を開きます。`);
+  window.location.href = shortcutUrl;
 }
 
 async function copyText(text, sourceEl, statusEl, showSuccess = true) {
