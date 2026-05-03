@@ -1,5 +1,5 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
-const TOTAL_STEPS = 6;
+const DEFAULT_TOTAL_STEPS = 6;
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -30,6 +30,24 @@ const templates = {
 
 # 出力形式
 採用案、却下案、主な理由、未解決論点、追加確認事項、次アクション`,
+  deepResearch: `# 調べたいテーマ
+
+# 背景
+
+# 最終的に判断したいこと
+
+# 使う場面
+
+# 重視する観点
+調査品質、実用性、抜け漏れ防止、低コスト、Markdown保存、再利用性
+
+# 除外したいこと
+最初から大規模SaaS化すること。
+複雑すぎるUI。
+Deep Research API前提の設計。
+
+# 希望する出力形式
+Deep Researchに貼れる完成プロンプト、調査観点、除外範囲、レビュー観点、次アクション`,
   marketing: `# 議題
 集客について
 
@@ -170,7 +188,8 @@ const steps = [
 const modeLabels = {
   basic: "basic: 通常の提案・批判・結論",
   decision: "decision: 複数案の比較判断",
-  review: "review: 文章・企画・仕様のレビュー"
+  review: "review: 文章・企画・仕様のレビュー",
+  deepResearchPrompt: "Deep Researchプロンプト作成モード"
 };
 
 const modeSteps = {
@@ -363,6 +382,104 @@ const modeSteps = {
 ## 結論の自信度
 ## 自信度の理由`,
       note: `最終結論は、次にどこをどう直すかが分かる具体度にしてください。`
+    }
+  ],
+  deepResearchPrompt: [
+    {
+      role: "Framer / 問いの設計者",
+      title: "調査可能な問いへの変換",
+      target: "ChatGPT推奨",
+      instruction: `雑なテーマを、Deep Researchで調査しやすい問いに変換してください。
+必ず以下を含めてください。
+- 調査したいテーマの再定義
+- 調査目的
+- 最終的に判断したいこと
+- 調査で明らかにすべきこと
+- まだ曖昧な前提
+- Deep Researchに投げる前に補うべき情報`,
+      note: `テーマを広げすぎないでください。
+ユーザーがDeep Researchに貼る前提で、調査可能な問いへ整えてください。`
+    },
+    {
+      role: "Scope Designer / 調査範囲設計者",
+      title: "調査範囲と除外範囲の設計",
+      target: "Claude推奨",
+      instruction: `Framerの整理を踏まえて、調査範囲・除外範囲・前提条件を設計してください。
+必ず以下を含めてください。
+- 調査範囲
+- 除外範囲
+- 調査対象に含める条件
+- 調査対象から外す条件
+- 比較すべき対象
+- 期間・地域・用途などの制約
+- 広すぎる場合の絞り込み案`,
+      note: `Deep Researchが散らからないように、調べることと調べないことを明確にしてください。`
+    },
+    {
+      role: "Question Designer / 調査質問設計者",
+      title: "調査質問への分解",
+      target: "ChatGPT推奨",
+      instruction: `ここまでの整理を踏まえて、Deep Researchで調べるべき問いに分解してください。
+必ず以下を含めてください。
+- メイン調査質問
+- サブ調査質問
+- 比較観点
+- 意思決定に必要な問い
+- 事実確認すべき問い
+- 実務適用を判断する問い
+- 調査後にAI会議で再検討すべき問い`,
+      note: `質問は多すぎず、調査結果を意思決定に使える粒度にしてください。`
+    },
+    {
+      role: "Source & Evidence Reviewer / 情報源レビュー担当",
+      title: "情報源と根拠レベルの設計",
+      target: "Claude推奨",
+      instruction: `調査質問に対して、優先すべき情報源・根拠レベル・確認方法を整理してください。
+必ず以下を含めてください。
+- 優先すべき情報源
+- 避けるべき情報源
+- 一次情報を優先すべき項目
+- 比較・レビュー情報で足りる項目
+- 情報の新しさが重要な項目
+- 出典確認で注意すべき点
+- 根拠が弱い場合の扱い`,
+      note: `もっともらしいが根拠の弱い調査結果にならないように、情報源の条件を明確にしてください。`
+    },
+    {
+      role: "Risk & Practicality Reviewer / リスク実用性レビュー担当",
+      title: "調査失敗リスクの洗い出し",
+      target: "Claude推奨",
+      instruction: `Deep Researchプロンプトとして失敗しやすい点をレビューしてください。
+必ず以下を含めてください。
+- 調査範囲が広すぎるリスク
+- 誤情報・古い情報のリスク
+- 出力が一般論になるリスク
+- 実務に使えない出力になるリスク
+- 機密情報や個人情報の注意点
+- トークンや作業量が増えすぎるリスク
+- 最終プロンプトに追加すべき制約`,
+      note: `単なる批判ではなく、最終プロンプトの品質を上げるための修正点にしてください。`
+    },
+    {
+      role: "Prompt Finalizer / 最終プロンプト作成者",
+      title: "Deep Research用完成プロンプト",
+      target: "ChatGPTまたはClaude推奨",
+      instruction: `これまでの議論を踏まえて、Deep Researchにそのまま貼れる完成プロンプトを作成してください。
+必ず以下の見出しをこの順番で使ってください。
+## Deep Researchにそのまま貼れる完成プロンプト
+## 調査目的
+## 背景
+## 最終的に判断したいこと
+## 調査範囲
+## 除外範囲
+## 調査すべき主要論点
+## 優先すべき情報源
+## 避けるべき情報源
+## 期待する出力形式
+## Deep Research後にAI会議で再検討すべき論点
+## 注意点`,
+      note: `完成プロンプトは、そのままDeep Researchに貼れる形にしてください。
+説明文ではなく、実際に貼り付ける調査依頼文として完成させてください。`
     }
   ]
 };
@@ -647,12 +764,13 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
+    const mode = modeSteps[parsed.mode] ? parsed.mode : fallback.mode;
     return {
-      mode: modeSteps[parsed.mode] ? parsed.mode : fallback.mode,
+      mode,
       topicCard: typeof parsed.topicCard === "string" ? parsed.topicCard : fallback.topicCard,
       setupDone: typeof parsed.setupDone === "boolean" ? parsed.setupDone : fallback.setupDone,
       quickFields: normalizeQuickFields(parsed.quickFields),
-      currentStep: normalizeStep(parsed.currentStep),
+      currentStep: normalizeStep(parsed.currentStep, mode),
       answers: typeof parsed.answers === "object" && parsed.answers ? parsed.answers : {},
       steeringNotes: typeof parsed.steeringNotes === "object" && parsed.steeringNotes ? parsed.steeringNotes : {},
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : fallback.updatedAt
@@ -662,10 +780,10 @@ function loadState() {
   }
 }
 
-function normalizeStep(step) {
+function normalizeStep(step, mode = "basic") {
   const n = Number(step);
   if (!Number.isFinite(n)) return 1;
-  return Math.min(TOTAL_STEPS, Math.max(1, Math.trunc(n)));
+  return Math.min(getTotalSteps(mode), Math.max(1, Math.trunc(n)));
 }
 
 function defaultQuickFields() {
@@ -743,6 +861,7 @@ function changeMode() {
     return;
   }
   state.mode = modeSteps[mode] ? mode : "basic";
+  state.currentStep = normalizeStep(state.currentStep, state.mode);
   els.modeSelect.value = state.mode;
   persist(`会議モードを ${modeLabels[state.mode]} に変更しました`);
   render();
@@ -797,30 +916,41 @@ function applyTemplate() {
 }
 
 function currentStepIndex() {
-  return normalizeStep(state.currentStep) - 1;
+  return normalizeStep(state.currentStep, state.mode) - 1;
+}
+
+function getStepsForMode(mode) {
+  return modeSteps[mode] || modeSteps.basic;
 }
 
 function getSteps() {
-  return modeSteps[state.mode] || modeSteps.basic;
+  return getStepsForMode(state.mode);
+}
+
+function getTotalSteps(mode = state.mode) {
+  const stepList = getStepsForMode(mode);
+  return stepList.length || DEFAULT_TOTAL_STEPS;
 }
 
 function isComplete() {
-  return Boolean(state.answers[String(TOTAL_STEPS)] && String(state.answers[String(TOTAL_STEPS)]).trim());
+  const totalSteps = getTotalSteps();
+  return Boolean(state.answers[String(totalSteps)] && String(state.answers[String(totalSteps)]).trim());
 }
 
 function render() {
   const activeSteps = getSteps();
   const step = activeSteps[currentStepIndex()];
+  const totalSteps = getTotalSteps();
   const complete = isComplete();
   els.modeSelect.value = state.mode;
   els.stepTitle.textContent = `Step ${state.currentStep}: ${step.role} - ${step.title}`;
   els.stepTarget.textContent = `推奨AI: ${step.target}`;
   els.completionBadge.textContent = complete ? "会議完了" : "進行中";
-  els.progressBar.style.width = `${Math.round((countCompletedAnswers() / TOTAL_STEPS) * 100)}%`;
+  els.progressBar.style.width = `${Math.round((countCompletedAnswers() / totalSteps) * 100)}%`;
   els.promptText.value = generatePrompt(state.currentStep, state.topicCard, state.answers, state.steeringNotes);
   els.answerText.value = state.answers[String(state.currentStep)] || "";
   els.steeringText.value = state.steeringNotes[String(state.currentStep)] || "";
-  els.saveAnswerButton.textContent = state.currentStep === TOTAL_STEPS ? "回答を保存して会議完了" : "回答を保存して次へ";
+  els.saveAnswerButton.textContent = state.currentStep === totalSteps ? "回答を保存して会議完了" : "回答を保存して次へ";
   els.saveAnswerButton.disabled = false;
   els.backStepButton.disabled = state.currentStep <= 1;
   els.retryStepButton.disabled = !hasCurrentStepWork();
@@ -831,7 +961,8 @@ function render() {
 
 function countCompletedAnswers() {
   let count = 0;
-  for (let i = 1; i <= TOTAL_STEPS; i += 1) {
+  const totalSteps = getTotalSteps();
+  for (let i = 1; i <= totalSteps; i += 1) {
     if (state.answers[String(i)] && String(state.answers[String(i)]).trim()) count += 1;
   }
   return count;
@@ -893,7 +1024,8 @@ function buildMeetingLogBefore(answers, steeringNotes, stepNumber) {
 
 function buildMeetingLog(answers, steeringNotes) {
   const parts = [];
-  for (let i = 1; i <= TOTAL_STEPS; i += 1) {
+  const totalSteps = getTotalSteps();
+  for (let i = 1; i <= totalSteps; i += 1) {
     const stepLog = buildStepLog(i, answers, steeringNotes);
     if (stepLog) parts.push(stepLog);
   }
@@ -943,13 +1075,14 @@ function retryCurrentStep() {
 
 function saveAnswerAndNext() {
   const answer = els.answerText.value.trim();
+  const totalSteps = getTotalSteps();
   if (!answer) {
     setStatus(els.answerStatus, "AIの回答を貼り戻してから保存してください。", "error");
     return;
   }
   state.answers[String(state.currentStep)] = answer;
   saveCurrentSteeringNote();
-  if (state.currentStep < TOTAL_STEPS) {
+  if (state.currentStep < totalSteps) {
     state.currentStep += 1;
     setStatus(els.answerStatus, "回答を保存しました。次Stepのプロンプトを生成しました。");
   } else {
