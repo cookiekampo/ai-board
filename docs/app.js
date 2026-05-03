@@ -626,6 +626,7 @@ function bindEvents() {
     persist("保存しました");
     render();
   });
+  els.topicCard.addEventListener("paste", handleTopicCardPaste);
   els.backStepButton.addEventListener("click", goBackStep);
   els.retryStepButton.addEventListener("click", retryCurrentStep);
   els.copyPromptButton.addEventListener("click", () => copyText(els.promptText.value, els.promptText, els.copyStatus));
@@ -713,8 +714,9 @@ function applyGeneratedTopicCard() {
   state.topicCard = generated;
   els.topicCard.value = generated;
   persist("議題カードを反映しました");
-  setStatus(els.generatedTopicStatus, "議題カード欄へ反映しました。");
+  setStatus(els.generatedTopicStatus, "議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
   render();
+  scrollToElement(els.promptPanel);
 }
 
 function draftTopicCardFromRoughTopic() {
@@ -762,8 +764,20 @@ ${roughTopic}
   state.topicCard = draft;
   els.topicCard.value = draft;
   persist("雑なテーマから仮カードを作成しました");
-  setStatus(els.topicPromptStatus, "仮カードを議題カード欄へ反映しました。必要に応じて編集してください。");
+  setStatus(els.topicPromptStatus, "仮カードを議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
   render();
+  scrollToElement(els.promptPanel);
+}
+
+function handleTopicCardPaste() {
+  window.setTimeout(() => {
+    const pasted = els.topicCard.value.trim();
+    if (!pasted) return;
+    state.topicCard = els.topicCard.value;
+    persist("貼り付けた議題カードを反映しました。Step 1のプロンプトへ移動します。");
+    render();
+    scrollToElement(els.promptPanel);
+  }, 0);
 }
 
 function loadState() {
@@ -904,8 +918,9 @@ function applyQuickCard() {
   state.topicCard = topicCard;
   els.topicCard.value = topicCard;
   persist("かんたん入力フォームから議題カードを作成しました");
-  setStatus(els.quickCardStatus, "議題カード欄へ反映しました。必要に応じて詳細編集してください。");
+  setStatus(els.quickCardStatus, "議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
   render();
+  scrollToElement(els.promptPanel);
 }
 
 function buildTopicCardFromQuickFields(values) {
