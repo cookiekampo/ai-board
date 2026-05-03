@@ -41,14 +41,19 @@
           <textarea id="topicPromptText" class="prompt short" readonly></textarea>
           <div class="button-grid">
             <button id="copyTopicPromptButton" class="primary" type="button">2. 作成プロンプトをコピー</button>
-            <button id="openTopicChatGptButton" type="button">コピーしてChatGPTを開く</button>
-            <button id="openTopicClaudeButton" type="button">コピーしてClaudeを開く</button>
-            <button id="openTopicGeminiButton" type="button">コピーしてGeminiを開く</button>
             <button id="shortcutTopicChatGptButton" type="button">iPhone: ChatGPTアプリ</button>
             <button id="shortcutTopicClaudeButton" type="button">iPhone: Claudeアプリ</button>
             <button id="shortcutTopicGeminiButton" type="button">iPhone: Geminiアプリ</button>
             <button id="draftTopicCardButton" type="button">AIを使わず仮カードにする</button>
           </div>
+          <details class="fallback-actions">
+            <summary>うまく開けない時のWeb版</summary>
+            <div class="button-grid">
+              <button id="openTopicChatGptButton" type="button">Web版ChatGPTを開く</button>
+              <button id="openTopicClaudeButton" type="button">Web版Claudeを開く</button>
+              <button id="openTopicGeminiButton" type="button">Web版Geminiを開く</button>
+            </div>
+          </details>
           <p id="topicPromptStatus" class="status" aria-live="polite"></p>
           <label for="generatedTopicCard">3. AIの返答を貼る</label>
           <textarea id="generatedTopicCard" class="topic-card" placeholder="ChatGPT / Claude / Gemini が作った議題カードをここに貼り付けます"></textarea>
@@ -90,13 +95,18 @@
       <textarea id="promptText" class="prompt" readonly></textarea>
       <div class="button-grid">
         <button id="copyPromptButton" class="primary" type="button">プロンプトをコピー</button>
-        <button id="openChatGptButton" type="button">コピーしてChatGPTを開く</button>
-        <button id="openClaudeButton" type="button">コピーしてClaudeを開く</button>
-        <button id="openGeminiButton" type="button">コピーしてGeminiを開く</button>
         <button id="shortcutChatGptButton" type="button">iPhone: ChatGPTアプリ</button>
         <button id="shortcutClaudeButton" type="button">iPhone: Claudeアプリ</button>
         <button id="shortcutGeminiButton" type="button">iPhone: Geminiアプリ</button>
       </div>
+      <details class="fallback-actions">
+        <summary>うまく開けない時のWeb版</summary>
+        <div class="button-grid">
+          <button id="openChatGptButton" type="button">Web版ChatGPTを開く</button>
+          <button id="openClaudeButton" type="button">Web版Claudeを開く</button>
+          <button id="openGeminiButton" type="button">Web版Geminiを開く</button>
+        </div>
+      </details>
       <p id="copyStatus" class="status" aria-live="polite"></p>
     </section>
 

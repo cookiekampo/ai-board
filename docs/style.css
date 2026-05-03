@@ -84,6 +84,14 @@ summary {
   align-items: center;
 }
 
+.fallback-actions summary {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 650;
+  min-height: 38px;
+  margin-top: 8px;
+}
+
 .app-header p,
 .status,
 .eyebrow,
