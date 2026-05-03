@@ -2144,11 +2144,17 @@ function renderDeepResearchReviewInputPanel() {
 
 function renderPromptContextModePanel(step) {
   if (!els.promptContextModePanel || !els.promptContextModeSelect) return;
-  const canShow = state.mode === "deepResearchReview";
+  const canShow = Boolean(step);
   els.promptContextModePanel.hidden = !canShow;
   els.promptContextModeSelect.value = state.promptContextMode === "light" ? "light" : "full";
   if (els.promptContextModeWarning) {
-    els.promptContextModeWarning.hidden = !(canShow && state.currentStep === 1 && step && step.role.includes("Result Framer"));
+    const showWarning = canShow && state.currentStep === 1;
+    els.promptContextModeWarning.hidden = !showWarning;
+    if (showWarning) {
+      els.promptContextModeWarning.textContent = state.mode === "deepResearchReview"
+        ? "Step 1 はレビュー対象を初めて構造化するため、完全版の使用を推奨します。"
+        : "Step 1 は議題カードを初めて扱うため、完全版の使用を推奨します。";
+    }
   }
   if (els.promptLengthInfo) {
     if (!canShow) {
@@ -2156,7 +2162,7 @@ function renderPromptContextModePanel(step) {
       return;
     }
     const fullPrompt = generateFullPrompt(state.currentStep, state.topicCard, state.answers, state.steeringNotes);
-    const lightPrompt = generateDeepResearchReviewLightPrompt(state.currentStep, step, state.answers);
+    const lightPrompt = generateLightPrompt(state.currentStep, step, state.answers);
     els.promptLengthInfo.textContent = `完全版: ${formatCharacterCount(fullPrompt.length)}文字 / 軽量版: ${formatCharacterCount(lightPrompt.length)}文字`;
   }
 }
@@ -2193,8 +2199,8 @@ function updateRecommendedAiButtons(target) {
 
 function generatePrompt(stepNumber, topicCard, answers, steeringNotes) {
   const step = getSteps()[stepNumber - 1];
-  if (state.mode === "deepResearchReview" && state.promptContextMode === "light") {
-    return generateDeepResearchReviewLightPrompt(stepNumber, step, answers);
+  if (state.promptContextMode === "light") {
+    return generateLightPrompt(stepNumber, step, answers);
   }
   return generateFullPrompt(stepNumber, topicCard, answers, steeringNotes);
 }
@@ -2234,6 +2240,50 @@ ${step.instruction}${deepResearchReviewArtifactBlock}
 
 ## 注意
 ${step.note}`;
+}
+
+function generateLightPrompt(stepNumber, step, answers) {
+  if (state.mode === "deepResearchReview") {
+    return generateDeepResearchReviewLightPrompt(stepNumber, step, answers);
+  }
+  return generateGenericLightPrompt(stepNumber, step, answers);
+}
+
+function generateGenericLightPrompt(stepNumber, step, answers) {
+  const previousAnswer = stepNumber > 1 ? String(answers[String(stepNumber - 1)] || "").trim() : "";
+  const fallbackHandoff = "前Stepの引き継ぎは未抽出です。直前の会議ログを参照して続けてください。";
+  const handoff = extractMarkdownSubsection(previousAnswer, ["次Stepへの引き継ぎ", "次Stepへの入力", "次アクション", "次に確認すべきこと"]) || fallbackHandoff;
+  const issues = extractMarkdownSubsection(previousAnswer, ["Issue / 未解決論点", "未解決Issue", "未解決論点", "残論点", "保留論点"]) || fallbackHandoff;
+  const artifact = extractMarkdownSubsection(previousAnswer, ["成果物更新", "採用案", "暫定結論", "最終結論", "結論"]) || fallbackHandoff;
+
+  return `このプロンプトは、同じチャットスレッド内で前の会議ログが共有されている前提の軽量版です。新規チャット、別AI、別モデルに渡す場合は完全版を使ってください。
+前の会議ログを前提に続けてください。
+
+## 会議モード
+${modeLabels[state.mode] || modeLabels.basic}
+
+## 今回の担当
+${step.role} - ${step.title}
+
+## 前Stepからの引き継ぎ
+${handoff}
+
+## 前Stepの主な論点
+${issues}
+
+## 前Stepの成果物・結論
+${artifact}
+
+## 指示
+${step.instruction}
+
+## 注意
+${step.note}
+
+## 出力上の注意
+- 同じ内容の繰り返しを避け、今回Stepの役割に集中してください。
+- 必要な判断、修正、次アクションを明確にしてください。
+- 次のStepがある場合は、引き継ぐべき前提や未解決論点を最後に短く整理してください。`;
 }
 
 function generateDeepResearchReviewLightPrompt(stepNumber, step, answers) {
