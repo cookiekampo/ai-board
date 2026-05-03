@@ -1025,7 +1025,11 @@ const els = {
   setupToggleButton: document.getElementById("setupToggleButton"),
   setupPanel: document.getElementById("setupPanel"),
   setupDoneCheckbox: document.getElementById("setupDoneCheckbox"),
-  resetButton: document.getElementById("resetButton")
+  resetButton: document.getElementById("resetButton"),
+  preparationBody: document.querySelector(".step-zero"),
+  preparationPanel: document.querySelector(".step-zero") ? document.querySelector(".step-zero").closest(".panel") : null,
+  stepActions: document.querySelector(".step-actions"),
+  deepResearchReviewCompleteGrid: document.querySelector(".review-complete-grid")
 };
 
 init();
@@ -1040,6 +1044,7 @@ function init() {
   if (els.promptContextModeSelect) els.promptContextModeSelect.value = state.promptContextMode || "full";
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value, state.mode);
   bindEvents();
+  setupWorkflowLayoutControls();
   renderSetupPanel();
   render();
 }
@@ -1130,6 +1135,95 @@ function bindEvents() {
   els.setupToggleButton.addEventListener("click", toggleSetupPanel);
   els.setupDoneCheckbox.addEventListener("change", changeSetupDone);
   els.resetButton.addEventListener("click", resetMeeting);
+}
+
+function setupWorkflowLayoutControls() {
+  if (els.preparationPanel && els.preparationBody && !els.togglePreparationButton) {
+    els.preparationPanel.classList.add("preparation-panel");
+    const title = els.preparationPanel.querySelector("h2");
+    const titleRow = document.createElement("div");
+    titleRow.className = "panel-title-row";
+    if (title) {
+      els.preparationPanel.insertBefore(titleRow, title);
+      titleRow.appendChild(title);
+    } else {
+      els.preparationPanel.insertBefore(titleRow, els.preparationPanel.firstChild);
+    }
+    const toggleButton = document.createElement("button");
+    toggleButton.id = "togglePreparationButton";
+    toggleButton.className = "panel-toggle-button";
+    toggleButton.type = "button";
+    toggleButton.addEventListener("click", togglePreparationCollapsed);
+    titleRow.appendChild(toggleButton);
+    els.togglePreparationButton = toggleButton;
+  }
+
+  if (els.stepActions && !els.jumpToReviewResultsButton) {
+    const jumpButton = document.createElement("button");
+    jumpButton.id = "jumpToReviewResultsButton";
+    jumpButton.className = "result-jump-button";
+    jumpButton.type = "button";
+    jumpButton.textContent = "成果物へ移動";
+    jumpButton.hidden = true;
+    jumpButton.addEventListener("click", () => scrollToElement(els.deepResearchReviewCompletePanel));
+    els.stepActions.appendChild(jumpButton);
+    els.jumpToReviewResultsButton = jumpButton;
+  }
+
+  if (els.deepResearchReviewCompletePanel && !els.toggleReviewResultsButton) {
+    const buttonGrid = els.deepResearchReviewCompletePanel.querySelector(".button-grid");
+    if (buttonGrid) {
+      const toggleButton = document.createElement("button");
+      toggleButton.id = "toggleReviewResultsButton";
+      toggleButton.className = "panel-toggle-button";
+      toggleButton.type = "button";
+      toggleButton.addEventListener("click", toggleReviewResultsCollapsed);
+      buttonGrid.appendChild(toggleButton);
+      els.toggleReviewResultsButton = toggleButton;
+    }
+  }
+}
+
+function togglePreparationCollapsed() {
+  state.preparationCollapsed = !state.preparationCollapsed;
+  persist(state.preparationCollapsed ? "準備セクションを閉じました" : "準備セクションを開きました");
+  render();
+}
+
+function toggleReviewResultsCollapsed() {
+  state.reviewResultsCollapsed = !state.reviewResultsCollapsed;
+  persist(state.reviewResultsCollapsed ? "成果物詳細を閉じました" : "成果物詳細を開きました");
+  render();
+}
+
+function collapsePreparationAfterTopicApplied() {
+  state.preparationCollapsed = true;
+}
+
+function renderWorkflowLayout(complete) {
+  if (els.preparationBody) {
+    const collapsed = Boolean(state.preparationCollapsed);
+    els.preparationBody.hidden = collapsed;
+    if (els.preparationPanel) els.preparationPanel.classList.toggle("is-collapsed", collapsed);
+    if (els.togglePreparationButton) {
+      els.togglePreparationButton.textContent = collapsed ? "準備を開く" : "準備を閉じる";
+      els.togglePreparationButton.setAttribute("aria-expanded", String(!collapsed));
+    }
+  }
+
+  const hasImportedFinal = Boolean(String(state.deepResearchReviewImportedFinalAnswer || "").trim());
+  const hasReviewResults = state.mode === "deepResearchReview" && (complete || hasImportedFinal);
+  if (els.jumpToReviewResultsButton) {
+    els.jumpToReviewResultsButton.hidden = !hasReviewResults;
+  }
+  if (els.deepResearchReviewCompleteGrid) {
+    els.deepResearchReviewCompleteGrid.hidden = hasReviewResults && Boolean(state.reviewResultsCollapsed);
+  }
+  if (els.toggleReviewResultsButton) {
+    els.toggleReviewResultsButton.hidden = !hasReviewResults;
+    els.toggleReviewResultsButton.textContent = state.reviewResultsCollapsed ? "成果物詳細を開く" : "成果物詳細を閉じる";
+    els.toggleReviewResultsButton.setAttribute("aria-expanded", String(!state.reviewResultsCollapsed));
+  }
 }
 
 function updateTopicPrompt() {
@@ -1292,6 +1386,7 @@ function applyGeneratedTopicCard() {
   }
   state.topicCard = generated;
   els.topicCard.value = generated;
+  collapsePreparationAfterTopicApplied();
   persist("議題カードを反映しました");
   setStatus(els.generatedTopicStatus, "議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
   render();
@@ -1313,6 +1408,7 @@ function applyDeepResearchReviewFormCard() {
   const draft = buildDeepResearchReviewTopicCardFromForm(values);
   state.topicCard = draft;
   els.topicCard.value = draft;
+  collapsePreparationAfterTopicApplied();
   persist("Deep Research reviewフォームから議題カードを作成しました");
   setStatus(els.deepResearchReviewFormStatus, "議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
   render();
@@ -1337,6 +1433,7 @@ function draftTopicCardFromRoughTopic() {
       const draft = buildDeepResearchReviewTopicCardFromForm(values);
       state.topicCard = draft;
       els.topicCard.value = draft;
+      collapsePreparationAfterTopicApplied();
       persist("Deep Research reviewフォームから仮カードを作成しました");
       setStatus(els.topicPromptStatus, "Deep Research reviewフォームから仮カードを作成しました。Step 1のプロンプトへ移動します。");
       setStatus(els.deepResearchReviewFormStatus, "議題カード欄へ反映しました。");
@@ -1351,6 +1448,7 @@ function draftTopicCardFromRoughTopic() {
     const draft = buildDraftTopicCardFromRoughTopic(roughTopic || "Deep Research結果をレビューする", state.mode);
     state.topicCard = draft;
     els.topicCard.value = draft;
+    collapsePreparationAfterTopicApplied();
     persist("Deep Research review用の仮カードを作成しました");
     setStatus(els.topicPromptStatus, "Deep Research review用の仮カードを議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
     render();
@@ -1367,6 +1465,7 @@ function draftTopicCardFromRoughTopic() {
   const draft = buildDraftTopicCardFromRoughTopic(roughTopic, state.mode);
   state.topicCard = draft;
   els.topicCard.value = draft;
+  collapsePreparationAfterTopicApplied();
   persist("雑なテーマから仮カードを作成しました");
   setStatus(els.topicPromptStatus, "仮カードを議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
   render();
@@ -1535,6 +1634,7 @@ function handleTopicCardPaste() {
     const pasted = els.topicCard.value.trim();
     if (!pasted) return;
     state.topicCard = els.topicCard.value;
+    collapsePreparationAfterTopicApplied();
     persist("貼り付けた議題カードを反映しました。Step 1のプロンプトへ移動します。");
     render();
     scrollToElement(els.promptPanel);
@@ -1551,6 +1651,8 @@ function loadState() {
     deepResearchReviewImportLog: "",
     deepResearchReviewImportedFinalAnswer: "",
     promptContextMode: "full",
+    preparationCollapsed: false,
+    reviewResultsCollapsed: false,
     currentStep: 1,
     answers: {},
     steeringNotes: {},
@@ -1570,6 +1672,8 @@ function loadState() {
       deepResearchReviewImportLog: typeof parsed.deepResearchReviewImportLog === "string" ? parsed.deepResearchReviewImportLog : "",
       deepResearchReviewImportedFinalAnswer: typeof parsed.deepResearchReviewImportedFinalAnswer === "string" ? parsed.deepResearchReviewImportedFinalAnswer : "",
       promptContextMode: parsed.promptContextMode === "light" ? "light" : "full",
+      preparationCollapsed: typeof parsed.preparationCollapsed === "boolean" ? parsed.preparationCollapsed : fallback.preparationCollapsed,
+      reviewResultsCollapsed: typeof parsed.reviewResultsCollapsed === "boolean" ? parsed.reviewResultsCollapsed : fallback.reviewResultsCollapsed,
       currentStep: normalizeStep(parsed.currentStep, mode),
       answers: typeof parsed.answers === "object" && parsed.answers ? parsed.answers : {},
       steeringNotes: typeof parsed.steeringNotes === "object" && parsed.steeringNotes ? parsed.steeringNotes : {},
@@ -1734,6 +1838,8 @@ function applyDeepResearchReviewImportedLog() {
   state.mode = "deepResearchReview";
   state.deepResearchReviewImportLog = raw;
   state.deepResearchReviewImportedFinalAnswer = finalAnswer;
+  state.preparationCollapsed = true;
+  state.reviewResultsCollapsed = false;
   els.modeSelect.value = state.mode;
   persist("過去ログからDeep Research reviewの出口カードを作成しました");
   render();
@@ -1950,6 +2056,7 @@ function applyQuickCard() {
   const topicCard = buildTopicCardFromQuickFields(state.quickFields);
   state.topicCard = topicCard;
   els.topicCard.value = topicCard;
+  collapsePreparationAfterTopicApplied();
   persist("かんたん入力フォームから議題カードを作成しました");
   setStatus(els.quickCardStatus, "議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
   render();
@@ -1975,6 +2082,7 @@ function applyTemplate() {
   }
   state.topicCard = templates[key];
   els.topicCard.value = state.topicCard;
+  collapsePreparationAfterTopicApplied();
   persist("テンプレートを適用しました");
   els.templateSelect.value = "";
   render();
@@ -2026,6 +2134,7 @@ function render() {
   els.markdownText.value = generateMarkdown();
   renderDeepResearchReviewCompletePanel();
   renderDeepResearchCopyPanel();
+  renderWorkflowLayout(complete);
 }
 
 function renderDeepResearchReviewInputPanel() {
@@ -2281,6 +2390,7 @@ function saveAnswerAndNext() {
     state.currentStep += 1;
     setStatus(els.answerStatus, "回答を保存しました。次Stepのプロンプトを生成しました。");
   } else {
+    if (state.mode === "deepResearchReview") state.reviewResultsCollapsed = false;
     setStatus(els.answerStatus, `Step ${totalSteps}を保存しました。会議完了です。`);
   }
   persist();
@@ -2534,6 +2644,8 @@ function startNewDeepResearchReview() {
   state.deepResearchReviewImportLog = "";
   state.deepResearchReviewImportedFinalAnswer = "";
   state.promptContextMode = "full";
+  state.preparationCollapsed = false;
+  state.reviewResultsCollapsed = false;
   els.modeSelect.value = state.mode;
   els.topicCard.value = state.topicCard;
   fillDeepResearchReviewForm(state.deepResearchReviewForm);
@@ -2723,6 +2835,8 @@ function resetMeeting() {
   state.deepResearchReviewImportLog = "";
   state.deepResearchReviewImportedFinalAnswer = "";
   state.promptContextMode = "full";
+  state.preparationCollapsed = false;
+  state.reviewResultsCollapsed = false;
   state.currentStep = 1;
   state.answers = {};
   state.steeringNotes = {};

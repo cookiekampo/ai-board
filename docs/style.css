@@ -115,6 +115,39 @@ summary {
   margin: 12px 0;
 }
 
+.panel-title-row {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.panel-title-row h2 {
+  margin-bottom: 0;
+}
+
+.panel-toggle-button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.preparation-panel.is-collapsed {
+  padding-bottom: 10px;
+}
+
+.step-panel {
+  border-left: 4px solid var(--accent);
+}
+
+.result-jump-button[hidden],
+.panel-toggle-button[hidden],
+.review-complete-grid[hidden],
+.step-zero[hidden] {
+  display: none;
+}
+
 .secondary-panel {
   box-shadow: none;
 }
@@ -466,6 +499,15 @@ button.wide {
 }
 
 @media (max-width: 719px) {
+  .panel-title-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .panel-toggle-button {
+    width: 100%;
+  }
+
   .review-complete-grid {
     grid-template-columns: 1fr;
   }
