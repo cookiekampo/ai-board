@@ -2238,14 +2238,12 @@ ${step.note}`;
 
 function generateDeepResearchReviewLightPrompt(stepNumber, step, answers) {
   const previousAnswer = stepNumber > 1 ? String(answers[String(stepNumber - 1)] || "").trim() : "";
-  const fallbackHandoff = stepNumber > 1
-    ? "前Stepの引き継ぎは未抽出です。直前の会議ログを参照して続けてください。"
-    : "Step 1のため前Stepはありません。同じチャット内に議題カードまたはレビュー対象が共有済みである前提で始めてください。";
+  const fallbackHandoff = "前Stepの引き継ぎは未抽出です。直前の会議ログを参照して続けてください。";
   const handoff = extractMarkdownSubsection(previousAnswer, ["次Stepへの引き継ぎ", "次Stepへの入力"]) || fallbackHandoff;
   const issues = extractMarkdownSubsection(previousAnswer, ["Issue / 未解決論点", "未解決Issue", "未解決論点"]) ||
-    (stepNumber > 1 ? fallbackHandoff : "前Stepがないため未抽出です。");
+    fallbackHandoff;
   const artifact = extractMarkdownSubsection(previousAnswer, ["成果物更新"]) ||
-    (stepNumber > 1 ? fallbackHandoff : "前Stepがないため未抽出です。");
+    fallbackHandoff;
   const finalJudgeSummary = step.role.includes("Final Judge") ? buildDeepResearchReviewArtifactSummary(answers, stepNumber) : "";
   const finalJudgeSummaryBlock = finalJudgeSummary ? `
 
