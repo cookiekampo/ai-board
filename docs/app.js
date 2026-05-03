@@ -537,7 +537,7 @@ async function copyTextAndRunShortcut(service, text, sourceEl, statusEl) {
     return;
   }
   const shortcutName = shortcutNames[service];
-  const shortcutUrl = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}&input=clipboard`;
+  const shortcutUrl = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}`;
   setStatus(statusEl, `コピーしました。${shortcutName}を開きます。`);
   window.location.href = shortcutUrl;
 }
