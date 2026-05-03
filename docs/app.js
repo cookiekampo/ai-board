@@ -827,7 +827,9 @@ Pass / Conditional Pass / Fail: Rebuild needed / Fail: Premise issue / Human dec
       instruction: `Deep Research結果と改訂案について、最終判断を出してください。
 必ず以下の見出しをこの順番で使ってください。
 ## 採用可否
-Pass / Conditional Pass / Needs Revision / Needs More Research / Reject のいずれかで判定し、採用条件も明記してください。
+Pass / Conditional Pass / Needs Revision / Needs More Research / Reject のいずれかで判定してください。
+## 採用条件
+採用できる場合の条件を明記してください。
 ## 採用できる内容
 ## 修正すべき内容
 ## 危険な内容
@@ -837,7 +839,9 @@ Pass / Conditional Pass / Needs Revision / Needs More Research / Reject のい�
 ## 抜け漏れ
 ## 実用性レビュー
 ## 改訂版成果物
-修正済み最終成果物として使える形にしてください。
+ここには、レビュー文ではなく、ユーザーがそのまま使える最終成果物だけを入れてください。
+会議ログ、メタ評価、根拠レビューの説明は他の見出しに分け、改訂版成果物には混ぜないでください。
+可能なら、相談前メモ、チェックリスト、質問リスト、プロンプト案など、コピーして使える形式にしてください。
 ## 追加Deep Researchプロンプト案
 追加調査が必要な点も含めてください。
 ## 次アクション
@@ -889,6 +893,30 @@ const deepResearchReviewArtifactDefaults = [
   "改訂版成果物",
   "追加Deep Researchプロンプト案",
   "次アクション"
+];
+
+const deepResearchReviewDefaultPurpose = "Deep Research結果を、採用可否・修正点・実用版成果物・追加Deep Researchプロンプト案に変換する。";
+
+const deepResearchReviewCompleteSectionLabels = [
+  "採用可否",
+  "採用条件",
+  "採用できる内容",
+  "修正すべき内容",
+  "危険な内容",
+  "危険なため使わない内容",
+  "情報源レビュー",
+  "主張・根拠対応レビュー",
+  "抜け漏れ",
+  "実用性レビュー",
+  "改訂版成果物",
+  "追加Deep Researchプロンプト案",
+  "追加Deep Researchプロンプト",
+  "未解決Issue",
+  "Issue / 未解決論点",
+  "未解決論点",
+  "次アクション",
+  "結論の自信度",
+  "自信度の理由"
 ];
 
 const deepResearchReviewFormDefs = {
@@ -959,6 +987,22 @@ const els = {
   saveAnswerButton: document.getElementById("saveAnswerButton"),
   answerStatus: document.getElementById("answerStatus"),
   logPreview: document.getElementById("logPreview"),
+  deepResearchReviewCompletePanel: document.getElementById("deepResearchReviewCompletePanel"),
+  copyDeepResearchReviewFullButton: document.getElementById("copyDeepResearchReviewFullButton"),
+  copyDeepResearchReviewArtifactButton: document.getElementById("copyDeepResearchReviewArtifactButton"),
+  copyDeepResearchReviewPracticalButton: document.getElementById("copyDeepResearchReviewPracticalButton"),
+  copyDeepResearchReviewAdditionalPromptButton: document.getElementById("copyDeepResearchReviewAdditionalPromptButton"),
+  copyDeepResearchReviewIssuesButton: document.getElementById("copyDeepResearchReviewIssuesButton"),
+  startNewDeepResearchReviewButton: document.getElementById("startNewDeepResearchReviewButton"),
+  deepResearchReviewCompleteStatus: document.getElementById("deepResearchReviewCompleteStatus"),
+  deepResearchReviewAdoptionText: document.getElementById("deepResearchReviewAdoptionText"),
+  deepResearchReviewAdoptionConditionsText: document.getElementById("deepResearchReviewAdoptionConditionsText"),
+  deepResearchReviewUsableText: document.getElementById("deepResearchReviewUsableText"),
+  deepResearchReviewDangerousText: document.getElementById("deepResearchReviewDangerousText"),
+  deepResearchReviewArtifactText: document.getElementById("deepResearchReviewArtifactText"),
+  deepResearchReviewAdditionalPromptText: document.getElementById("deepResearchReviewAdditionalPromptText"),
+  deepResearchReviewIssuesText: document.getElementById("deepResearchReviewIssuesText"),
+  deepResearchReviewNextActionsText: document.getElementById("deepResearchReviewNextActionsText"),
   deepResearchCopyPanel: document.getElementById("deepResearchCopyPanel"),
   deepResearchPromptText: document.getElementById("deepResearchPromptText"),
   copyDeepResearchPromptButton: document.getElementById("copyDeepResearchPromptButton"),
@@ -1040,6 +1084,24 @@ function bindEvents() {
   els.saveAnswerButton.addEventListener("click", saveAnswerAndNext);
   els.copyDeepResearchPromptButton.addEventListener("click", copyDeepResearchPrompt);
   els.shortcutDeepResearchChatGptButton.addEventListener("click", copyDeepResearchPromptAndRunChatGptShortcut);
+  if (els.copyDeepResearchReviewFullButton) {
+    els.copyDeepResearchReviewFullButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("full"));
+  }
+  if (els.copyDeepResearchReviewArtifactButton) {
+    els.copyDeepResearchReviewArtifactButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("artifact"));
+  }
+  if (els.copyDeepResearchReviewPracticalButton) {
+    els.copyDeepResearchReviewPracticalButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("practical"));
+  }
+  if (els.copyDeepResearchReviewAdditionalPromptButton) {
+    els.copyDeepResearchReviewAdditionalPromptButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("additionalPrompt"));
+  }
+  if (els.copyDeepResearchReviewIssuesButton) {
+    els.copyDeepResearchReviewIssuesButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("issues"));
+  }
+  if (els.startNewDeepResearchReviewButton) {
+    els.startNewDeepResearchReviewButton.addEventListener("click", startNewDeepResearchReview);
+  }
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.shareMarkdownButton.addEventListener("click", shareMarkdown);
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
@@ -1622,7 +1684,7 @@ function buildDeepResearchReviewTopicCardFromForm(values) {
   const normalized = normalizeDeepResearchReviewForm(values);
   const originalPrompt = normalized.originalPrompt.trim() || "未入力";
   const researchResult = normalized.result.trim();
-  const usagePurpose = normalized.purpose.trim() || "要確認";
+  const usagePurpose = normalized.purpose.trim() || deepResearchReviewDefaultPurpose;
   const reviewFocus = listOrDefault(normalized.focus, deepResearchReviewFocusDefaults);
   const riskAreas = normalized.risk.length ? normalized.risk.join(" / ") : "要確認";
   const desiredArtifacts = listOrDefault(normalized.artifact, deepResearchReviewArtifactDefaults);
@@ -1867,6 +1929,7 @@ function render() {
   updateRecommendedAiButtons(step.target);
   els.logPreview.textContent = buildMeetingLog(state.answers, state.steeringNotes) || "まだ会議ログはありません。";
   els.markdownText.value = generateMarkdown();
+  renderDeepResearchReviewCompletePanel();
   renderDeepResearchCopyPanel();
 }
 
@@ -2036,7 +2099,9 @@ function saveCurrentSteeringNote() {
 
 function scrollAfterAnswerSave() {
   const target = isComplete()
-    ? (state.mode === "deepResearchPrompt" ? els.deepResearchCopyPanel : els.markdownPanel)
+    ? (state.mode === "deepResearchReview"
+      ? els.deepResearchReviewCompletePanel
+      : (state.mode === "deepResearchPrompt" ? els.deepResearchCopyPanel : els.markdownPanel))
     : els.promptPanel;
   scrollToElement(target);
 }
@@ -2099,6 +2164,147 @@ async function copyText(text, sourceEl, statusEl, showSuccess = true) {
   sourceEl.setSelectionRange(0, sourceEl.value.length);
   setStatus(statusEl, "コピーに失敗しました。テキストを長押しして手動でコピーしてください。", "error");
   return false;
+}
+
+async function copyPlainText(text, statusEl, successMessage) {
+  const buffer = document.createElement("textarea");
+  buffer.value = text;
+  buffer.setAttribute("readonly", "");
+  buffer.style.position = "fixed";
+  buffer.style.left = "-9999px";
+  buffer.style.top = "0";
+  document.body.appendChild(buffer);
+  const ok = await copyText(text, buffer, statusEl, false);
+  document.body.removeChild(buffer);
+  if (ok) setStatus(statusEl, successMessage || "コピーしました");
+  return ok;
+}
+
+function getDeepResearchReviewFinalAnswer() {
+  const finalStep = String(getTotalSteps());
+  return String(state.answers[finalStep] || "").trim();
+}
+
+function normalizeMarkdownHeading(line) {
+  return String(line || "")
+    .trim()
+    .replace(/^#{1,6}\s*/, "")
+    .replace(/\s*[:：]\s*$/, "")
+    .trim();
+}
+
+function extractDeepResearchReviewSection(text, aliases) {
+  const lines = String(text || "").split(/\r?\n/);
+  let startIndex = -1;
+  let matchedHeading = "";
+  for (let i = 0; i < lines.length; i += 1) {
+    const normalized = normalizeMarkdownHeading(lines[i]);
+    if (aliases.includes(normalized)) {
+      startIndex = i;
+      matchedHeading = normalized;
+      break;
+    }
+  }
+  if (startIndex < 0) return "";
+
+  const body = [];
+  for (let i = startIndex + 1; i < lines.length; i += 1) {
+    const line = lines[i];
+    const normalized = normalizeMarkdownHeading(line);
+    const isKnownSection = deepResearchReviewCompleteSectionLabels.includes(normalized);
+    if (normalized && normalized !== matchedHeading && isKnownSection) {
+      break;
+    }
+    body.push(line);
+  }
+  return body.join("\n").trim();
+}
+
+function buildDeepResearchReviewCompleteParts() {
+  const full = getDeepResearchReviewFinalAnswer();
+  return {
+    full,
+    adoption: extractDeepResearchReviewSection(full, ["採用可否"]),
+    adoptionConditions: extractDeepResearchReviewSection(full, ["採用条件"]),
+    usable: extractDeepResearchReviewSection(full, ["採用できる内容"]),
+    dangerous: extractDeepResearchReviewSection(full, ["危険な内容", "危険なため使わない内容"]),
+    artifact: extractDeepResearchReviewSection(full, ["改訂版成果物"]),
+    additionalPrompt: extractDeepResearchReviewSection(full, ["追加Deep Researchプロンプト案", "追加Deep Researchプロンプト"]),
+    issues: extractDeepResearchReviewSection(full, ["Issue / 未解決論点", "未解決Issue", "未解決論点"]),
+    nextActions: extractDeepResearchReviewSection(full, ["次アクション"])
+  };
+}
+
+function setReviewCompleteText(el, value) {
+  if (!el) return;
+  el.textContent = value || "未抽出";
+}
+
+function renderDeepResearchReviewCompletePanel() {
+  if (!els.deepResearchReviewCompletePanel) return;
+  const finalStep = getSteps()[getTotalSteps() - 1];
+  const canShow = state.mode === "deepResearchReview" && isComplete() && finalStep.role.includes("Final Judge");
+  els.deepResearchReviewCompletePanel.hidden = !canShow;
+  if (!canShow) {
+    [
+      els.deepResearchReviewAdoptionText,
+      els.deepResearchReviewAdoptionConditionsText,
+      els.deepResearchReviewUsableText,
+      els.deepResearchReviewDangerousText,
+      els.deepResearchReviewArtifactText,
+      els.deepResearchReviewAdditionalPromptText,
+      els.deepResearchReviewIssuesText,
+      els.deepResearchReviewNextActionsText
+    ].forEach((el) => setReviewCompleteText(el, ""));
+    setStatus(els.deepResearchReviewCompleteStatus, "");
+    return;
+  }
+
+  const parts = buildDeepResearchReviewCompleteParts();
+  setReviewCompleteText(els.deepResearchReviewAdoptionText, parts.adoption);
+  setReviewCompleteText(els.deepResearchReviewAdoptionConditionsText, parts.adoptionConditions);
+  setReviewCompleteText(els.deepResearchReviewUsableText, parts.usable);
+  setReviewCompleteText(els.deepResearchReviewDangerousText, parts.dangerous);
+  setReviewCompleteText(els.deepResearchReviewArtifactText, parts.artifact);
+  setReviewCompleteText(els.deepResearchReviewAdditionalPromptText, parts.additionalPrompt);
+  setReviewCompleteText(els.deepResearchReviewIssuesText, parts.issues);
+  setReviewCompleteText(els.deepResearchReviewNextActionsText, parts.nextActions);
+}
+
+function getDeepResearchReviewCopyPayload(kind) {
+  const parts = buildDeepResearchReviewCompleteParts();
+  if (kind === "full") return { text: parts.full, label: "レビュー全文" };
+  if (kind === "artifact") return { text: parts.artifact || parts.full, label: "改訂版成果物" };
+  if (kind === "practical") return { text: parts.artifact || parts.full, label: "実用版" };
+  if (kind === "additionalPrompt") return { text: parts.additionalPrompt || parts.full, label: "追加Deep Researchプロンプト案" };
+  if (kind === "issues") return { text: parts.issues || parts.full, label: "未解決Issue" };
+  return { text: parts.full, label: "レビュー全文" };
+}
+
+async function copyDeepResearchReviewCompletePart(kind) {
+  const payload = getDeepResearchReviewCopyPayload(kind);
+  if (!payload.text) {
+    setStatus(els.deepResearchReviewCompleteStatus, "コピーできるFinal Judgeの回答がまだありません。", "warn");
+    return;
+  }
+  await copyPlainText(payload.text, els.deepResearchReviewCompleteStatus, `${payload.label}をコピーしました。`);
+}
+
+function startNewDeepResearchReview() {
+  if (!confirm("新しいDeep Research reviewを開始します。現在の会議ログをクリアしますか？")) return;
+  state.mode = "deepResearchReview";
+  state.currentStep = 1;
+  state.topicCard = templates.deepResearchReview;
+  state.answers = {};
+  state.steeringNotes = {};
+  state.deepResearchReviewForm = defaultDeepResearchReviewForm();
+  els.modeSelect.value = state.mode;
+  els.topicCard.value = state.topicCard;
+  fillDeepResearchReviewForm(state.deepResearchReviewForm);
+  updateTopicPrompt();
+  persist("新しいDeep Research reviewを開始しました");
+  render();
+  scrollToElement(els.deepResearchReviewInputPanel || els.promptPanel);
 }
 
 function renderDeepResearchCopyPanel() {

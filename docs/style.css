@@ -246,6 +246,44 @@ textarea {
   font: 14px/1.5 var(--mono);
 }
 
+.review-complete-panel[hidden] {
+  display: none;
+}
+
+.review-complete-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.review-complete-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.review-complete-card.wide {
+  grid-column: 1 / -1;
+}
+
+.review-complete-card h3 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+
+.review-complete-text {
+  border: 0;
+  font: 13px/1.5 var(--mono);
+  margin: 0;
+  max-height: 280px;
+  min-height: 88px;
+  overflow: auto;
+  padding: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 button {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -395,5 +433,11 @@ button.wide {
 @media (min-width: 720px) {
   .button-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 719px) {
+  .review-complete-grid {
+    grid-template-columns: 1fr;
   }
 }

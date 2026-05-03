@@ -69,7 +69,7 @@
           <label for="deepResearchReviewResult">Deep Research結果（必須）</label>
           <textarea id="deepResearchReviewResult" class="review-field large" placeholder="レビュー対象となるDeep Research結果を貼ります。"></textarea>
           <label for="deepResearchReviewPurpose">結果を使う目的（推奨）</label>
-          <textarea id="deepResearchReviewPurpose" class="review-field" placeholder="例）一般ユーザー向けチェックリストにしたい&#10;例）専門家への質問リストにしたい&#10;例）追加調査プロンプトを作りたい"></textarea>
+          <textarea id="deepResearchReviewPurpose" class="review-field" placeholder="例: 一般ユーザー向けに、相談前メモ・専門家への質問リスト・安全なDeep Research用プロンプトとして再利用したい"></textarea>
           <details class="compact-card">
             <summary>任意項目</summary>
             <fieldset class="checkbox-group">
@@ -247,6 +247,55 @@
         <summary>会議ログプレビュー</summary>
         <pre id="logPreview" class="preview"></pre>
       </details>
+    </section>
+
+    <section id="deepResearchReviewCompletePanel" class="panel review-complete-panel" hidden>
+      <p class="eyebrow">Deep Research review 完了</p>
+      <h2>レビュー完了画面</h2>
+      <p class="hint">Final Judgeの出力から、実際に持ち帰る成果物だけを切り出します。</p>
+      <div class="button-grid">
+        <button id="copyDeepResearchReviewFullButton" class="primary" type="button">レビュー全文をコピー</button>
+        <button id="copyDeepResearchReviewArtifactButton" type="button">改訂版成果物をコピー</button>
+        <button id="copyDeepResearchReviewPracticalButton" type="button">実用版だけをコピー</button>
+        <button id="copyDeepResearchReviewAdditionalPromptButton" type="button">追加Deep Researchプロンプト案をコピー</button>
+        <button id="copyDeepResearchReviewIssuesButton" type="button">未解決Issueをコピー</button>
+        <button id="startNewDeepResearchReviewButton" class="danger" type="button">新しいDeep Research reviewを開始</button>
+      </div>
+      <p id="deepResearchReviewCompleteStatus" class="status" aria-live="polite"></p>
+      <div class="review-complete-grid">
+        <article class="review-complete-card">
+          <h3>採用可否</h3>
+          <pre id="deepResearchReviewAdoptionText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>採用条件</h3>
+          <pre id="deepResearchReviewAdoptionConditionsText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>採用できる内容</h3>
+          <pre id="deepResearchReviewUsableText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>危険なため使わない内容</h3>
+          <pre id="deepResearchReviewDangerousText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card wide">
+          <h3>改訂版成果物</h3>
+          <pre id="deepResearchReviewArtifactText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card wide">
+          <h3>追加Deep Researchプロンプト案</h3>
+          <pre id="deepResearchReviewAdditionalPromptText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>未解決Issue</h3>
+          <pre id="deepResearchReviewIssuesText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>次アクション</h3>
+          <pre id="deepResearchReviewNextActionsText" class="review-complete-text"></pre>
+        </article>
+      </div>
     </section>
 
     <section id="deepResearchCopyPanel" class="panel" hidden>
