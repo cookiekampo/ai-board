@@ -65,6 +65,13 @@
 
     <section class="panel">
       <h2>議題カード</h2>
+      <label for="modeSelect">会議モード</label>
+      <select id="modeSelect">
+        <option value="basic">basic: 通常の提案・批判・結論</option>
+        <option value="decision">decision: 複数案の比較判断</option>
+        <option value="review">review: 文章・企画・仕様のレビュー</option>
+      </select>
+      <p class="hint">モードを変えると、Step 1〜6の指示文が変わります。会議ログや議題カードは消えません。</p>
       <label for="templateSelect">テンプレート</label>
       <select id="templateSelect">
         <option value="">選択してください</option>

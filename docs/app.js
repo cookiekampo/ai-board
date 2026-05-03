@@ -159,6 +159,206 @@ const steps = [
   }
 ];
 
+const modeLabels = {
+  basic: "basic: 通常の提案・批判・結論",
+  decision: "decision: 複数案の比較判断",
+  review: "review: 文章・企画・仕様のレビュー"
+};
+
+const modeSteps = {
+  basic: steps,
+  decision: [
+    {
+      role: "Proposer / 提案者",
+      title: "候補案の整理",
+      target: "ChatGPT推奨",
+      instruction: `比較対象となる案を整理し、判断に使える形にしてください。
+必ず以下を含めてください。
+- 比較する案
+- 各案の目的
+- 各案のメリット
+- 必要条件
+- 成功時の姿
+- 最初に確認すべきこと`,
+      note: `案を増やしすぎないでください。
+比較できる粒度にそろえ、判断しやすい形にしてください。`
+    },
+    {
+      role: "Critic / 批判者",
+      title: "比較案への批判",
+      target: "Claude推奨",
+      instruction: `Proposerが整理した各案を批判的にレビューしてください。
+必ず以下を含めてください。
+- 各案の弱点
+- 見落としている前提
+- コストや手間の差
+- 実行リスク
+- 判断を誤りやすい点
+- 比較に足りない情報
+- 明らかに除外すべき案`,
+      note: `単なる反対ではなく、最終判断の精度を上げるために比較軸を明確にしてください。`
+    },
+    {
+      role: "Proposer / 提案者",
+      title: "比較案の修正と優先順位",
+      target: "ChatGPT推奨",
+      instruction: `Criticの指摘を踏まえて、比較案を修正し、優先順位を出してください。
+必ず以下を含めてください。
+- 残す案
+- 除外する案
+- 修正する案
+- 比較軸
+- 優先順位
+- 小さく試す方法
+- 判断前に確認すべきこと`,
+      note: `結論を急ぎすぎず、なぜその優先順位になるのかを分かる形にしてください。`
+    },
+    {
+      role: "Critic / 批判者",
+      title: "優先順位レビュー",
+      target: "Claude推奨",
+      instruction: `Proposerの優先順位と比較軸を再レビューしてください。
+必ず以下を含めてください。
+- 優先順位の妥当性
+- 過大評価されている案
+- 過小評価されている案
+- 採用前に潰すべきリスク
+- やらない方がよい案
+- 判断基準の修正案`,
+      note: `最終判断で使えるように、重要度の高い論点から順に整理してください。`
+    },
+    {
+      role: "Judge / 判定者",
+      title: "暫定判断",
+      target: "ChatGPTまたはClaude推奨",
+      instruction: `ここまでの議論を整理し、暫定判断を出してください。
+必ず以下を含めてください。
+- 現時点の最有力案
+- 次点案
+- 却下候補
+- 比較表
+- 判断理由
+- 未確認の前提
+- 最終判断前に確認すべきこと`,
+      note: `まだ最終結論にしなくて構いません。
+判断の軸と不足情報を明確にしてください。`
+    },
+    {
+      role: "Judge / 判定者",
+      title: "最終判断",
+      target: "ChatGPTまたはClaude推奨",
+      instruction: `これまでの議論を踏まえて、最終判断を出してください。
+必ず以下の見出しをこの順番で使ってください。
+## 採用案
+## 次点案
+## 却下案
+## 比較表
+## 主な理由
+## 未解決論点
+## 追加確認事項
+## 次アクション
+## 実行順序
+## 結論の自信度
+## 自信度の理由`,
+      note: `最終判断は、どの案を選ぶかだけでなく、次に何を確認・実行するかまで具体化してください。`
+    }
+  ],
+  review: [
+    {
+      role: "Proposer / 提案者",
+      title: "レビュー観点の整理と改善案",
+      target: "ChatGPT推奨",
+      instruction: `対象をレビューし、改善できる方向を前向きに整理してください。
+必ず以下を含めてください。
+- 良い点
+- 改善余地
+- 想定読者または利用者
+- 伝わりにくい点
+- 改善案
+- 最初に直すべき箇所`,
+      note: `批判だけで終わらせず、使える改善案にしてください。`
+    },
+    {
+      role: "Critic / 批判者",
+      title: "問題点レビュー",
+      target: "Claude推奨",
+      instruction: `Proposerの整理と対象内容を批判的にレビューしてください。
+必ず以下を含めてください。
+- 致命的な問題
+- 誤解されやすい点
+- 抜け漏れ
+- 論理の弱い部分
+- 表現や構成の問題
+- 修正すべき優先順位
+- 追加で確認すべきこと`,
+      note: `細かい好みよりも、成果物としての品質に影響する問題を優先してください。`
+    },
+    {
+      role: "Proposer / 提案者",
+      title: "修正版の方針",
+      target: "ChatGPT推奨",
+      instruction: `Criticの指摘を踏まえて、修正版の方針を出してください。
+必ず以下を含めてください。
+- 残す要素
+- 削る要素
+- 追加する要素
+- 構成の直し方
+- 表現の直し方
+- 優先して修正する順番
+- 小さく直すならどこから始めるか`,
+      note: `全体を作り替える前提にせず、実際に直しやすい改善方針にしてください。`
+    },
+    {
+      role: "Critic / 批判者",
+      title: "修正版レビュー",
+      target: "Claude推奨",
+      instruction: `Proposerの修正版方針を再レビューしてください。
+必ず以下を含めてください。
+- まだ残っている問題
+- 修正方針の弱点
+- 過剰修正になりそうな点
+- 読者や利用者に伝わるか
+- 直すべき優先順位
+- 最終判断前に確認すべきこと`,
+      note: `最終判断に使えるように、品質上の重要度が高い順に整理してください。`
+    },
+    {
+      role: "Judge / 判定者",
+      title: "改善方針の暫定整理",
+      target: "ChatGPTまたはClaude推奨",
+      instruction: `ここまでのレビューを整理し、暫定的な改善方針を出してください。
+必ず以下を含めてください。
+- 残すべき点
+- 直すべき点
+- 優先順位
+- 判断理由
+- まだ決めきれない論点
+- 追加で確認すべきこと`,
+      note: `まだ最終結論にしなくて構いません。
+修正作業に移りやすい形へ論点を整理してください。`
+    },
+    {
+      role: "Judge / 判定者",
+      title: "最終レビュー結論",
+      target: "ChatGPTまたはClaude推奨",
+      instruction: `これまでのレビューを踏まえて、最終結論を出してください。
+必ず以下の見出しをこの順番で使ってください。
+## 採用する改善方針
+## 修正すべき点
+## 修正しない点
+## 主な理由
+## 未解決論点
+## 追加確認事項
+## 次アクション
+## 修正順序
+## 注意点
+## 結論の自信度
+## 自信度の理由`,
+      note: `最終結論は、次にどこをどう直すかが分かる具体度にしてください。`
+    }
+  ]
+};
+
 const aiUrls = {
   chatgpt: "https://chatgpt.com/",
   claude: "https://claude.ai/",
@@ -188,6 +388,7 @@ const els = {
   generatedTopicCard: document.getElementById("generatedTopicCard"),
   applyGeneratedTopicButton: document.getElementById("applyGeneratedTopicButton"),
   generatedTopicStatus: document.getElementById("generatedTopicStatus"),
+  modeSelect: document.getElementById("modeSelect"),
   templateSelect: document.getElementById("templateSelect"),
   topicCard: document.getElementById("topicCard"),
   saveStatus: document.getElementById("saveStatus"),
@@ -222,6 +423,7 @@ init();
 
 function init() {
   els.topicCard.value = state.topicCard;
+  els.modeSelect.value = state.mode;
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value);
   bindEvents();
   render();
@@ -240,6 +442,7 @@ function bindEvents() {
   els.shortcutTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("gemini"));
   els.draftTopicCardButton.addEventListener("click", draftTopicCardFromRoughTopic);
   els.applyGeneratedTopicButton.addEventListener("click", applyGeneratedTopicCard);
+  els.modeSelect.addEventListener("change", changeMode);
   els.templateSelect.addEventListener("change", applyTemplate);
   els.topicCard.addEventListener("input", () => {
     state.topicCard = els.topicCard.value;
@@ -383,6 +586,7 @@ ${roughTopic}
 
 function loadState() {
   const fallback = {
+    mode: "basic",
     topicCard: templates.general,
     currentStep: 1,
     answers: {},
@@ -394,6 +598,7 @@ function loadState() {
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
     return {
+      mode: modeSteps[parsed.mode] ? parsed.mode : fallback.mode,
       topicCard: typeof parsed.topicCard === "string" ? parsed.topicCard : fallback.topicCard,
       currentStep: normalizeStep(parsed.currentStep),
       answers: typeof parsed.answers === "object" && parsed.answers ? parsed.answers : {},
@@ -421,6 +626,18 @@ function persist(message) {
   }
 }
 
+function changeMode() {
+  const mode = els.modeSelect.value;
+  if (countCompletedAnswers() > 0 && mode !== state.mode && !confirm("会議モードを変更すると、保存済みログのStep名も新しいモードで表示されます。変更してよろしいですか？")) {
+    els.modeSelect.value = state.mode;
+    return;
+  }
+  state.mode = modeSteps[mode] ? mode : "basic";
+  els.modeSelect.value = state.mode;
+  persist(`会議モードを ${modeLabels[state.mode]} に変更しました`);
+  render();
+}
+
 function applyTemplate() {
   const key = els.templateSelect.value;
   if (!key || !templates[key]) return;
@@ -440,13 +657,19 @@ function currentStepIndex() {
   return normalizeStep(state.currentStep) - 1;
 }
 
+function getSteps() {
+  return modeSteps[state.mode] || modeSteps.basic;
+}
+
 function isComplete() {
   return Boolean(state.answers[String(TOTAL_STEPS)] && String(state.answers[String(TOTAL_STEPS)]).trim());
 }
 
 function render() {
-  const step = steps[currentStepIndex()];
+  const activeSteps = getSteps();
+  const step = activeSteps[currentStepIndex()];
   const complete = isComplete();
+  els.modeSelect.value = state.mode;
   els.stepTitle.textContent = `Step ${state.currentStep}: ${step.role} - ${step.title}`;
   els.completionBadge.textContent = complete ? "会議完了" : "進行中";
   els.progressBar.style.width = `${Math.round((countCompletedAnswers() / TOTAL_STEPS) * 100)}%`;
@@ -478,9 +701,12 @@ function hasCurrentStepWork() {
 }
 
 function generatePrompt(stepNumber, topicCard, answers, steeringNotes) {
-  const step = steps[stepNumber - 1];
+  const step = getSteps()[stepNumber - 1];
   const meetingLog = buildMeetingLogBefore(answers, steeringNotes, stepNumber) || "まだ会議ログはありません。";
   return `あなたはAI会議室の ${step.role}です。
+
+## 会議モード
+${modeLabels[state.mode] || modeLabels.basic}
 
 ## 議題カード
 ${topicCard.trim() || "# 議題\\n"}
@@ -519,9 +745,10 @@ function buildMeetingLog(answers, steeringNotes) {
 function buildStepLog(stepNumber, answers, steeringNotes) {
   const answer = answers[String(stepNumber)];
   if (!answer || !String(answer).trim()) return "";
+  const step = getSteps()[stepNumber - 1];
   const note = steeringNotes[String(stepNumber)];
   const noteBlock = note && String(note).trim() ? `\n\n### ユーザーの軌道修正メモ\n${String(note).trim()}` : "";
-  return `## Step ${stepNumber}: ${steps[stepNumber - 1].role.split(" / ")[0]} ${steps[stepNumber - 1].title}\n${String(answer).trim()}${noteBlock}`;
+  return `## Step ${stepNumber}: ${step.role.split(" / ")[0]} ${step.title}\n${String(answer).trim()}${noteBlock}`;
 }
 
 function goBackStep() {
@@ -643,6 +870,7 @@ function generateMarkdown() {
   return `# AI会議ログ
 
 作成日: ${created}
+会議モード: ${modeLabels[state.mode] || modeLabels.basic}
 
 ${incomplete}## 議題カード
 
@@ -712,10 +940,12 @@ function formatDateTime(date) {
 
 function resetMeeting() {
   if (!confirm("現在の会議内容をリセットします。よろしいですか？")) return;
+  state.mode = "basic";
   state.topicCard = templates.general;
   state.currentStep = 1;
   state.answers = {};
   state.steeringNotes = {};
+  els.modeSelect.value = state.mode;
   els.topicCard.value = state.topicCard;
   els.steeringText.value = "";
   persist("新規会議を開始しました");
