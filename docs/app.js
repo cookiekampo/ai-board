@@ -466,20 +466,28 @@ const modeSteps = {
       target: "ChatGPTまたはClaude推奨",
       instruction: `これまでの議論を踏まえて、Deep Researchにそのまま貼れる完成プロンプトを作成してください。
 必ず以下の見出しをこの順番で使ってください。
-## Deep Researchにそのまま貼れる完成プロンプト
-## 調査目的
-## 背景
-## 最終的に判断したいこと
-## 調査範囲
-## 除外範囲
-## 調査すべき主要論点
-## 優先すべき情報源
-## 避けるべき情報源
-## 期待する出力形式
+## 要約
+## Deep Researchに貼る完成プロンプト
+ここから下をDeep Researchに貼ってください。
+---
+本文
+---
+ここまで
+## 補足
 ## Deep Research後にAI会議で再検討すべき論点
-## 注意点`,
+## ユーザー確認用チェックリスト
+チェックリストはAIの自己採点ではなく、ユーザー確認用にしてください。
+- 調査目的が具体的か：0〜2点
+- 判断したいことが明確か：0〜2点
+- 調査範囲が明確か：0〜2点
+- 除外範囲が明確か：0〜2点
+- 調査論点が具体的か：0〜2点
+- 情報源指定が具体的か：0〜2点
+- 出力形式が意思決定に使えるか：0〜2点
+- コピペしやすいか：0〜2点`,
       note: `完成プロンプトは、そのままDeep Researchに貼れる形にしてください。
-説明文ではなく、実際に貼り付ける調査依頼文として完成させてください。`
+説明文ではなく、実際に貼り付ける調査依頼文として完成させてください。
+完成プロンプト本文の外には、調査目的・範囲・補足説明を重複して書きすぎないでください。`
     }
   ]
 };
@@ -563,6 +571,10 @@ const els = {
   saveAnswerButton: document.getElementById("saveAnswerButton"),
   answerStatus: document.getElementById("answerStatus"),
   logPreview: document.getElementById("logPreview"),
+  deepResearchCopyPanel: document.getElementById("deepResearchCopyPanel"),
+  deepResearchPromptText: document.getElementById("deepResearchPromptText"),
+  copyDeepResearchPromptButton: document.getElementById("copyDeepResearchPromptButton"),
+  deepResearchCopyStatus: document.getElementById("deepResearchCopyStatus"),
   markdownText: document.getElementById("markdownText"),
   copyMarkdownButton: document.getElementById("copyMarkdownButton"),
   shareMarkdownButton: document.getElementById("shareMarkdownButton"),
@@ -622,6 +634,7 @@ function bindEvents() {
   els.shortcutGeminiButton.addEventListener("click", () => copyAndRunShortcut("gemini"));
   els.steeringText.addEventListener("input", saveCurrentSteeringNote);
   els.saveAnswerButton.addEventListener("click", saveAnswerAndNext);
+  els.copyDeepResearchPromptButton.addEventListener("click", copyDeepResearchPrompt);
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.shareMarkdownButton.addEventListener("click", shareMarkdown);
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
@@ -957,6 +970,7 @@ function render() {
   updateRecommendedAiButtons(step.target);
   els.logPreview.textContent = buildMeetingLog(state.answers, state.steeringNotes) || "まだ会議ログはありません。";
   els.markdownText.value = generateMarkdown();
+  renderDeepResearchCopyPanel();
 }
 
 function countCompletedAnswers() {
@@ -1152,6 +1166,67 @@ async function copyText(text, sourceEl, statusEl, showSuccess = true) {
   sourceEl.setSelectionRange(0, sourceEl.value.length);
   setStatus(statusEl, "コピーに失敗しました。テキストを長押しして手動でコピーしてください。", "error");
   return false;
+}
+
+function renderDeepResearchCopyPanel() {
+  const canCopy = state.mode === "deepResearchPrompt" && isComplete();
+  els.deepResearchCopyPanel.hidden = !canCopy;
+  if (!canCopy) {
+    els.deepResearchPromptText.value = "";
+    return;
+  }
+  els.deepResearchPromptText.value = extractDeepResearchPrompt();
+}
+
+async function copyDeepResearchPrompt() {
+  const prompt = els.deepResearchPromptText.value.trim();
+  if (!prompt) {
+    setStatus(els.deepResearchCopyStatus, "コピーできるDeep Research用プロンプトがまだありません。", "warn");
+    return;
+  }
+  await copyText(prompt, els.deepResearchPromptText, els.deepResearchCopyStatus);
+}
+
+function extractDeepResearchPrompt() {
+  const answer = String(state.answers[String(getTotalSteps())] || "").trim();
+  if (!answer) return "";
+
+  const marker = "ここから下をDeep Researchに貼ってください。";
+  const markerIndex = answer.indexOf(marker);
+  if (markerIndex >= 0) {
+    const afterMarker = answer.slice(markerIndex + marker.length);
+    const firstDelimiter = afterMarker.match(/(?:^|\n)---\s*(?:\n|$)/);
+    if (firstDelimiter) {
+      const start = markerIndex + marker.length + firstDelimiter.index + firstDelimiter[0].length;
+      const rest = answer.slice(start);
+      const endIndex = rest.search(/\n---\s*(?:\n|$)/);
+      if (endIndex >= 0) return rest.slice(0, endIndex).trim();
+      return rest.replace(/(?:^|\n)ここまで[\s\S]*$/m, "").trim();
+    }
+    const endMarkerIndex = afterMarker.indexOf("ここまで");
+    if (endMarkerIndex >= 0) {
+      return afterMarker.slice(0, endMarkerIndex).replace(/^---\s*/, "").replace(/---\s*$/, "").trim();
+    }
+  }
+
+  const section = extractMarkdownSection(answer, [
+    "## Deep Researchに貼る完成プロンプト",
+    "## Deep Researchにそのまま貼れる完成プロンプト"
+  ]);
+  return section || answer;
+}
+
+function extractMarkdownSection(text, headings) {
+  for (const heading of headings) {
+    const startIndex = text.indexOf(heading);
+    if (startIndex < 0) continue;
+    const contentStart = startIndex + heading.length;
+    const afterHeading = text.slice(contentStart).replace(/^\s*\n/, "");
+    const nextHeadingIndex = afterHeading.search(/\n##\s+/);
+    if (nextHeadingIndex >= 0) return afterHeading.slice(0, nextHeadingIndex).trim();
+    return afterHeading.trim();
+  }
+  return "";
 }
 
 function generateMarkdown() {

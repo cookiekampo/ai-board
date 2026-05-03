@@ -161,6 +161,10 @@ textarea {
   min-height: 310px;
 }
 
+.markdown.compact {
+  min-height: 220px;
+}
+
 .prompt.short {
   min-height: 260px;
 }
