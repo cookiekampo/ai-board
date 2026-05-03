@@ -977,6 +977,8 @@ const els = {
   retryStepButton: document.getElementById("retryStepButton"),
   stepActionStatus: document.getElementById("stepActionStatus"),
   promptPanel: document.getElementById("promptPanel"),
+  promptContextModePanel: document.getElementById("promptContextModePanel"),
+  promptContextModeSelect: document.getElementById("promptContextModeSelect"),
   promptText: document.getElementById("promptText"),
   copyPromptButton: document.getElementById("copyPromptButton"),
   openChatGptButton: document.getElementById("openChatGptButton"),
@@ -1033,6 +1035,7 @@ function init() {
   fillQuickFields(state.quickFields);
   fillDeepResearchReviewForm(state.deepResearchReviewForm);
   if (els.deepResearchReviewImportLog) els.deepResearchReviewImportLog.value = state.deepResearchReviewImportLog || "";
+  if (els.promptContextModeSelect) els.promptContextModeSelect.value = state.promptContextMode || "full";
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value, state.mode);
   bindEvents();
   renderSetupPanel();
@@ -1087,6 +1090,9 @@ function bindEvents() {
   els.topicCard.addEventListener("paste", handleTopicCardPaste);
   els.backStepButton.addEventListener("click", goBackStep);
   els.retryStepButton.addEventListener("click", retryCurrentStep);
+  if (els.promptContextModeSelect) {
+    els.promptContextModeSelect.addEventListener("change", changePromptContextMode);
+  }
   els.copyPromptButton.addEventListener("click", () => copyText(els.promptText.value, els.promptText, els.copyStatus));
   els.openChatGptButton.addEventListener("click", () => copyAndOpen("chatgpt"));
   els.openClaudeButton.addEventListener("click", () => copyAndOpen("claude"));
@@ -1542,6 +1548,7 @@ function loadState() {
     deepResearchReviewForm: defaultDeepResearchReviewForm(),
     deepResearchReviewImportLog: "",
     deepResearchReviewImportedFinalAnswer: "",
+    promptContextMode: "full",
     currentStep: 1,
     answers: {},
     steeringNotes: {},
@@ -1560,6 +1567,7 @@ function loadState() {
       deepResearchReviewForm: normalizeDeepResearchReviewForm(parsed.deepResearchReviewForm),
       deepResearchReviewImportLog: typeof parsed.deepResearchReviewImportLog === "string" ? parsed.deepResearchReviewImportLog : "",
       deepResearchReviewImportedFinalAnswer: typeof parsed.deepResearchReviewImportedFinalAnswer === "string" ? parsed.deepResearchReviewImportedFinalAnswer : "",
+      promptContextMode: parsed.promptContextMode === "light" ? "light" : "full",
       currentStep: normalizeStep(parsed.currentStep, mode),
       answers: typeof parsed.answers === "object" && parsed.answers ? parsed.answers : {},
       steeringNotes: typeof parsed.steeringNotes === "object" && parsed.steeringNotes ? parsed.steeringNotes : {},
@@ -1915,6 +1923,12 @@ function changeMode() {
   render();
 }
 
+function changePromptContextMode() {
+  state.promptContextMode = els.promptContextModeSelect && els.promptContextModeSelect.value === "light" ? "light" : "full";
+  persist("プロンプト形式を変更しました");
+  render();
+}
+
 function saveQuickFields() {
   state.quickFields = readQuickFields();
   persist();
@@ -1993,6 +2007,7 @@ function render() {
   const complete = isComplete();
   els.modeSelect.value = state.mode;
   renderDeepResearchReviewInputPanel();
+  renderPromptContextModePanel();
   els.stepTitle.textContent = `Step ${state.currentStep}: ${step.role} - ${step.title}`;
   els.stepTarget.textContent = `推奨AI: ${step.target}`;
   els.completionBadge.textContent = complete ? "会議完了" : "進行中";
@@ -2014,6 +2029,13 @@ function render() {
 function renderDeepResearchReviewInputPanel() {
   if (!els.deepResearchReviewInputPanel) return;
   els.deepResearchReviewInputPanel.hidden = state.mode !== "deepResearchReview";
+}
+
+function renderPromptContextModePanel() {
+  if (!els.promptContextModePanel || !els.promptContextModeSelect) return;
+  const canShow = state.mode === "deepResearchReview";
+  els.promptContextModePanel.hidden = !canShow;
+  els.promptContextModeSelect.value = state.promptContextMode === "light" ? "light" : "full";
 }
 
 function countCompletedAnswers() {
@@ -2048,6 +2070,9 @@ function updateRecommendedAiButtons(target) {
 
 function generatePrompt(stepNumber, topicCard, answers, steeringNotes) {
   const step = getSteps()[stepNumber - 1];
+  if (state.mode === "deepResearchReview" && state.promptContextMode === "light") {
+    return generateDeepResearchReviewLightPrompt(stepNumber, step, answers);
+  }
   const meetingLog = buildMeetingLogBefore(answers, steeringNotes, stepNumber) || "まだ会議ログはありません。";
   const deepResearchReviewArtifactBlock = state.mode === "deepResearchReview" ? `
 
@@ -2078,6 +2103,59 @@ ${step.role} - ${step.title}
 
 ## 指示
 ${step.instruction}${deepResearchReviewArtifactBlock}
+
+## 注意
+${step.note}`;
+}
+
+function generateDeepResearchReviewLightPrompt(stepNumber, step, answers) {
+  const previousAnswer = stepNumber > 1 ? String(answers[String(stepNumber - 1)] || "").trim() : "";
+  const fallbackHandoff = stepNumber > 1
+    ? "前Stepの引き継ぎは未抽出です。直前の会議ログを参照して続けてください。"
+    : "Step 1のため前Stepはありません。同じチャット内に議題カードまたはレビュー対象が共有済みである前提で始めてください。";
+  const handoff = extractMarkdownSubsection(previousAnswer, ["次Stepへの引き継ぎ", "次Stepへの入力"]) || fallbackHandoff;
+  const issues = extractMarkdownSubsection(previousAnswer, ["Issue / 未解決論点", "未解決Issue", "未解決論点"]) ||
+    (stepNumber > 1 ? "未抽出です。直前の会議ログを参照してください。" : "前Stepがないため未抽出です。");
+  const artifact = extractMarkdownSubsection(previousAnswer, ["成果物更新"]);
+  const artifactBlock = artifact ? `
+
+## 前Stepの成果物更新
+${artifact}` : "";
+
+  return `前の会議ログを前提に続けてください。
+この軽量版は、同じチャットスレッドで続ける場合だけ使います。
+新規チャットや別AIに渡す場合は、完全版を使ってください。
+
+## 今回の担当
+${step.role}
+
+## 前Stepからの引き継ぎ
+${handoff}
+
+## 未解決Issue
+${issues}${artifactBlock}
+
+## 指示
+${step.instruction}
+
+## Deep Research reviewの最低制約
+- 医療判断に踏み込まない
+- 根拠の弱い情報を推奨扱いしない
+- 危険な内容と採用できる内容を分ける
+- 必要なら追加Deep Researchプロンプト案を作る
+- Deep Research結果を単なる要約で終わらせず、検証して成果物に変換する
+
+## 共通出力
+最後に必ず以下を含めてください。
+
+### 成果物更新
+このStepで更新されたレビュー成果物、対応表、改訂案、判定を簡潔に示してください。
+
+### Issue / 未解決論点
+残っている問題、懸念、追加確認が必要な点を重要度つきで整理してください。
+
+### 次Stepへの引き継ぎ
+次の担当AIが前提にすべき内容、採用してよい内容、保留すべき内容、見落としてはいけない制約を明示してください。
 
 ## 注意
 ${step.note}`;
@@ -2276,6 +2354,33 @@ function normalizeMarkdownHeading(line) {
     .trim();
 }
 
+function getMarkdownHeadingLevel(line) {
+  const match = String(line || "").match(/^(#{1,6})\s+/);
+  return match ? match[1].length : 0;
+}
+
+function extractMarkdownSubsection(text, aliases) {
+  const lines = String(text || "").split(/\r?\n/);
+  let startIndex = -1;
+  let startLevel = 0;
+  for (let i = 0; i < lines.length; i += 1) {
+    const normalized = normalizeMarkdownHeading(lines[i]);
+    if (aliases.includes(normalized)) {
+      startIndex = i;
+      startLevel = getMarkdownHeadingLevel(lines[i]) || 3;
+      break;
+    }
+  }
+  if (startIndex < 0) return "";
+  const body = [];
+  for (let i = startIndex + 1; i < lines.length; i += 1) {
+    const level = getMarkdownHeadingLevel(lines[i]);
+    if (level && level <= startLevel) break;
+    body.push(lines[i]);
+  }
+  return body.join("\n").trim();
+}
+
 function extractDeepResearchReviewSection(text, aliases) {
   const lines = String(text || "").split(/\r?\n/);
   let startIndex = -1;
@@ -2384,6 +2489,7 @@ function startNewDeepResearchReview() {
   state.deepResearchReviewForm = defaultDeepResearchReviewForm();
   state.deepResearchReviewImportLog = "";
   state.deepResearchReviewImportedFinalAnswer = "";
+  state.promptContextMode = "full";
   els.modeSelect.value = state.mode;
   els.topicCard.value = state.topicCard;
   fillDeepResearchReviewForm(state.deepResearchReviewForm);
@@ -2568,6 +2674,7 @@ function resetMeeting() {
   state.deepResearchReviewForm = defaultDeepResearchReviewForm();
   state.deepResearchReviewImportLog = "";
   state.deepResearchReviewImportedFinalAnswer = "";
+  state.promptContextMode = "full";
   state.currentStep = 1;
   state.answers = {};
   state.steeringNotes = {};

@@ -227,6 +227,21 @@ textarea {
   min-height: 260px;
 }
 
+.prompt-context-mode {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 0 0 10px;
+  padding: 10px;
+}
+
+.prompt-context-mode[hidden] {
+  display: none;
+}
+
+.prompt-context-mode .hint {
+  margin-bottom: 0;
+}
+
 .answer {
   min-height: 190px;
 }

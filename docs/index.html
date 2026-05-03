@@ -225,6 +225,14 @@
 
     <section id="promptPanel" class="panel">
       <h2>次に貼るプロンプト</h2>
+      <div id="promptContextModePanel" class="prompt-context-mode" hidden>
+        <label for="promptContextModeSelect">プロンプト形式</label>
+        <select id="promptContextModeSelect">
+          <option value="full">完全版（別AI・新規チャット用）</option>
+          <option value="light">軽量版（同じチャットで続ける用）</option>
+        </select>
+        <p class="hint">軽量版は同じチャットスレッドで続ける前提です。新規チャットや別AIには完全版を使ってください。</p>
+      </div>
       <textarea id="promptText" class="prompt" readonly></textarea>
       <div class="button-grid">
         <button id="copyPromptButton" class="primary" type="button">プロンプトをコピー</button>
