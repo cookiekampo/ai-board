@@ -873,6 +873,30 @@ const quickFieldDefs = [
   { key: "output", id: "quickOutput", heading: "# 出力形式" }
 ];
 
+const deepResearchReviewFocusDefaults = [
+  "情報源の信頼性",
+  "主張と根拠の対応",
+  "抜け漏れ",
+  "安全性",
+  "実用性",
+  "追加調査の必要性"
+];
+
+const deepResearchReviewArtifactDefaults = [
+  "採用可否",
+  "修正すべき点",
+  "危険な内容",
+  "改訂版成果物",
+  "追加Deep Researchプロンプト案",
+  "次アクション"
+];
+
+const deepResearchReviewFormDefs = {
+  focus: "deepResearchReviewFocus",
+  risk: "deepResearchReviewRisk",
+  artifact: "deepResearchReviewArtifact"
+};
+
 const state = loadState();
 
 const els = {
@@ -887,6 +911,13 @@ const els = {
   shortcutTopicGeminiButton: document.getElementById("shortcutTopicGeminiButton"),
   draftTopicCardButton: document.getElementById("draftTopicCardButton"),
   topicPromptStatus: document.getElementById("topicPromptStatus"),
+  deepResearchReviewInputPanel: document.getElementById("deepResearchReviewInputPanel"),
+  deepResearchReviewOriginalPrompt: document.getElementById("deepResearchReviewOriginalPrompt"),
+  deepResearchReviewResult: document.getElementById("deepResearchReviewResult"),
+  deepResearchReviewPurpose: document.getElementById("deepResearchReviewPurpose"),
+  deepResearchReviewNotes: document.getElementById("deepResearchReviewNotes"),
+  applyDeepResearchReviewFormButton: document.getElementById("applyDeepResearchReviewFormButton"),
+  deepResearchReviewFormStatus: document.getElementById("deepResearchReviewFormStatus"),
   generatedTopicCard: document.getElementById("generatedTopicCard"),
   applyGeneratedTopicButton: document.getElementById("applyGeneratedTopicButton"),
   generatedTopicStatus: document.getElementById("generatedTopicStatus"),
@@ -952,6 +983,7 @@ function init() {
   els.modeSelect.value = state.mode;
   els.setupDoneCheckbox.checked = state.setupDone;
   fillQuickFields(state.quickFields);
+  fillDeepResearchReviewForm(state.deepResearchReviewForm);
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value, state.mode);
   bindEvents();
   renderSetupPanel();
@@ -970,6 +1002,18 @@ function bindEvents() {
   els.shortcutTopicClaudeButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("claude"));
   els.shortcutTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("gemini"));
   els.draftTopicCardButton.addEventListener("click", draftTopicCardFromRoughTopic);
+  [els.deepResearchReviewOriginalPrompt, els.deepResearchReviewResult, els.deepResearchReviewPurpose, els.deepResearchReviewNotes]
+    .forEach((el) => {
+      if (el) el.addEventListener("input", saveDeepResearchReviewForm);
+    });
+  Object.values(deepResearchReviewFormDefs).forEach((name) => {
+    document.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
+      input.addEventListener("change", saveDeepResearchReviewForm);
+    });
+  });
+  if (els.applyDeepResearchReviewFormButton) {
+    els.applyDeepResearchReviewFormButton.addEventListener("click", applyDeepResearchReviewFormCard);
+  }
   els.applyGeneratedTopicButton.addEventListener("click", applyGeneratedTopicCard);
   els.modeSelect.addEventListener("change", changeMode);
   quickFieldDefs.forEach((field) => {
@@ -1170,8 +1214,65 @@ function applyGeneratedTopicCard() {
   scrollToElement(els.promptPanel);
 }
 
+function applyDeepResearchReviewFormCard() {
+  const values = readDeepResearchReviewForm();
+  state.deepResearchReviewForm = values;
+  if (!values.result.trim()) {
+    setStatus(els.deepResearchReviewFormStatus, "Deep Research reviewでは、レビュー対象となるDeep Research結果を入力してください。", "error");
+    persist();
+    return;
+  }
+  if (els.topicCard.value.trim() && !confirm("現在の議題カードをDeep Research reviewフォームの内容で上書きします。よろしいですか？")) {
+    persist();
+    return;
+  }
+  const draft = buildDeepResearchReviewTopicCardFromForm(values);
+  state.topicCard = draft;
+  els.topicCard.value = draft;
+  persist("Deep Research reviewフォームから議題カードを作成しました");
+  setStatus(els.deepResearchReviewFormStatus, "議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
+  render();
+  scrollToElement(els.promptPanel);
+}
+
 function draftTopicCardFromRoughTopic() {
   const roughTopic = els.roughTopic.value.trim();
+  if (state.mode === "deepResearchReview") {
+    const values = readDeepResearchReviewForm();
+    state.deepResearchReviewForm = values;
+    if (hasDeepResearchReviewFormInput(values)) {
+      if (!values.result.trim()) {
+        setStatus(els.deepResearchReviewFormStatus, "Deep Research reviewでは、レビュー対象となるDeep Research結果を入力してください。", "error");
+        persist();
+        return;
+      }
+      if (els.topicCard.value.trim() && !confirm("現在の議題カードをDeep Research reviewフォームの内容で上書きします。よろしいですか？")) {
+        persist();
+        return;
+      }
+      const draft = buildDeepResearchReviewTopicCardFromForm(values);
+      state.topicCard = draft;
+      els.topicCard.value = draft;
+      persist("Deep Research reviewフォームから仮カードを作成しました");
+      setStatus(els.topicPromptStatus, "Deep Research reviewフォームから仮カードを作成しました。Step 1のプロンプトへ移動します。");
+      setStatus(els.deepResearchReviewFormStatus, "議題カード欄へ反映しました。");
+      render();
+      scrollToElement(els.promptPanel);
+      return;
+    }
+    if (els.topicCard.value.trim() && !confirm("現在の議題カードを上書きします。よろしいですか？")) {
+      persist();
+      return;
+    }
+    const draft = buildDraftTopicCardFromRoughTopic(roughTopic || "Deep Research結果をレビューする", state.mode);
+    state.topicCard = draft;
+    els.topicCard.value = draft;
+    persist("Deep Research review用の仮カードを作成しました");
+    setStatus(els.topicPromptStatus, "Deep Research review用の仮カードを議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
+    render();
+    scrollToElement(els.promptPanel);
+    return;
+  }
   if (!roughTopic) {
     setStatus(els.topicPromptStatus, "雑なテーマを入力してください。", "error");
     return;
@@ -1362,6 +1463,7 @@ function loadState() {
     topicCard: templates.general,
     setupDone: false,
     quickFields: defaultQuickFields(),
+    deepResearchReviewForm: defaultDeepResearchReviewForm(),
     currentStep: 1,
     answers: {},
     steeringNotes: {},
@@ -1377,6 +1479,7 @@ function loadState() {
       topicCard: typeof parsed.topicCard === "string" ? parsed.topicCard : fallback.topicCard,
       setupDone: typeof parsed.setupDone === "boolean" ? parsed.setupDone : fallback.setupDone,
       quickFields: normalizeQuickFields(parsed.quickFields),
+      deepResearchReviewForm: normalizeDeepResearchReviewForm(parsed.deepResearchReviewForm),
       currentStep: normalizeStep(parsed.currentStep, mode),
       answers: typeof parsed.answers === "object" && parsed.answers ? parsed.answers : {},
       steeringNotes: typeof parsed.steeringNotes === "object" && parsed.steeringNotes ? parsed.steeringNotes : {},
@@ -1430,6 +1533,203 @@ function fillQuickFields(values) {
   quickFieldDefs.forEach((field) => {
     els[field.id].value = normalized[field.key];
   });
+}
+
+function defaultDeepResearchReviewForm() {
+  return {
+    originalPrompt: "",
+    result: "",
+    purpose: "",
+    focus: [],
+    risk: [],
+    artifact: [],
+    notes: ""
+  };
+}
+
+function normalizeDeepResearchReviewForm(value) {
+  const defaults = defaultDeepResearchReviewForm();
+  if (!value || typeof value !== "object") return defaults;
+  return {
+    originalPrompt: typeof value.originalPrompt === "string" ? value.originalPrompt : "",
+    result: typeof value.result === "string" ? value.result : "",
+    purpose: typeof value.purpose === "string" ? value.purpose : "",
+    focus: Array.isArray(value.focus) ? value.focus.filter((item) => typeof item === "string") : [],
+    risk: Array.isArray(value.risk) ? value.risk.filter((item) => typeof item === "string") : [],
+    artifact: Array.isArray(value.artifact) ? value.artifact.filter((item) => typeof item === "string") : [],
+    notes: typeof value.notes === "string" ? value.notes : ""
+  };
+}
+
+function getCheckedValues(name) {
+  return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map((input) => input.value);
+}
+
+function setCheckedValues(name, values) {
+  const selected = new Set(Array.isArray(values) ? values : []);
+  document.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
+    input.checked = selected.has(input.value);
+  });
+}
+
+function readDeepResearchReviewForm() {
+  return {
+    originalPrompt: els.deepResearchReviewOriginalPrompt ? els.deepResearchReviewOriginalPrompt.value : "",
+    result: els.deepResearchReviewResult ? els.deepResearchReviewResult.value : "",
+    purpose: els.deepResearchReviewPurpose ? els.deepResearchReviewPurpose.value : "",
+    focus: getCheckedValues(deepResearchReviewFormDefs.focus),
+    risk: getCheckedValues(deepResearchReviewFormDefs.risk),
+    artifact: getCheckedValues(deepResearchReviewFormDefs.artifact),
+    notes: els.deepResearchReviewNotes ? els.deepResearchReviewNotes.value : ""
+  };
+}
+
+function fillDeepResearchReviewForm(values) {
+  const normalized = normalizeDeepResearchReviewForm(values);
+  if (els.deepResearchReviewOriginalPrompt) els.deepResearchReviewOriginalPrompt.value = normalized.originalPrompt;
+  if (els.deepResearchReviewResult) els.deepResearchReviewResult.value = normalized.result;
+  if (els.deepResearchReviewPurpose) els.deepResearchReviewPurpose.value = normalized.purpose;
+  if (els.deepResearchReviewNotes) els.deepResearchReviewNotes.value = normalized.notes;
+  setCheckedValues(deepResearchReviewFormDefs.focus, normalized.focus);
+  setCheckedValues(deepResearchReviewFormDefs.risk, normalized.risk);
+  setCheckedValues(deepResearchReviewFormDefs.artifact, normalized.artifact);
+}
+
+function saveDeepResearchReviewForm() {
+  state.deepResearchReviewForm = readDeepResearchReviewForm();
+  persist();
+}
+
+function hasDeepResearchReviewFormInput(values = readDeepResearchReviewForm()) {
+  return Boolean(
+    values.originalPrompt.trim() ||
+    values.result.trim() ||
+    values.purpose.trim() ||
+    values.notes.trim() ||
+    values.focus.length ||
+    values.risk.length ||
+    values.artifact.length
+  );
+}
+
+function listOrDefault(values, defaults, emptyValue) {
+  if (Array.isArray(values) && values.length) return values.join(" / ");
+  if (Array.isArray(defaults) && defaults.length) return defaults.join(" / ");
+  return emptyValue;
+}
+
+function buildDeepResearchReviewTopicCardFromForm(values) {
+  const normalized = normalizeDeepResearchReviewForm(values);
+  const originalPrompt = normalized.originalPrompt.trim() || "未入力";
+  const researchResult = normalized.result.trim();
+  const usagePurpose = normalized.purpose.trim() || "要確認";
+  const reviewFocus = listOrDefault(normalized.focus, deepResearchReviewFocusDefaults);
+  const riskAreas = normalized.risk.length ? normalized.risk.join(" / ") : "要確認";
+  const desiredArtifacts = listOrDefault(normalized.artifact, deepResearchReviewArtifactDefaults);
+  const notes = normalized.notes.trim() || "未入力";
+
+  return `# 議題
+Deep Research結果をレビューする
+
+# 背景
+Deep Researchで調査結果を得た。
+この結果をそのまま使うのではなく、情報源、根拠、主張の対応、安全性、抜け漏れ、実用性を確認したい。
+
+# 元のDeep Researchプロンプト
+${originalPrompt}
+
+# レビュー対象
+${researchResult}
+
+# 結果を使う目的
+${usagePurpose}
+
+# 特に確認したい観点
+${reviewFocus}
+
+# 高リスク領域
+${riskAreas}
+
+# 最終的に欲しい成果物
+${desiredArtifacts}
+
+# 補足・制約
+${notes}
+
+# 判断したいこと
+- 調査結果は信頼できるか
+- 主張と根拠が対応しているか
+- 情報源は十分か
+- 古い情報や根拠の弱い情報が混ざっていないか
+- 危険な結論や過剰な断定がないか
+- 元の調査質問に答えているか
+- 実務で使える成果物になっているか
+- 追加調査が必要か
+
+# 制約
+- 調査結果を無批判に採用しない
+- 情報源と根拠レベルを確認する
+- 主張と根拠の対応を確認する
+- 高リスク領域では安全性を優先する
+- 必要なら追加Deep Researchプロンプトを作る
+- 危険な内容、根拠の弱い内容、採用できる内容を分ける
+- 単なる要約で終わらせない
+
+# 使える資源
+- 元のDeep Researchプロンプト
+- Deep Research結果
+- Deep Research内で示された情報源
+- ユーザーの利用目的
+- ユーザーが指定した確認観点
+- ユーザーが指定した最終成果物
+
+# やらないこと
+- 調査結果をそのまま最終結論にしない
+- 根拠の弱い情報を推奨扱いしない
+- 危険な内容を成果物に混ぜない
+- 単なる要約で終わらせない
+- 情報源を確認せずに採用判断しない
+
+# 欲しくない回答
+- ただの要約
+- 情報源を確認しない感想
+- 主張と根拠の対応を見ない結論
+- 危険な内容と使える内容を分けない回答
+- 追加調査の要否を示さない回答
+- 元の調査目的とのズレを確認しない回答
+
+# 判断基準
+- 情報源の信頼性
+- 主張と根拠の対応
+- 根拠レベル
+- 情報の新しさ
+- 元の質問への回答度
+- 安全性
+- 実用性
+- 追加調査の必要性
+- 成果物として使えるか
+
+# 回答の粒度
+- 重要度つきで問題点を整理する
+- 採用できる内容、修正すべき内容、危険な内容を分ける
+- 主張・根拠対応表を作る
+- 抜け漏れを明示する
+- 最終的に使える成果物へ変換する
+- 必要なら追加Deep Researchプロンプト案を作る
+
+# 出力形式
+- 採用可否
+- 採用できる内容
+- 修正すべき内容
+- 危険な内容
+- 情報源レビュー
+- 主張・根拠対応レビュー
+- 抜け漏れ
+- 実用性レビュー
+- 改訂版成果物
+- 追加Deep Researchプロンプト案
+- 次アクション
+- 結論の自信度`;
 }
 
 function persist(message) {
@@ -1552,6 +1852,7 @@ function render() {
   const totalSteps = getTotalSteps();
   const complete = isComplete();
   els.modeSelect.value = state.mode;
+  renderDeepResearchReviewInputPanel();
   els.stepTitle.textContent = `Step ${state.currentStep}: ${step.role} - ${step.title}`;
   els.stepTarget.textContent = `推奨AI: ${step.target}`;
   els.completionBadge.textContent = complete ? "会議完了" : "進行中";
@@ -1567,6 +1868,11 @@ function render() {
   els.logPreview.textContent = buildMeetingLog(state.answers, state.steeringNotes) || "まだ会議ログはありません。";
   els.markdownText.value = generateMarkdown();
   renderDeepResearchCopyPanel();
+}
+
+function renderDeepResearchReviewInputPanel() {
+  if (!els.deepResearchReviewInputPanel) return;
+  els.deepResearchReviewInputPanel.hidden = state.mode !== "deepResearchReview";
 }
 
 function countCompletedAnswers() {
@@ -1966,11 +2272,13 @@ function resetMeeting() {
   state.mode = "basic";
   state.topicCard = templates.general;
   state.quickFields = defaultQuickFields();
+  state.deepResearchReviewForm = defaultDeepResearchReviewForm();
   state.currentStep = 1;
   state.answers = {};
   state.steeringNotes = {};
   els.modeSelect.value = state.mode;
   fillQuickFields(state.quickFields);
+  fillDeepResearchReviewForm(state.deepResearchReviewForm);
   els.topicCard.value = state.topicCard;
   els.steeringText.value = "";
   persist("新規会議を開始しました");

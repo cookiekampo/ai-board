@@ -61,6 +61,52 @@
         <label for="roughTopic">1. 話したいこと・調べたいこと・レビューしたい結果を雑に書く</label>
         <textarea id="roughTopic" class="rough-topic" placeholder="例）集客について&#10;例）LINE相談を増やしたい&#10;例）漢方相談でDeep Researchをどう使うか&#10;例）Deep Research結果をレビューしたい"></textarea>
         <p class="hint">長く書かなくて大丈夫です。足りない前提は、AIが「未入力」や「要確認」として整理します。</p>
+        <div id="deepResearchReviewInputPanel" class="mode-specific-input" hidden>
+          <h3>Deep Research結果レビュー用フォーム</h3>
+          <p class="hint">Deep Research結果・元プロンプト・使いたい目的を分けて貼れます。調査結果をそのまま採用せず、情報源・根拠・安全性・実用性を確認します。</p>
+          <label for="deepResearchReviewOriginalPrompt">元のDeep Researchプロンプト（任意）</label>
+          <textarea id="deepResearchReviewOriginalPrompt" class="review-field" placeholder="Deep Researchに投げた元プロンプトを貼ります。空欄なら「未入力」として扱います。"></textarea>
+          <label for="deepResearchReviewResult">Deep Research結果（必須）</label>
+          <textarea id="deepResearchReviewResult" class="review-field large" placeholder="レビュー対象となるDeep Research結果を貼ります。"></textarea>
+          <label for="deepResearchReviewPurpose">結果を使う目的（推奨）</label>
+          <textarea id="deepResearchReviewPurpose" class="review-field" placeholder="例）一般ユーザー向けチェックリストにしたい&#10;例）専門家への質問リストにしたい&#10;例）追加調査プロンプトを作りたい"></textarea>
+          <details class="compact-card">
+            <summary>任意項目</summary>
+            <fieldset class="checkbox-group">
+              <legend>特に確認したい観点</legend>
+              <label><input type="checkbox" name="deepResearchReviewFocus" value="情報源の信頼性"> 情報源の信頼性</label>
+              <label><input type="checkbox" name="deepResearchReviewFocus" value="主張と根拠の対応"> 主張と根拠の対応</label>
+              <label><input type="checkbox" name="deepResearchReviewFocus" value="古い情報・根拠の弱い情報"> 古い情報・根拠の弱い情報</label>
+              <label><input type="checkbox" name="deepResearchReviewFocus" value="抜け漏れ"> 抜け漏れ</label>
+              <label><input type="checkbox" name="deepResearchReviewFocus" value="安全性・禁止事項"> 安全性・禁止事項</label>
+              <label><input type="checkbox" name="deepResearchReviewFocus" value="実用性"> 実用性</label>
+              <label><input type="checkbox" name="deepResearchReviewFocus" value="追加調査の必要性"> 追加調査の必要性</label>
+            </fieldset>
+            <fieldset class="checkbox-group">
+              <legend>高リスク領域</legend>
+              <label><input type="checkbox" name="deepResearchReviewRisk" value="医療"> 医療</label>
+              <label><input type="checkbox" name="deepResearchReviewRisk" value="法律"> 法律</label>
+              <label><input type="checkbox" name="deepResearchReviewRisk" value="金融"> 金融</label>
+              <label><input type="checkbox" name="deepResearchReviewRisk" value="セキュリティ"> セキュリティ</label>
+              <label><input type="checkbox" name="deepResearchReviewRisk" value="個人情報"> 個人情報</label>
+              <label><input type="checkbox" name="deepResearchReviewRisk" value="なし / 不明"> なし / 不明</label>
+            </fieldset>
+            <fieldset class="checkbox-group">
+              <legend>最終的に欲しい成果物</legend>
+              <label><input type="checkbox" name="deepResearchReviewArtifact" value="採用可否"> 採用可否</label>
+              <label><input type="checkbox" name="deepResearchReviewArtifact" value="修正すべき点"> 修正すべき点</label>
+              <label><input type="checkbox" name="deepResearchReviewArtifact" value="危険な内容"> 危険な内容</label>
+              <label><input type="checkbox" name="deepResearchReviewArtifact" value="改訂版チェックリスト"> 改訂版チェックリスト</label>
+              <label><input type="checkbox" name="deepResearchReviewArtifact" value="改訂版質問リスト"> 改訂版質問リスト</label>
+              <label><input type="checkbox" name="deepResearchReviewArtifact" value="追加Deep Researchプロンプト"> 追加Deep Researchプロンプト</label>
+              <label><input type="checkbox" name="deepResearchReviewArtifact" value="次アクション"> 次アクション</label>
+            </fieldset>
+            <label for="deepResearchReviewNotes">補足・制約（任意）</label>
+            <textarea id="deepResearchReviewNotes" class="review-field" placeholder="例）患者説明には使わない。医療判断は専門家確認を前提にする。"></textarea>
+          </details>
+          <button id="applyDeepResearchReviewFormButton" class="primary wide" type="button">Deep Research review用議題カードを作る</button>
+          <p id="deepResearchReviewFormStatus" class="status" aria-live="polite"></p>
+        </div>
         <label for="topicPromptText">2. AIに貼る作成プロンプト（自動生成）</label>
         <textarea id="topicPromptText" class="prompt short" readonly></textarea>
         <div class="button-grid">

@@ -156,6 +156,58 @@ textarea {
   min-height: 92px;
 }
 
+.mode-specific-input {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 12px 0;
+  padding: 12px;
+}
+
+.mode-specific-input[hidden] {
+  display: none;
+}
+
+.mode-specific-input h3 {
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+.review-field {
+  min-height: 92px;
+}
+
+.review-field.large {
+  min-height: 190px;
+}
+
+.checkbox-group {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 10px 0;
+  padding: 8px 10px 10px;
+}
+
+.checkbox-group legend {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+.checkbox-group label {
+  align-items: flex-start;
+  display: flex;
+  gap: 8px;
+  font-weight: 500;
+  margin: 7px 0;
+}
+
+.checkbox-group input {
+  flex: 0 0 auto;
+  margin-top: 4px;
+  width: auto;
+}
+
 .prompt,
 .markdown {
   min-height: 310px;
