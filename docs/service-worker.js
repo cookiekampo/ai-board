@@ -1,4 +1,4 @@
-const CACHE_NAME = "ai-board-static-v0.1.8";
+const CACHE_NAME = "ai-board-static-v0.1.9";
 const APP_ASSETS = [
   "./",
   "./index.html",
