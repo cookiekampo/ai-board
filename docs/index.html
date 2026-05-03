@@ -22,6 +22,7 @@
         <div class="step-zero">
           <label for="roughTopic">雑なテーマ</label>
           <textarea id="roughTopic" class="rough-topic" placeholder="例）集客について"></textarea>
+          <p class="hint">雑なテーマは、下の「議題カード作成プロンプト」に入ります。メインの議題カード欄へ直接入れたい場合は「雑なテーマから仮カードを作る」を押してください。</p>
           <label for="topicPromptText">議題カード作成プロンプト</label>
           <textarea id="topicPromptText" class="prompt short" readonly></textarea>
           <div class="button-grid">
@@ -29,6 +30,7 @@
             <button id="openTopicChatGptButton" type="button">コピーしてChatGPTを開く</button>
             <button id="openTopicClaudeButton" type="button">コピーしてClaudeを開く</button>
             <button id="openTopicGeminiButton" type="button">コピーしてGeminiを開く</button>
+            <button id="draftTopicCardButton" type="button">雑なテーマから仮カードを作る</button>
           </div>
           <p id="topicPromptStatus" class="status" aria-live="polite"></p>
           <label for="generatedTopicCard">AIが作った議題カード</label>

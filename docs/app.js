@@ -155,6 +155,7 @@ const els = {
   openTopicChatGptButton: document.getElementById("openTopicChatGptButton"),
   openTopicClaudeButton: document.getElementById("openTopicClaudeButton"),
   openTopicGeminiButton: document.getElementById("openTopicGeminiButton"),
+  draftTopicCardButton: document.getElementById("draftTopicCardButton"),
   topicPromptStatus: document.getElementById("topicPromptStatus"),
   generatedTopicCard: document.getElementById("generatedTopicCard"),
   applyGeneratedTopicButton: document.getElementById("applyGeneratedTopicButton"),
@@ -192,13 +193,14 @@ function init() {
 }
 
 function bindEvents() {
-  els.roughTopic.addEventListener("input", () => {
-    els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value);
+  ["input", "change", "keyup", "compositionend"].forEach((eventName) => {
+    els.roughTopic.addEventListener(eventName, updateTopicPrompt);
   });
   els.copyTopicPromptButton.addEventListener("click", () => copyText(els.topicPromptText.value, els.topicPromptText, els.topicPromptStatus));
   els.openTopicChatGptButton.addEventListener("click", () => copyTopicPromptAndOpen("chatgpt"));
   els.openTopicClaudeButton.addEventListener("click", () => copyTopicPromptAndOpen("claude"));
   els.openTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndOpen("gemini"));
+  els.draftTopicCardButton.addEventListener("click", draftTopicCardFromRoughTopic);
   els.applyGeneratedTopicButton.addEventListener("click", applyGeneratedTopicCard);
   els.templateSelect.addEventListener("change", applyTemplate);
   els.topicCard.addEventListener("input", () => {
@@ -214,6 +216,10 @@ function bindEvents() {
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
   els.resetButton.addEventListener("click", resetMeeting);
+}
+
+function updateTopicPrompt() {
+  els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value);
 }
 
 function generateTopicCardPrompt(roughTopic) {
@@ -269,6 +275,42 @@ function applyGeneratedTopicCard() {
   els.topicCard.value = generated;
   persist("議題カードを反映しました");
   setStatus(els.generatedTopicStatus, "議題カード欄へ反映しました。");
+  render();
+}
+
+function draftTopicCardFromRoughTopic() {
+  const roughTopic = els.roughTopic.value.trim();
+  if (!roughTopic) {
+    setStatus(els.topicPromptStatus, "雑なテーマを入力してください。", "error");
+    return;
+  }
+  if (els.topicCard.value.trim() && !confirm("現在の議題カードを上書きします。よろしいですか？")) {
+    return;
+  }
+  const draft = `# 議題
+${roughTopic}
+
+# 背景
+未入力
+
+# 判断したいこと
+このテーマについて、今後取るべき方針を決めたい。
+
+# 制約
+未入力
+
+# 使える資源
+未入力
+
+# やらないこと
+未入力
+
+# 出力形式
+採用案、却下案、主な理由、未解決論点、追加確認事項、次アクション`;
+  state.topicCard = draft;
+  els.topicCard.value = draft;
+  persist("雑なテーマから仮カードを作成しました");
+  setStatus(els.topicPromptStatus, "仮カードを議題カード欄へ反映しました。必要に応じて編集してください。");
   render();
 }
 
