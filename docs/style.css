@@ -115,6 +115,10 @@ summary {
   margin: 12px 0;
 }
 
+.secondary-panel {
+  box-shadow: none;
+}
+
 label {
   display: block;
   font-weight: 650;

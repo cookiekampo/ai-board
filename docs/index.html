@@ -54,7 +54,7 @@
       <p class="hint">完了にすると、右上ボタンが薄く「初期設定済み」と表示されます。後からいつでも開けます。</p>
     </section>
 
-    <section class="panel">
+    <section class="panel secondary-panel">
       <details>
         <summary>Step 0: 雑なテーマから議題カードを作る</summary>
         <div class="step-zero">
@@ -88,51 +88,53 @@
       </details>
     </section>
 
-    <section class="panel">
-      <h2>議題カード</h2>
-      <label for="modeSelect">会議モード</label>
-      <select id="modeSelect">
-        <option value="basic">basic: 通常の提案・批判・結論</option>
-        <option value="decision">decision: 複数案の比較判断</option>
-        <option value="review">review: 文章・企画・仕様のレビュー</option>
-      </select>
-      <p class="hint">モードを変えると、Step 1〜6の指示文が変わります。会議ログや議題カードは消えません。</p>
-      <details class="quick-card">
-        <summary>かんたん入力フォーム</summary>
-        <p class="hint">書けるところだけ入力してください。空欄は「未入力」として議題カード化します。</p>
-        <label for="quickTopic">議題</label>
-        <textarea id="quickTopic" class="quick-field" placeholder="例）集客について"></textarea>
-        <label for="quickBackground">背景</label>
-        <textarea id="quickBackground" class="quick-field" placeholder="例）新規相談者を増やしたい"></textarea>
-        <label for="quickDecision">判断したいこと</label>
-        <textarea id="quickDecision" class="quick-field" placeholder="例）今後3か月で優先すべき施策を決めたい"></textarea>
-        <label for="quickConstraints">制約</label>
-        <textarea id="quickConstraints" class="quick-field" placeholder="例）広告費は大きくかけない。1人で実行できる範囲。"></textarea>
-        <label for="quickResources">使える資源</label>
-        <textarea id="quickResources" class="quick-field" placeholder="例）Instagram、LINE、Webサイト、店頭、既存顧客"></textarea>
-        <label for="quickAvoid">やらないこと</label>
-        <textarea id="quickAvoid" class="quick-field" placeholder="例）過度な値引き。断定的な医療表現。"></textarea>
-        <label for="quickUnwanted">欲しくない回答</label>
-        <textarea id="quickUnwanted" class="quick-field" placeholder="例）SNSを頑張る、広告を出す、などの一般論だけの回答"></textarea>
-        <label for="quickCriteria">判断基準</label>
-        <textarea id="quickCriteria" class="quick-field" placeholder="例）1人で続けられる。LINE相談につながる。リスクが低い。"></textarea>
-        <label for="quickGranularity">回答の粒度</label>
-        <textarea id="quickGranularity" class="quick-field" placeholder="例）最初の2週間で何をするか分かる具体度"></textarea>
-        <label for="quickOutput">出力形式</label>
-        <textarea id="quickOutput" class="quick-field" placeholder="例）採用案、却下案、主な理由、未解決論点、追加確認事項、次アクション"></textarea>
-        <button id="applyQuickCardButton" class="primary wide" type="button">フォームから議題カードを作る</button>
-        <p id="quickCardStatus" class="status" aria-live="polite"></p>
+    <section class="panel secondary-panel">
+      <details open>
+        <summary>議題カード</summary>
+        <label for="modeSelect">会議モード</label>
+        <select id="modeSelect">
+          <option value="basic">basic: 通常の提案・批判・結論</option>
+          <option value="decision">decision: 複数案の比較判断</option>
+          <option value="review">review: 文章・企画・仕様のレビュー</option>
+        </select>
+        <p class="hint">モードを変えると、Step 1〜6の指示文が変わります。会議ログや議題カードは消えません。</p>
+        <details class="quick-card">
+          <summary>かんたん入力フォーム</summary>
+          <p class="hint">書けるところだけ入力してください。空欄は「未入力」として議題カード化します。</p>
+          <label for="quickTopic">議題</label>
+          <textarea id="quickTopic" class="quick-field" placeholder="例）集客について"></textarea>
+          <label for="quickBackground">背景</label>
+          <textarea id="quickBackground" class="quick-field" placeholder="例）新規相談者を増やしたい"></textarea>
+          <label for="quickDecision">判断したいこと</label>
+          <textarea id="quickDecision" class="quick-field" placeholder="例）今後3か月で優先すべき施策を決めたい"></textarea>
+          <label for="quickConstraints">制約</label>
+          <textarea id="quickConstraints" class="quick-field" placeholder="例）広告費は大きくかけない。1人で実行できる範囲。"></textarea>
+          <label for="quickResources">使える資源</label>
+          <textarea id="quickResources" class="quick-field" placeholder="例）Instagram、LINE、Webサイト、店頭、既存顧客"></textarea>
+          <label for="quickAvoid">やらないこと</label>
+          <textarea id="quickAvoid" class="quick-field" placeholder="例）過度な値引き。断定的な医療表現。"></textarea>
+          <label for="quickUnwanted">欲しくない回答</label>
+          <textarea id="quickUnwanted" class="quick-field" placeholder="例）SNSを頑張る、広告を出す、などの一般論だけの回答"></textarea>
+          <label for="quickCriteria">判断基準</label>
+          <textarea id="quickCriteria" class="quick-field" placeholder="例）1人で続けられる。LINE相談につながる。リスクが低い。"></textarea>
+          <label for="quickGranularity">回答の粒度</label>
+          <textarea id="quickGranularity" class="quick-field" placeholder="例）最初の2週間で何をするか分かる具体度"></textarea>
+          <label for="quickOutput">出力形式</label>
+          <textarea id="quickOutput" class="quick-field" placeholder="例）採用案、却下案、主な理由、未解決論点、追加確認事項、次アクション"></textarea>
+          <button id="applyQuickCardButton" class="primary wide" type="button">フォームから議題カードを作る</button>
+          <p id="quickCardStatus" class="status" aria-live="polite"></p>
+        </details>
+        <label for="templateSelect">テンプレート</label>
+        <select id="templateSelect">
+          <option value="">選択してください</option>
+          <option value="general">汎用テンプレ</option>
+          <option value="marketing">集客施策テンプレ</option>
+        </select>
+        <label for="topicCard">議題カード</label>
+        <textarea id="topicCard" class="topic-card" placeholder="# 議題&#10;集客について"></textarea>
+        <p class="hint">「欲しくない回答」「判断基準」「回答の粒度」を書くと、一般論に流れにくくなります。</p>
+        <p id="saveStatus" class="status" aria-live="polite"></p>
       </details>
-      <label for="templateSelect">テンプレート</label>
-      <select id="templateSelect">
-        <option value="">選択してください</option>
-        <option value="general">汎用テンプレ</option>
-        <option value="marketing">集客施策テンプレ</option>
-      </select>
-      <label for="topicCard">議題カード</label>
-      <textarea id="topicCard" class="topic-card" placeholder="# 議題&#10;集客について"></textarea>
-      <p class="hint">「欲しくない回答」「判断基準」「回答の粒度」を書くと、一般論に流れにくくなります。</p>
-      <p id="saveStatus" class="status" aria-live="polite"></p>
     </section>
 
     <section class="panel step-panel">
@@ -184,20 +186,24 @@
       <p id="answerStatus" class="status" aria-live="polite"></p>
     </section>
 
-    <section class="panel">
-      <h2>会議ログプレビュー</h2>
-      <pre id="logPreview" class="preview"></pre>
+    <section class="panel secondary-panel">
+      <details>
+        <summary>会議ログプレビュー</summary>
+        <pre id="logPreview" class="preview"></pre>
+      </details>
     </section>
 
-    <section class="panel">
-      <h2>Markdown</h2>
-      <textarea id="markdownText" class="markdown" readonly></textarea>
-      <div class="button-grid">
-        <button id="copyMarkdownButton" class="primary" type="button">Markdownをコピー</button>
-        <button id="shareMarkdownButton" type="button">Markdownを共有</button>
-        <button id="downloadMarkdownButton" type="button">Markdownをダウンロード</button>
-      </div>
-      <p id="markdownStatus" class="status" aria-live="polite"></p>
+    <section class="panel secondary-panel">
+      <details>
+        <summary>Markdown</summary>
+        <textarea id="markdownText" class="markdown" readonly></textarea>
+        <div class="button-grid">
+          <button id="copyMarkdownButton" class="primary" type="button">Markdownをコピー</button>
+          <button id="shareMarkdownButton" type="button">Markdownを共有</button>
+          <button id="downloadMarkdownButton" type="button">Markdownをダウンロード</button>
+        </div>
+        <p id="markdownStatus" class="status" aria-live="polite"></p>
+      </details>
     </section>
   </main>
 
