@@ -71,6 +71,14 @@ h2 {
   margin-bottom: 10px;
 }
 
+summary {
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
 .app-header p,
 .status,
 .eyebrow {
@@ -119,9 +127,17 @@ textarea {
   min-height: 220px;
 }
 
+.rough-topic {
+  min-height: 92px;
+}
+
 .prompt,
 .markdown {
   min-height: 310px;
+}
+
+.prompt.short {
+  min-height: 260px;
 }
 
 .answer {
@@ -221,6 +237,10 @@ button.wide {
 
 .status.warn {
   color: var(--warn);
+}
+
+.step-zero {
+  padding-top: 8px;
 }
 
 @media (min-width: 720px) {

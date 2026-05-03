@@ -17,6 +17,29 @@
     </header>
 
     <section class="panel">
+      <details>
+        <summary>議題カード作成をAIに手伝ってもらう</summary>
+        <div class="step-zero">
+          <label for="roughTopic">雑なテーマ</label>
+          <textarea id="roughTopic" class="rough-topic" placeholder="例）集客について"></textarea>
+          <label for="topicPromptText">議題カード作成プロンプト</label>
+          <textarea id="topicPromptText" class="prompt short" readonly></textarea>
+          <div class="button-grid">
+            <button id="copyTopicPromptButton" class="primary" type="button">作成プロンプトをコピー</button>
+            <button id="openTopicChatGptButton" type="button">コピーしてChatGPTを開く</button>
+            <button id="openTopicClaudeButton" type="button">コピーしてClaudeを開く</button>
+            <button id="openTopicGeminiButton" type="button">コピーしてGeminiを開く</button>
+          </div>
+          <p id="topicPromptStatus" class="status" aria-live="polite"></p>
+          <label for="generatedTopicCard">AIが作った議題カード</label>
+          <textarea id="generatedTopicCard" class="topic-card" placeholder="AIが作った議題カードをここに貼り付けます"></textarea>
+          <button id="applyGeneratedTopicButton" class="primary wide" type="button">議題カード欄へ反映</button>
+          <p id="generatedTopicStatus" class="status" aria-live="polite"></p>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel">
       <h2>議題カード</h2>
       <label for="templateSelect">テンプレート</label>
       <select id="templateSelect">

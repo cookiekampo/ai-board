@@ -149,6 +149,16 @@ const aiUrls = {
 const state = loadState();
 
 const els = {
+  roughTopic: document.getElementById("roughTopic"),
+  topicPromptText: document.getElementById("topicPromptText"),
+  copyTopicPromptButton: document.getElementById("copyTopicPromptButton"),
+  openTopicChatGptButton: document.getElementById("openTopicChatGptButton"),
+  openTopicClaudeButton: document.getElementById("openTopicClaudeButton"),
+  openTopicGeminiButton: document.getElementById("openTopicGeminiButton"),
+  topicPromptStatus: document.getElementById("topicPromptStatus"),
+  generatedTopicCard: document.getElementById("generatedTopicCard"),
+  applyGeneratedTopicButton: document.getElementById("applyGeneratedTopicButton"),
+  generatedTopicStatus: document.getElementById("generatedTopicStatus"),
   templateSelect: document.getElementById("templateSelect"),
   topicCard: document.getElementById("topicCard"),
   saveStatus: document.getElementById("saveStatus"),
@@ -176,11 +186,20 @@ init();
 
 function init() {
   els.topicCard.value = state.topicCard;
+  els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value);
   bindEvents();
   render();
 }
 
 function bindEvents() {
+  els.roughTopic.addEventListener("input", () => {
+    els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value);
+  });
+  els.copyTopicPromptButton.addEventListener("click", () => copyText(els.topicPromptText.value, els.topicPromptText, els.topicPromptStatus));
+  els.openTopicChatGptButton.addEventListener("click", () => copyTopicPromptAndOpen("chatgpt"));
+  els.openTopicClaudeButton.addEventListener("click", () => copyTopicPromptAndOpen("claude"));
+  els.openTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndOpen("gemini"));
+  els.applyGeneratedTopicButton.addEventListener("click", applyGeneratedTopicCard);
   els.templateSelect.addEventListener("change", applyTemplate);
   els.topicCard.addEventListener("input", () => {
     state.topicCard = els.topicCard.value;
@@ -195,6 +214,62 @@ function bindEvents() {
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
   els.resetButton.addEventListener("click", resetMeeting);
+}
+
+function generateTopicCardPrompt(roughTopic) {
+  const topic = roughTopic.trim() || "未入力";
+  return `あなたはAI会議室の事前整理担当です。
+ユーザーの雑なテーマを、AI会議で使いやすい「議題カード」に整理してください。
+
+## ユーザーの入力
+${topic}
+
+## 作成する議題カード
+必ず以下の見出しで作成してください。
+
+# 議題
+# 背景
+# 判断したいこと
+# 制約
+# 使える資源
+# やらないこと
+# 出力形式
+
+## 作成方針
+- 不明な情報は勝手に断定しない
+- 不明な箇所は「未入力」または「要確認」と書く
+- ユーザーがすぐ編集できるように簡潔に書く
+- 一般論ではなく、AI会議で議論しやすい形にする
+- 「判断したいこと」と「制約」を特に明確にする
+
+## 出力形式
+議題カードだけを出力してください。
+余計な説明は不要です。`;
+}
+
+async function copyTopicPromptAndOpen(service) {
+  const ok = await copyText(els.topicPromptText.value, els.topicPromptText, els.topicPromptStatus, false);
+  if (!ok) {
+    setStatus(els.topicPromptStatus, "コピーに失敗しました。先に手動でプロンプトをコピーしてください。", "error");
+    return;
+  }
+  window.open(aiUrls[service], "_blank", "noopener,noreferrer");
+}
+
+function applyGeneratedTopicCard() {
+  const generated = els.generatedTopicCard.value.trim();
+  if (!generated) {
+    setStatus(els.generatedTopicStatus, "AIが作った議題カードを貼り付けてください。", "error");
+    return;
+  }
+  if (els.topicCard.value.trim() && !confirm("現在の議題カードを上書きします。よろしいですか？")) {
+    return;
+  }
+  state.topicCard = generated;
+  els.topicCard.value = generated;
+  persist("議題カードを反映しました");
+  setStatus(els.generatedTopicStatus, "議題カード欄へ反映しました。");
+  render();
 }
 
 function loadState() {
