@@ -1,18 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="AI会議室">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="AI会議">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0d6b5f"/>
-      <stop offset="1" stop-color="#123d47"/>
-    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="68%" r="82%">
+      <stop offset="0" stop-color="#3b00df"/>
+      <stop offset="0.34" stop-color="#003fd0"/>
+      <stop offset="0.74" stop-color="#030063"/>
+      <stop offset="1" stop-color="#010035"/>
+    </radialGradient>
+    <filter id="cyanGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.02 0 0 0 0 0.88 0 0 0 0 1 0 0 0 0.92 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="whiteGlow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.2 0 0 0 0 0.65 0 0 0 0 1 0 0 0 0.5 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
-  <rect width="180" height="180" rx="38" fill="url(#bg)"/>
-  <path d="M43 38h94c12 0 21 9 21 21v48c0 12-9 21-21 21H89l-28 20c-4 3-10 0-9-5l5-15H43c-12 0-21-9-21-21V59c0-12 9-21 21-21Z" fill="#f7fbf8"/>
-  <text x="90" y="96" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="800" fill="#123d47">AI</text>
-  <rect x="48" y="132" width="84" height="12" rx="6" fill="#f2b84b"/>
-  <circle cx="57" cy="121" r="10" fill="#f7fbf8"/>
-  <circle cx="90" cy="121" r="10" fill="#f7fbf8"/>
-  <circle cx="123" cy="121" r="10" fill="#f7fbf8"/>
-  <circle cx="57" cy="121" r="4" fill="#0d6b5f"/>
-  <circle cx="90" cy="121" r="4" fill="#0d6b5f"/>
-  <circle cx="123" cy="121" r="4" fill="#0d6b5f"/>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <g fill="none" stroke="#2ff6ff" stroke-width="28" stroke-linejoin="round" stroke-linecap="round" filter="url(#cyanGlow)">
+    <path d="M111 151h139c51 0 84 31 84 78v62c0 46-32 77-78 77h-27v50l-58-50h-60c-47 0-78-31-78-77v-62c0-47 31-78 78-78Z"/>
+    <path d="M774 151h139c47 0 78 31 78 78v62c0 46-31 77-78 77h-60l-58 50v-50h-27c-46 0-78-31-78-77v-62c0-47 33-78 84-78Z"/>
+  </g>
+  <g fill="#2ff6ff" filter="url(#cyanGlow)">
+    <circle cx="125" cy="261" r="16"/>
+    <circle cx="181" cy="261" r="16"/>
+    <circle cx="237" cy="261" r="16"/>
+    <circle cx="787" cy="261" r="16"/>
+    <circle cx="843" cy="261" r="16"/>
+    <circle cx="899" cy="261" r="16"/>
+  </g>
+  <text x="512" y="670" text-anchor="middle" font-family="Arial Black, Impact, Arial, Helvetica, sans-serif" font-size="430" font-weight="900" letter-spacing="-28" fill="#ffffff" filter="url(#whiteGlow)">AI</text>
+  <text x="512" y="884" text-anchor="middle" font-family="Hiragino Sans, Yu Gothic, Meiryo, Arial, sans-serif" font-size="170" font-weight="900" letter-spacing="8" fill="#ffffff" filter="url(#whiteGlow)">会議</text>
 </svg>
