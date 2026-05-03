@@ -232,6 +232,8 @@
           <option value="light">軽量版（同じチャットで続ける用）</option>
         </select>
         <p class="hint">軽量版は同じチャットスレッドで続ける前提です。新規チャットや別AIには完全版を使ってください。</p>
+        <p id="promptContextModeWarning" class="hint prompt-context-warning" hidden>Step 1 はレビュー対象を初めて構造化するため、完全版の使用を推奨します。</p>
+        <p id="promptLengthInfo" class="hint prompt-length-info"></p>
       </div>
       <textarea id="promptText" class="prompt" readonly></textarea>
       <div class="button-grid">

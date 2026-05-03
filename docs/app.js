@@ -895,7 +895,7 @@ const deepResearchReviewArtifactDefaults = [
   "次アクション"
 ];
 
-const deepResearchReviewDefaultPurpose = "Deep Research結果を、採用可否・修正点・実用版成果物・追加Deep Researchプロンプト案に変換する。";
+const deepResearchReviewDefaultPurpose = "一般ユーザー向けに、レビュー結果を相談前メモ・専門家への質問リスト・安全なDeep Research用プロンプトとして再利用する。";
 
 const deepResearchReviewCompleteSectionLabels = [
   "採用可否",
@@ -979,6 +979,8 @@ const els = {
   promptPanel: document.getElementById("promptPanel"),
   promptContextModePanel: document.getElementById("promptContextModePanel"),
   promptContextModeSelect: document.getElementById("promptContextModeSelect"),
+  promptContextModeWarning: document.getElementById("promptContextModeWarning"),
+  promptLengthInfo: document.getElementById("promptLengthInfo"),
   promptText: document.getElementById("promptText"),
   copyPromptButton: document.getElementById("copyPromptButton"),
   openChatGptButton: document.getElementById("openChatGptButton"),
@@ -2007,7 +2009,7 @@ function render() {
   const complete = isComplete();
   els.modeSelect.value = state.mode;
   renderDeepResearchReviewInputPanel();
-  renderPromptContextModePanel();
+  renderPromptContextModePanel(step);
   els.stepTitle.textContent = `Step ${state.currentStep}: ${step.role} - ${step.title}`;
   els.stepTarget.textContent = `推奨AI: ${step.target}`;
   els.completionBadge.textContent = complete ? "会議完了" : "進行中";
@@ -2031,11 +2033,23 @@ function renderDeepResearchReviewInputPanel() {
   els.deepResearchReviewInputPanel.hidden = state.mode !== "deepResearchReview";
 }
 
-function renderPromptContextModePanel() {
+function renderPromptContextModePanel(step) {
   if (!els.promptContextModePanel || !els.promptContextModeSelect) return;
   const canShow = state.mode === "deepResearchReview";
   els.promptContextModePanel.hidden = !canShow;
   els.promptContextModeSelect.value = state.promptContextMode === "light" ? "light" : "full";
+  if (els.promptContextModeWarning) {
+    els.promptContextModeWarning.hidden = !(canShow && state.currentStep === 1 && step && step.role.includes("Result Framer"));
+  }
+  if (els.promptLengthInfo) {
+    if (!canShow) {
+      els.promptLengthInfo.textContent = "";
+      return;
+    }
+    const fullPrompt = generateFullPrompt(state.currentStep, state.topicCard, state.answers, state.steeringNotes);
+    const lightPrompt = generateDeepResearchReviewLightPrompt(state.currentStep, step, state.answers);
+    els.promptLengthInfo.textContent = `完全版: ${formatCharacterCount(fullPrompt.length)}文字 / 軽量版: ${formatCharacterCount(lightPrompt.length)}文字`;
+  }
 }
 
 function countCompletedAnswers() {
@@ -2073,6 +2087,11 @@ function generatePrompt(stepNumber, topicCard, answers, steeringNotes) {
   if (state.mode === "deepResearchReview" && state.promptContextMode === "light") {
     return generateDeepResearchReviewLightPrompt(stepNumber, step, answers);
   }
+  return generateFullPrompt(stepNumber, topicCard, answers, steeringNotes);
+}
+
+function generateFullPrompt(stepNumber, topicCard, answers, steeringNotes) {
+  const step = getSteps()[stepNumber - 1];
   const meetingLog = buildMeetingLogBefore(answers, steeringNotes, stepNumber) || "まだ会議ログはありません。";
   const deepResearchReviewArtifactBlock = state.mode === "deepResearchReview" ? `
 
@@ -2115,16 +2134,23 @@ function generateDeepResearchReviewLightPrompt(stepNumber, step, answers) {
     : "Step 1のため前Stepはありません。同じチャット内に議題カードまたはレビュー対象が共有済みである前提で始めてください。";
   const handoff = extractMarkdownSubsection(previousAnswer, ["次Stepへの引き継ぎ", "次Stepへの入力"]) || fallbackHandoff;
   const issues = extractMarkdownSubsection(previousAnswer, ["Issue / 未解決論点", "未解決Issue", "未解決論点"]) ||
-    (stepNumber > 1 ? "未抽出です。直前の会議ログを参照してください。" : "前Stepがないため未抽出です。");
-  const artifact = extractMarkdownSubsection(previousAnswer, ["成果物更新"]);
-  const artifactBlock = artifact ? `
+    (stepNumber > 1 ? fallbackHandoff : "前Stepがないため未抽出です。");
+  const artifact = extractMarkdownSubsection(previousAnswer, ["成果物更新"]) ||
+    (stepNumber > 1 ? fallbackHandoff : "前Stepがないため未抽出です。");
+  const finalJudgeSummary = step.role.includes("Final Judge") ? buildDeepResearchReviewArtifactSummary(answers, stepNumber) : "";
+  const finalJudgeSummaryBlock = finalJudgeSummary ? `
+
+## これまでの判定サマリ
+Final Judge は最終判断のため、軽量版でも各Stepの成果物更新を集約して参照してください。
+${finalJudgeSummary}` : "";
+
+  const artifactBlock = `
 
 ## 前Stepの成果物更新
-${artifact}` : "";
+${artifact}${finalJudgeSummaryBlock}`;
 
-  return `前の会議ログを前提に続けてください。
-この軽量版は、同じチャットスレッドで続ける場合だけ使います。
-新規チャットや別AIに渡す場合は、完全版を使ってください。
+  return `このプロンプトは、同じチャットスレッド内で前の会議ログが共有されている前提の軽量版です。新規チャット、別AI、別モデルに渡す場合は完全版を使ってください。
+前の会議ログを前提に続けてください。
 
 ## 今回の担当
 ${step.role}
@@ -2138,10 +2164,13 @@ ${issues}${artifactBlock}
 ## 指示
 ${step.instruction}
 
-## Deep Research reviewの最低制約
-- 医療判断に踏み込まない
+## 共通安全制約カプセル
+- 調査結果を無批判に採用しない
+- 情報源と根拠レベルを確認する
+- 主張と根拠の対応を見る
 - 根拠の弱い情報を推奨扱いしない
 - 危険な内容と採用できる内容を分ける
+- 高リスク領域では安全性を優先する
 - 必要なら追加Deep Researchプロンプト案を作る
 - Deep Research結果を単なる要約で終わらせず、検証して成果物に変換する
 
@@ -2159,6 +2188,21 @@ ${step.instruction}
 
 ## 注意
 ${step.note}`;
+}
+
+function buildDeepResearchReviewArtifactSummary(answers, beforeStep) {
+  const steps = getStepsForMode("deepResearchReview");
+  const parts = [];
+  const maxStep = Math.min(beforeStep - 1, steps.length);
+  for (let i = 1; i <= maxStep; i += 1) {
+    const answer = String(answers[String(i)] || "").trim();
+    if (!answer) continue;
+    const artifact = extractMarkdownSubsection(answer, ["成果物更新"]);
+    if (!artifact) continue;
+    const step = steps[i - 1];
+    parts.push(`### Step ${i}: ${step ? step.role : "Step"}\n${artifact}`);
+  }
+  return parts.join("\n\n") || "これまでの成果物更新は未抽出です。直前までの会議ログを参照して最終判断してください。";
 }
 
 function buildMeetingLogBefore(answers, steeringNotes, stepNumber) {
@@ -2664,6 +2708,10 @@ function formatDateTime(date) {
   const hh = String(date.getHours()).padStart(2, "0");
   const mm = String(date.getMinutes()).padStart(2, "0");
   return `${y}-${m}-${d} ${hh}:${mm}`;
+}
+
+function formatCharacterCount(value) {
+  return Number(value || 0).toLocaleString("ja-JP");
 }
 
 function resetMeeting() {

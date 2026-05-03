@@ -242,6 +242,14 @@ textarea {
   margin-bottom: 0;
 }
 
+.prompt-context-warning {
+  color: var(--warn);
+}
+
+.prompt-length-info {
+  color: var(--muted);
+}
+
 .answer {
   min-height: 190px;
 }
