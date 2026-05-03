@@ -304,6 +304,27 @@ button.wide {
   margin-top: 8px;
 }
 
+.secondary-panel .quick-card summary {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 650;
+  min-height: 38px;
+}
+
+.compact-card .quick-field {
+  min-height: 72px;
+}
+
+.direct-edit-card {
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  padding-top: 4px;
+}
+
+.direct-edit-card .topic-card {
+  min-height: 160px;
+}
+
 .setup-panel[hidden] {
   display: none;
 }

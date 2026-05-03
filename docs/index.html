@@ -97,8 +97,8 @@
           <option value="deepResearchPrompt">Deep Researchプロンプト作成</option>
         </select>
         <p class="hint">モードを変えると、Step 1〜6の指示文が変わります。会議ログや議題カードは消えません。</p>
-        <details class="quick-card">
-          <summary>手入力で詳しく作る</summary>
+        <details class="quick-card compact-card">
+          <summary>項目フォームで作る（任意）</summary>
           <p class="hint">書けるところだけ入力してください。空欄は「未入力」として議題カード化します。</p>
           <label for="quickTopic">議題</label>
           <textarea id="quickTopic" class="quick-field" placeholder="例）集客について"></textarea>
@@ -123,10 +123,10 @@
           <button id="applyQuickCardButton" class="primary wide" type="button">フォームから議題カードを作る</button>
           <p id="quickCardStatus" class="status" aria-live="polite"></p>
         </details>
-        <details class="quick-card">
-          <summary>詳細テンプレートから始める</summary>
-          <p class="hint">決まった型から始めたい時だけ使います。通常は上の「まずテーマを書く」で十分です。</p>
-          <label for="templateSelect">詳細テンプレート</label>
+        <details class="quick-card compact-card">
+          <summary>型から入れる（任意）</summary>
+          <p class="hint">決まった型から直接入れたい時だけ使います。通常は上の「まずテーマを書く」で十分です。</p>
+          <label for="templateSelect">テンプレート</label>
           <select id="templateSelect">
             <option value="">選択してください</option>
             <option value="general">汎用テンプレ</option>
@@ -134,10 +134,14 @@
             <option value="deepResearch">Deep Research調査テンプレ</option>
           </select>
         </details>
-        <label for="topicCard">AIが作った議題カードを確認・編集</label>
-        <textarea id="topicCard" class="topic-card" placeholder="# 議題&#10;集客について"></textarea>
-        <p class="hint">「欲しくない回答」「判断基準」「回答の粒度」を書くと、一般論に流れにくくなります。</p>
-        <p id="saveStatus" class="status" aria-live="polite"></p>
+        <details class="quick-card direct-edit-card">
+          <summary>議題カードを直接編集する</summary>
+          <p class="hint">貼り付け済み・反映済みのカードを確認、微修正したい時だけ開きます。</p>
+          <label for="topicCard">現在の議題カード</label>
+          <textarea id="topicCard" class="topic-card" placeholder="# 議題&#10;集客について"></textarea>
+          <p class="hint">「欲しくない回答」「判断基準」「回答の粒度」を書くと、一般論に流れにくくなります。</p>
+          <p id="saveStatus" class="status" aria-live="polite"></p>
+        </details>
       </details>
     </section>
 
