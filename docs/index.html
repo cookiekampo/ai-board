@@ -54,43 +54,41 @@
       <p class="hint">完了にすると、右上ボタンが薄く「初期設定済み」と表示されます。後からいつでも開けます。</p>
     </section>
 
-    <section class="panel secondary-panel">
-      <details>
-        <summary>Step 0: 雑なテーマから議題カードを作る</summary>
-        <div class="step-zero">
-          <p class="hint">迷ったらここを使います。雑に書く → AIに貼る → AIの返答を貼る → 議題カードへ反映、の順番です。</p>
-          <label for="roughTopic">1. まず雑に書く</label>
-          <textarea id="roughTopic" class="rough-topic" placeholder="例）集客について&#10;例）LINE相談を増やしたい&#10;例）このAI会議室の改善案を考えたい"></textarea>
-          <p class="hint">ここは完成した議題カードではありません。一言やメモで十分です。</p>
-          <label for="topicPromptText">2. AIに貼る作成プロンプト（自動生成）</label>
-          <textarea id="topicPromptText" class="prompt short" readonly></textarea>
-          <div class="button-grid">
-            <button id="copyTopicPromptButton" class="primary" type="button">2. 作成プロンプトをコピー</button>
-            <button id="shortcutTopicChatGptButton" type="button">iPhone: ChatGPTアプリ</button>
-            <button id="shortcutTopicClaudeButton" type="button">iPhone: Claudeアプリ</button>
-            <button id="shortcutTopicGeminiButton" type="button">iPhone: Geminiアプリ</button>
-            <button id="draftTopicCardButton" type="button">AIを使わず仮カードにする</button>
-          </div>
-          <details class="fallback-actions">
-            <summary>うまく開けない時のWeb版</summary>
-            <div class="button-grid">
-              <button id="openTopicChatGptButton" type="button">Web版ChatGPTを開く</button>
-              <button id="openTopicClaudeButton" type="button">Web版Claudeを開く</button>
-              <button id="openTopicGeminiButton" type="button">Web版Geminiを開く</button>
-            </div>
-          </details>
-          <p id="topicPromptStatus" class="status" aria-live="polite"></p>
-          <label for="generatedTopicCard">3. AIの返答を貼る</label>
-          <textarea id="generatedTopicCard" class="topic-card" placeholder="ChatGPT / Claude / Gemini が作った議題カードをここに貼り付けます"></textarea>
-          <button id="applyGeneratedTopicButton" class="primary wide" type="button">4. 議題カード欄へ反映</button>
-          <p id="generatedTopicStatus" class="status" aria-live="polite"></p>
+    <section class="panel">
+      <h2>まずテーマを書く</h2>
+      <div class="step-zero">
+        <p class="hint">雑な一言でOKです。AIが会議で使いやすい議題カードに整えます。</p>
+        <label for="roughTopic">1. 話したいことを雑に書く</label>
+        <textarea id="roughTopic" class="rough-topic" placeholder="例）集客について&#10;例）LINE相談を増やしたい&#10;例）このAI会議室の改善案を考えたい"></textarea>
+        <p class="hint">長く書かなくて大丈夫です。足りない前提は、AIが「未入力」や「要確認」として整理します。</p>
+        <label for="topicPromptText">2. AIに貼る作成プロンプト（自動生成）</label>
+        <textarea id="topicPromptText" class="prompt short" readonly></textarea>
+        <div class="button-grid">
+          <button id="copyTopicPromptButton" class="primary" type="button">2. 作成プロンプトをコピー</button>
+          <button id="shortcutTopicChatGptButton" type="button">iPhone: ChatGPTアプリ</button>
+          <button id="shortcutTopicClaudeButton" type="button">iPhone: Claudeアプリ</button>
+          <button id="shortcutTopicGeminiButton" type="button">iPhone: Geminiアプリ</button>
+          <button id="draftTopicCardButton" type="button">AIを使わず仮カードにする</button>
         </div>
-      </details>
+        <details class="fallback-actions">
+          <summary>うまく開けない時のWeb版</summary>
+          <div class="button-grid">
+            <button id="openTopicChatGptButton" type="button">Web版ChatGPTを開く</button>
+            <button id="openTopicClaudeButton" type="button">Web版Claudeを開く</button>
+            <button id="openTopicGeminiButton" type="button">Web版Geminiを開く</button>
+          </div>
+        </details>
+        <p id="topicPromptStatus" class="status" aria-live="polite"></p>
+        <label for="generatedTopicCard">3. AIが作った議題カードを貼る</label>
+        <textarea id="generatedTopicCard" class="topic-card" placeholder="ChatGPT / Claude / Gemini が作った議題カードをここに貼り付けます"></textarea>
+        <button id="applyGeneratedTopicButton" class="primary wide" type="button">4. 議題カード欄へ反映</button>
+        <p id="generatedTopicStatus" class="status" aria-live="polite"></p>
+      </div>
     </section>
 
     <section class="panel secondary-panel">
       <details open>
-        <summary>議題カード</summary>
+        <summary>会議設定・議題カードの確認</summary>
         <label for="modeSelect">会議モード</label>
         <select id="modeSelect">
           <option value="basic">basic: 通常の提案・批判・結論</option>
@@ -100,7 +98,7 @@
         </select>
         <p class="hint">モードを変えると、Step 1〜6の指示文が変わります。会議ログや議題カードは消えません。</p>
         <details class="quick-card">
-          <summary>かんたん入力フォーム</summary>
+          <summary>手入力で詳しく作る</summary>
           <p class="hint">書けるところだけ入力してください。空欄は「未入力」として議題カード化します。</p>
           <label for="quickTopic">議題</label>
           <textarea id="quickTopic" class="quick-field" placeholder="例）集客について"></textarea>
@@ -125,14 +123,18 @@
           <button id="applyQuickCardButton" class="primary wide" type="button">フォームから議題カードを作る</button>
           <p id="quickCardStatus" class="status" aria-live="polite"></p>
         </details>
-        <label for="templateSelect">テンプレート</label>
-        <select id="templateSelect">
-          <option value="">選択してください</option>
-          <option value="general">汎用テンプレ</option>
-          <option value="marketing">集客施策テンプレ</option>
-          <option value="deepResearch">Deep Research調査テンプレ</option>
-        </select>
-        <label for="topicCard">議題カード</label>
+        <details class="quick-card">
+          <summary>詳細テンプレートから始める</summary>
+          <p class="hint">決まった型から始めたい時だけ使います。通常は上の「まずテーマを書く」で十分です。</p>
+          <label for="templateSelect">詳細テンプレート</label>
+          <select id="templateSelect">
+            <option value="">選択してください</option>
+            <option value="general">汎用テンプレ</option>
+            <option value="marketing">集客施策テンプレ</option>
+            <option value="deepResearch">Deep Research調査テンプレ</option>
+          </select>
+        </details>
+        <label for="topicCard">AIが作った議題カードを確認・編集</label>
         <textarea id="topicCard" class="topic-card" placeholder="# 議題&#10;集客について"></textarea>
         <p class="hint">「欲しくない回答」「判断基準」「回答の粒度」を書くと、一般論に流れにくくなります。</p>
         <p id="saveStatus" class="status" aria-live="polite"></p>
