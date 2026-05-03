@@ -19,10 +19,14 @@
         <h1>AI会議室</h1>
         <p>APIなしで、AI会議のプロンプト生成とログ保存を補助します。</p>
       </div>
-      <button id="resetButton" class="danger" type="button">新規会議</button>
+      <div class="header-actions">
+        <button id="setupToggleButton" type="button">初期設定</button>
+        <button id="resetButton" class="danger" type="button">新規会議</button>
+      </div>
     </header>
 
-    <section class="panel">
+    <section id="setupPanel" class="panel setup-panel" hidden>
+      <h2>初期設定</h2>
       <details>
         <summary>iPhoneのホーム画面に追加する</summary>
         <p class="hint">Safariでこのページを開き、共有ボタンから「ホーム画面に追加」を選ぶと、アプリのように起動できます。</p>
@@ -33,11 +37,8 @@
         </ol>
         <p class="hint">一度開いた後は、基本ファイルを端末にキャッシュします。通信が弱い時でも画面を開きやすくなります。</p>
       </details>
-    </section>
-
-    <section class="panel">
       <details>
-        <summary>iPhoneアプリで開くための初回設定</summary>
+        <summary>iPhoneアプリで開くためのショートカット設定</summary>
         <p class="hint">「iPhone: ChatGPTアプリ」ボタンは、Appleショートカット経由でアプリを開きます。初回だけ、ショートカットアプリで以下の名前のショートカットを作ってください。</p>
         <ul class="setup-list">
           <li>AI会議 ChatGPT: ChatGPTアプリを開く</li>
@@ -46,6 +47,11 @@
         </ul>
         <p class="hint">ボタンを押すと、プロンプトをコピーしてから対応するショートカットを起動します。自動貼り付け・自動送信はしません。</p>
       </details>
+      <label class="setup-check" for="setupDoneCheckbox">
+        <input id="setupDoneCheckbox" type="checkbox">
+        <span>初期設定は完了した</span>
+      </label>
+      <p class="hint">完了にすると、右上ボタンが薄く「初期設定済み」と表示されます。後からいつでも開けます。</p>
     </section>
 
     <section class="panel">

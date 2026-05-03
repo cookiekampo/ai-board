@@ -451,6 +451,9 @@ const els = {
   shareMarkdownButton: document.getElementById("shareMarkdownButton"),
   downloadMarkdownButton: document.getElementById("downloadMarkdownButton"),
   markdownStatus: document.getElementById("markdownStatus"),
+  setupToggleButton: document.getElementById("setupToggleButton"),
+  setupPanel: document.getElementById("setupPanel"),
+  setupDoneCheckbox: document.getElementById("setupDoneCheckbox"),
   resetButton: document.getElementById("resetButton")
 };
 
@@ -459,9 +462,11 @@ init();
 function init() {
   els.topicCard.value = state.topicCard;
   els.modeSelect.value = state.mode;
+  els.setupDoneCheckbox.checked = state.setupDone;
   fillQuickFields(state.quickFields);
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value);
   bindEvents();
+  renderSetupPanel();
   render();
 }
 
@@ -503,6 +508,8 @@ function bindEvents() {
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.shareMarkdownButton.addEventListener("click", shareMarkdown);
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
+  els.setupToggleButton.addEventListener("click", toggleSetupPanel);
+  els.setupDoneCheckbox.addEventListener("change", changeSetupDone);
   els.resetButton.addEventListener("click", resetMeeting);
 }
 
@@ -629,6 +636,7 @@ function loadState() {
   const fallback = {
     mode: "basic",
     topicCard: templates.general,
+    setupDone: false,
     quickFields: defaultQuickFields(),
     currentStep: 1,
     answers: {},
@@ -642,6 +650,7 @@ function loadState() {
     return {
       mode: modeSteps[parsed.mode] ? parsed.mode : fallback.mode,
       topicCard: typeof parsed.topicCard === "string" ? parsed.topicCard : fallback.topicCard,
+      setupDone: typeof parsed.setupDone === "boolean" ? parsed.setupDone : fallback.setupDone,
       quickFields: normalizeQuickFields(parsed.quickFields),
       currentStep: normalizeStep(parsed.currentStep),
       answers: typeof parsed.answers === "object" && parsed.answers ? parsed.answers : {},
@@ -705,6 +714,25 @@ function persist(message) {
     if (message) setStatus(els.saveStatus, message);
   } catch {
     setStatus(els.saveStatus, "localStorage保存に失敗しました。画面操作は継続できます。", "warn");
+  }
+}
+
+function renderSetupPanel() {
+  els.setupDoneCheckbox.checked = state.setupDone;
+  els.setupToggleButton.textContent = state.setupDone ? "初期設定済み" : "初期設定";
+  els.setupToggleButton.classList.toggle("muted", state.setupDone);
+}
+
+function toggleSetupPanel() {
+  els.setupPanel.hidden = !els.setupPanel.hidden;
+}
+
+function changeSetupDone() {
+  state.setupDone = els.setupDoneCheckbox.checked;
+  persist(state.setupDone ? "初期設定を完了にしました" : "初期設定を未完了に戻しました");
+  renderSetupPanel();
+  if (state.setupDone) {
+    els.setupPanel.hidden = true;
   }
 }
 

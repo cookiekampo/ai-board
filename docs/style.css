@@ -54,6 +54,13 @@ body {
   margin-bottom: 14px;
 }
 
+.header-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 112px;
+}
+
 h1,
 h2,
 p {
@@ -199,6 +206,11 @@ button.danger {
   color: var(--danger);
 }
 
+button.muted {
+  color: var(--muted);
+  opacity: 0.58;
+}
+
 button.wide {
   width: 100%;
   margin-top: 10px;
@@ -282,6 +294,21 @@ button.wide {
 
 .quick-card {
   margin-top: 8px;
+}
+
+.setup-panel[hidden] {
+  display: none;
+}
+
+.setup-check {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.setup-check input {
+  width: auto;
 }
 
 @media (min-width: 720px) {
