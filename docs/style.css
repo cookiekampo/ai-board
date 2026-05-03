@@ -207,6 +207,10 @@ button.wide {
   margin-top: 10px;
 }
 
+.step-actions {
+  margin-top: 14px;
+}
+
 .step-heading {
   display: flex;
   justify-content: space-between;

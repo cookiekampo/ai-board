@@ -194,6 +194,9 @@ const els = {
   stepTitle: document.getElementById("stepTitle"),
   completionBadge: document.getElementById("completionBadge"),
   progressBar: document.getElementById("progressBar"),
+  backStepButton: document.getElementById("backStepButton"),
+  retryStepButton: document.getElementById("retryStepButton"),
+  stepActionStatus: document.getElementById("stepActionStatus"),
   promptText: document.getElementById("promptText"),
   copyPromptButton: document.getElementById("copyPromptButton"),
   openChatGptButton: document.getElementById("openChatGptButton"),
@@ -243,6 +246,8 @@ function bindEvents() {
     persist("保存しました");
     render();
   });
+  els.backStepButton.addEventListener("click", goBackStep);
+  els.retryStepButton.addEventListener("click", retryCurrentStep);
   els.copyPromptButton.addEventListener("click", () => copyText(els.promptText.value, els.promptText, els.copyStatus));
   els.openChatGptButton.addEventListener("click", () => copyAndOpen("chatgpt"));
   els.openClaudeButton.addEventListener("click", () => copyAndOpen("claude"));
@@ -445,11 +450,13 @@ function render() {
   els.stepTitle.textContent = `Step ${state.currentStep}: ${step.role} - ${step.title}`;
   els.completionBadge.textContent = complete ? "会議完了" : "進行中";
   els.progressBar.style.width = `${Math.round((countCompletedAnswers() / TOTAL_STEPS) * 100)}%`;
-  els.promptText.value = complete ? "会議は完了しています。Markdownをコピーまたはダウンロードしてください。" : generatePrompt(state.currentStep, state.topicCard, state.answers, state.steeringNotes);
+  els.promptText.value = generatePrompt(state.currentStep, state.topicCard, state.answers, state.steeringNotes);
   els.answerText.value = state.answers[String(state.currentStep)] || "";
   els.steeringText.value = state.steeringNotes[String(state.currentStep)] || "";
   els.saveAnswerButton.textContent = state.currentStep === TOTAL_STEPS ? "回答を保存して会議完了" : "回答を保存して次へ";
-  els.saveAnswerButton.disabled = complete;
+  els.saveAnswerButton.disabled = false;
+  els.backStepButton.disabled = state.currentStep <= 1;
+  els.retryStepButton.disabled = !hasCurrentStepWork();
   els.logPreview.textContent = buildMeetingLog(state.answers, state.steeringNotes) || "まだ会議ログはありません。";
   els.markdownText.value = generateMarkdown();
 }
@@ -460,6 +467,14 @@ function countCompletedAnswers() {
     if (state.answers[String(i)] && String(state.answers[String(i)]).trim()) count += 1;
   }
   return count;
+}
+
+function hasCurrentStepWork() {
+  const key = String(state.currentStep);
+  return Boolean(
+    (state.answers[key] && String(state.answers[key]).trim()) ||
+    (state.steeringNotes[key] && String(state.steeringNotes[key]).trim())
+  );
 }
 
 function generatePrompt(stepNumber, topicCard, answers, steeringNotes) {
@@ -507,6 +522,38 @@ function buildStepLog(stepNumber, answers, steeringNotes) {
   const note = steeringNotes[String(stepNumber)];
   const noteBlock = note && String(note).trim() ? `\n\n### ユーザーの軌道修正メモ\n${String(note).trim()}` : "";
   return `## Step ${stepNumber}: ${steps[stepNumber - 1].role.split(" / ")[0]} ${steps[stepNumber - 1].title}\n${String(answer).trim()}${noteBlock}`;
+}
+
+function goBackStep() {
+  if (state.currentStep <= 1) {
+    setStatus(els.stepActionStatus, "Step 1より前には戻れません。", "warn");
+    return;
+  }
+  if (!confirm("1つ前のStepへ戻ります。現在のStep番号だけを戻し、保存済み回答は残します。よろしいですか？")) {
+    return;
+  }
+  state.currentStep -= 1;
+  persist();
+  setStatus(els.stepActionStatus, `Step ${state.currentStep}へ戻りました。`);
+  render();
+}
+
+function retryCurrentStep() {
+  const key = String(state.currentStep);
+  if (!hasCurrentStepWork()) {
+    setStatus(els.stepActionStatus, "このStepには削除する回答や軌道修正メモがありません。", "warn");
+    return;
+  }
+  if (!confirm("このStepの回答と軌道修正メモを削除して、同じStepをやり直します。よろしいですか？")) {
+    return;
+  }
+  delete state.answers[key];
+  delete state.steeringNotes[key];
+  els.answerText.value = "";
+  els.steeringText.value = "";
+  persist();
+  setStatus(els.stepActionStatus, `Step ${state.currentStep}をやり直せる状態にしました。`);
+  render();
 }
 
 function saveAnswerAndNext() {
