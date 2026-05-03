@@ -204,6 +204,7 @@ const els = {
   shortcutGeminiButton: document.getElementById("shortcutGeminiButton"),
   copyStatus: document.getElementById("copyStatus"),
   answerText: document.getElementById("answerText"),
+  steeringText: document.getElementById("steeringText"),
   saveAnswerButton: document.getElementById("saveAnswerButton"),
   answerStatus: document.getElementById("answerStatus"),
   logPreview: document.getElementById("logPreview"),
@@ -249,6 +250,7 @@ function bindEvents() {
   els.shortcutChatGptButton.addEventListener("click", () => copyAndRunShortcut("chatgpt"));
   els.shortcutClaudeButton.addEventListener("click", () => copyAndRunShortcut("claude"));
   els.shortcutGeminiButton.addEventListener("click", () => copyAndRunShortcut("gemini"));
+  els.steeringText.addEventListener("input", saveCurrentSteeringNote);
   els.saveAnswerButton.addEventListener("click", saveAnswerAndNext);
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
@@ -379,6 +381,7 @@ function loadState() {
     topicCard: templates.general,
     currentStep: 1,
     answers: {},
+    steeringNotes: {},
     updatedAt: new Date().toISOString()
   };
   try {
@@ -389,6 +392,7 @@ function loadState() {
       topicCard: typeof parsed.topicCard === "string" ? parsed.topicCard : fallback.topicCard,
       currentStep: normalizeStep(parsed.currentStep),
       answers: typeof parsed.answers === "object" && parsed.answers ? parsed.answers : {},
+      steeringNotes: typeof parsed.steeringNotes === "object" && parsed.steeringNotes ? parsed.steeringNotes : {},
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : fallback.updatedAt
     };
   } catch {
@@ -441,11 +445,12 @@ function render() {
   els.stepTitle.textContent = `Step ${state.currentStep}: ${step.role} - ${step.title}`;
   els.completionBadge.textContent = complete ? "会議完了" : "進行中";
   els.progressBar.style.width = `${Math.round((countCompletedAnswers() / TOTAL_STEPS) * 100)}%`;
-  els.promptText.value = complete ? "会議は完了しています。Markdownをコピーまたはダウンロードしてください。" : generatePrompt(state.currentStep, state.topicCard, state.answers);
+  els.promptText.value = complete ? "会議は完了しています。Markdownをコピーまたはダウンロードしてください。" : generatePrompt(state.currentStep, state.topicCard, state.answers, state.steeringNotes);
   els.answerText.value = state.answers[String(state.currentStep)] || "";
+  els.steeringText.value = state.steeringNotes[String(state.currentStep)] || "";
   els.saveAnswerButton.textContent = state.currentStep === TOTAL_STEPS ? "回答を保存して会議完了" : "回答を保存して次へ";
   els.saveAnswerButton.disabled = complete;
-  els.logPreview.textContent = buildMeetingLog(state.answers) || "まだ会議ログはありません。";
+  els.logPreview.textContent = buildMeetingLog(state.answers, state.steeringNotes) || "まだ会議ログはありません。";
   els.markdownText.value = generateMarkdown();
 }
 
@@ -457,9 +462,9 @@ function countCompletedAnswers() {
   return count;
 }
 
-function generatePrompt(stepNumber, topicCard, answers) {
+function generatePrompt(stepNumber, topicCard, answers, steeringNotes) {
   const step = steps[stepNumber - 1];
-  const meetingLog = buildMeetingLogBefore(answers, stepNumber) || "まだ会議ログはありません。";
+  const meetingLog = buildMeetingLogBefore(answers, steeringNotes, stepNumber) || "まだ会議ログはありません。";
   return `あなたはAI会議室の ${step.role}です。
 
 ## 議題カード
@@ -478,26 +483,30 @@ ${step.instruction}
 ${step.note}`;
 }
 
-function buildMeetingLogBefore(answers, stepNumber) {
+function buildMeetingLogBefore(answers, steeringNotes, stepNumber) {
   const parts = [];
   for (let i = 1; i < stepNumber; i += 1) {
-    const answer = answers[String(i)];
-    if (answer && String(answer).trim()) {
-      parts.push(`## Step ${i}: ${steps[i - 1].role.split(" / ")[0]} ${steps[i - 1].title}\n${String(answer).trim()}`);
-    }
+    const stepLog = buildStepLog(i, answers, steeringNotes);
+    if (stepLog) parts.push(stepLog);
   }
   return parts.join("\n\n");
 }
 
-function buildMeetingLog(answers) {
+function buildMeetingLog(answers, steeringNotes) {
   const parts = [];
   for (let i = 1; i <= TOTAL_STEPS; i += 1) {
-    const answer = answers[String(i)];
-    if (answer && String(answer).trim()) {
-      parts.push(`## Step ${i}: ${steps[i - 1].role.split(" / ")[0]} ${steps[i - 1].title}\n${String(answer).trim()}`);
-    }
+    const stepLog = buildStepLog(i, answers, steeringNotes);
+    if (stepLog) parts.push(stepLog);
   }
   return parts.join("\n\n");
+}
+
+function buildStepLog(stepNumber, answers, steeringNotes) {
+  const answer = answers[String(stepNumber)];
+  if (!answer || !String(answer).trim()) return "";
+  const note = steeringNotes[String(stepNumber)];
+  const noteBlock = note && String(note).trim() ? `\n\n### ユーザーの軌道修正メモ\n${String(note).trim()}` : "";
+  return `## Step ${stepNumber}: ${steps[stepNumber - 1].role.split(" / ")[0]} ${steps[stepNumber - 1].title}\n${String(answer).trim()}${noteBlock}`;
 }
 
 function saveAnswerAndNext() {
@@ -507,6 +516,7 @@ function saveAnswerAndNext() {
     return;
   }
   state.answers[String(state.currentStep)] = answer;
+  saveCurrentSteeringNote();
   if (state.currentStep < TOTAL_STEPS) {
     state.currentStep += 1;
     setStatus(els.answerStatus, "回答を保存しました。次Stepのプロンプトを生成しました。");
@@ -515,6 +525,18 @@ function saveAnswerAndNext() {
   }
   persist();
   render();
+}
+
+function saveCurrentSteeringNote() {
+  const key = String(state.currentStep);
+  const note = els.steeringText.value.trim();
+  if (note) {
+    state.steeringNotes[key] = note;
+  } else {
+    delete state.steeringNotes[key];
+  }
+  persist();
+  els.markdownText.value = generateMarkdown();
 }
 
 async function copyAndOpen(service) {
@@ -569,7 +591,7 @@ async function copyText(text, sourceEl, statusEl, showSuccess = true) {
 
 function generateMarkdown() {
   const created = formatDateTime(new Date());
-  const log = buildMeetingLog(state.answers);
+  const log = buildMeetingLog(state.answers, state.steeringNotes);
   const incomplete = isComplete() ? "" : "> この会議ログは途中保存です。最終結論はまだ完了していません。\n\n";
   return `# AI会議ログ
 
@@ -646,7 +668,9 @@ function resetMeeting() {
   state.topicCard = templates.general;
   state.currentStep = 1;
   state.answers = {};
+  state.steeringNotes = {};
   els.topicCard.value = state.topicCard;
+  els.steeringText.value = "";
   persist("新規会議を開始しました");
   render();
 }

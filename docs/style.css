@@ -158,6 +158,10 @@ textarea {
   min-height: 190px;
 }
 
+.steering {
+  min-height: 110px;
+}
+
 .preview {
   min-height: 120px;
   max-height: 360px;

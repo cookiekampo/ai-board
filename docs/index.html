@@ -113,6 +113,9 @@
     <section class="panel">
       <h2>AI回答を貼り戻す</h2>
       <textarea id="answerText" class="answer" placeholder="AIの回答をここに貼り付けます"></textarea>
+      <label for="steeringText">軌道修正メモ（任意）</label>
+      <textarea id="steeringText" class="steering" placeholder="例）もっと具体的に。SNS一般論はいらない。LINE導線中心で考えて。"></textarea>
+      <p class="hint">このStepの回答が少しズレた時に書きます。保存すると、次Stepのプロンプトに自動で入ります。</p>
       <button id="saveAnswerButton" class="primary wide" type="button">回答を保存して次へ</button>
       <p id="answerStatus" class="status" aria-live="polite"></p>
     </section>
