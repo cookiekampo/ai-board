@@ -180,6 +180,12 @@ textarea {
   min-height: 190px;
 }
 
+.review-import-card {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
 .checkbox-group {
   border: 1px solid var(--line);
   border-radius: 8px;

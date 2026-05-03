@@ -946,6 +946,10 @@ const els = {
   deepResearchReviewNotes: document.getElementById("deepResearchReviewNotes"),
   applyDeepResearchReviewFormButton: document.getElementById("applyDeepResearchReviewFormButton"),
   deepResearchReviewFormStatus: document.getElementById("deepResearchReviewFormStatus"),
+  deepResearchReviewImportLog: document.getElementById("deepResearchReviewImportLog"),
+  applyDeepResearchReviewImportButton: document.getElementById("applyDeepResearchReviewImportButton"),
+  clearDeepResearchReviewImportButton: document.getElementById("clearDeepResearchReviewImportButton"),
+  deepResearchReviewImportStatus: document.getElementById("deepResearchReviewImportStatus"),
   generatedTopicCard: document.getElementById("generatedTopicCard"),
   applyGeneratedTopicButton: document.getElementById("applyGeneratedTopicButton"),
   generatedTopicStatus: document.getElementById("generatedTopicStatus"),
@@ -1028,6 +1032,7 @@ function init() {
   els.setupDoneCheckbox.checked = state.setupDone;
   fillQuickFields(state.quickFields);
   fillDeepResearchReviewForm(state.deepResearchReviewForm);
+  if (els.deepResearchReviewImportLog) els.deepResearchReviewImportLog.value = state.deepResearchReviewImportLog || "";
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value, state.mode);
   bindEvents();
   renderSetupPanel();
@@ -1057,6 +1062,15 @@ function bindEvents() {
   });
   if (els.applyDeepResearchReviewFormButton) {
     els.applyDeepResearchReviewFormButton.addEventListener("click", applyDeepResearchReviewFormCard);
+  }
+  if (els.deepResearchReviewImportLog) {
+    els.deepResearchReviewImportLog.addEventListener("input", saveDeepResearchReviewImportLog);
+  }
+  if (els.applyDeepResearchReviewImportButton) {
+    els.applyDeepResearchReviewImportButton.addEventListener("click", applyDeepResearchReviewImportedLog);
+  }
+  if (els.clearDeepResearchReviewImportButton) {
+    els.clearDeepResearchReviewImportButton.addEventListener("click", clearDeepResearchReviewImportedLog);
   }
   els.applyGeneratedTopicButton.addEventListener("click", applyGeneratedTopicCard);
   els.modeSelect.addEventListener("change", changeMode);
@@ -1526,6 +1540,8 @@ function loadState() {
     setupDone: false,
     quickFields: defaultQuickFields(),
     deepResearchReviewForm: defaultDeepResearchReviewForm(),
+    deepResearchReviewImportLog: "",
+    deepResearchReviewImportedFinalAnswer: "",
     currentStep: 1,
     answers: {},
     steeringNotes: {},
@@ -1542,6 +1558,8 @@ function loadState() {
       setupDone: typeof parsed.setupDone === "boolean" ? parsed.setupDone : fallback.setupDone,
       quickFields: normalizeQuickFields(parsed.quickFields),
       deepResearchReviewForm: normalizeDeepResearchReviewForm(parsed.deepResearchReviewForm),
+      deepResearchReviewImportLog: typeof parsed.deepResearchReviewImportLog === "string" ? parsed.deepResearchReviewImportLog : "",
+      deepResearchReviewImportedFinalAnswer: typeof parsed.deepResearchReviewImportedFinalAnswer === "string" ? parsed.deepResearchReviewImportedFinalAnswer : "",
       currentStep: normalizeStep(parsed.currentStep, mode),
       answers: typeof parsed.answers === "object" && parsed.answers ? parsed.answers : {},
       steeringNotes: typeof parsed.steeringNotes === "object" && parsed.steeringNotes ? parsed.steeringNotes : {},
@@ -1660,6 +1678,66 @@ function fillDeepResearchReviewForm(values) {
 function saveDeepResearchReviewForm() {
   state.deepResearchReviewForm = readDeepResearchReviewForm();
   persist();
+}
+
+function saveDeepResearchReviewImportLog() {
+  state.deepResearchReviewImportLog = els.deepResearchReviewImportLog ? els.deepResearchReviewImportLog.value : "";
+  persist();
+}
+
+function extractDeepResearchReviewFinalJudgeAnswer(text) {
+  const source = String(text || "").trim().replace(/\r\n/g, "\n");
+  if (!source) return "";
+  const stepMatch = source.match(/(?:^|\n)##\s*Step\s*8\s*:[^\n]*\n/);
+  if (stepMatch) {
+    const headingStart = stepMatch.index + (stepMatch[0].startsWith("\n") ? 1 : 0);
+    const headingEnd = stepMatch.index + stepMatch[0].length;
+    const rest = source.slice(headingEnd);
+    const nextStepIndex = rest.search(/\n##\s*Step\s+\d+\s*:/);
+    const answer = nextStepIndex >= 0 ? rest.slice(0, nextStepIndex) : rest;
+    return answer
+      .replace(/\n###\s*ユーザーの軌道修正メモ[\s\S]*$/u, "")
+      .trim() || source.slice(headingStart).trim();
+  }
+  if (
+    /(?:^|\n)##\s*採用可否/u.test(source) ||
+    /(?:^|\n)##\s*改訂版成果物/u.test(source) ||
+    /(?:^|\n)##\s*追加Deep Researchプロンプト案/u.test(source)
+  ) {
+    return source;
+  }
+  return "";
+}
+
+function applyDeepResearchReviewImportedLog() {
+  if (!els.deepResearchReviewImportLog) return;
+  const raw = els.deepResearchReviewImportLog.value.trim();
+  if (!raw) {
+    setStatus(els.deepResearchReviewImportStatus, "過去のAI会議ログ、またはStep 8 Final Judgeの回答を貼ってください。", "error");
+    return;
+  }
+  const finalAnswer = extractDeepResearchReviewFinalJudgeAnswer(raw);
+  if (!finalAnswer) {
+    setStatus(els.deepResearchReviewImportStatus, "Step 8 Final Judge、またはFinal Judgeの見出し付き回答を抽出できませんでした。", "error");
+    return;
+  }
+  state.mode = "deepResearchReview";
+  state.deepResearchReviewImportLog = raw;
+  state.deepResearchReviewImportedFinalAnswer = finalAnswer;
+  els.modeSelect.value = state.mode;
+  persist("過去ログからDeep Research reviewの出口カードを作成しました");
+  render();
+  setStatus(els.deepResearchReviewImportStatus, "出口カードを作成しました。下のレビュー完了画面を確認してください。");
+  scrollToElement(els.deepResearchReviewCompletePanel);
+}
+
+function clearDeepResearchReviewImportedLog() {
+  state.deepResearchReviewImportLog = "";
+  state.deepResearchReviewImportedFinalAnswer = "";
+  if (els.deepResearchReviewImportLog) els.deepResearchReviewImportLog.value = "";
+  persist("Deep Research reviewの読み込みをクリアしました");
+  render();
+  setStatus(els.deepResearchReviewImportStatus, "読み込みをクリアしました。");
 }
 
 function hasDeepResearchReviewFormInput(values = readDeepResearchReviewForm()) {
@@ -2072,6 +2150,9 @@ function saveAnswerAndNext() {
     setStatus(els.answerStatus, "AIの回答を貼り戻してから保存してください。", "error");
     return;
   }
+  if (state.mode === "deepResearchReview" && state.deepResearchReviewImportedFinalAnswer) {
+    state.deepResearchReviewImportedFinalAnswer = "";
+  }
   state.answers[String(state.currentStep)] = answer;
   saveCurrentSteeringNote();
   if (state.currentStep < totalSteps) {
@@ -2181,6 +2262,8 @@ async function copyPlainText(text, statusEl, successMessage) {
 }
 
 function getDeepResearchReviewFinalAnswer() {
+  const imported = String(state.deepResearchReviewImportedFinalAnswer || "").trim();
+  if (state.mode === "deepResearchReview" && imported) return imported;
   const finalStep = String(getTotalSteps());
   return String(state.answers[finalStep] || "").trim();
 }
@@ -2243,7 +2326,8 @@ function setReviewCompleteText(el, value) {
 function renderDeepResearchReviewCompletePanel() {
   if (!els.deepResearchReviewCompletePanel) return;
   const finalStep = getSteps()[getTotalSteps() - 1];
-  const canShow = state.mode === "deepResearchReview" && isComplete() && finalStep.role.includes("Final Judge");
+  const hasImportedFinal = Boolean(String(state.deepResearchReviewImportedFinalAnswer || "").trim());
+  const canShow = state.mode === "deepResearchReview" && finalStep.role.includes("Final Judge") && (isComplete() || hasImportedFinal);
   els.deepResearchReviewCompletePanel.hidden = !canShow;
   if (!canShow) {
     [
@@ -2298,9 +2382,12 @@ function startNewDeepResearchReview() {
   state.answers = {};
   state.steeringNotes = {};
   state.deepResearchReviewForm = defaultDeepResearchReviewForm();
+  state.deepResearchReviewImportLog = "";
+  state.deepResearchReviewImportedFinalAnswer = "";
   els.modeSelect.value = state.mode;
   els.topicCard.value = state.topicCard;
   fillDeepResearchReviewForm(state.deepResearchReviewForm);
+  if (els.deepResearchReviewImportLog) els.deepResearchReviewImportLog.value = "";
   updateTopicPrompt();
   persist("新しいDeep Research reviewを開始しました");
   render();
@@ -2479,12 +2566,15 @@ function resetMeeting() {
   state.topicCard = templates.general;
   state.quickFields = defaultQuickFields();
   state.deepResearchReviewForm = defaultDeepResearchReviewForm();
+  state.deepResearchReviewImportLog = "";
+  state.deepResearchReviewImportedFinalAnswer = "";
   state.currentStep = 1;
   state.answers = {};
   state.steeringNotes = {};
   els.modeSelect.value = state.mode;
   fillQuickFields(state.quickFields);
   fillDeepResearchReviewForm(state.deepResearchReviewForm);
+  if (els.deepResearchReviewImportLog) els.deepResearchReviewImportLog.value = "";
   els.topicCard.value = state.topicCard;
   els.steeringText.value = "";
   persist("新規会議を開始しました");
