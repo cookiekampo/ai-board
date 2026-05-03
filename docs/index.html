@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI会議室 静的Web版</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <div>
+        <h1>AI会議室</h1>
+        <p>APIなしで、AI会議のプロンプト生成とログ保存を補助します。</p>
+      </div>
+      <button id="resetButton" class="danger" type="button">新規会議</button>
+    </header>
+
+    <section class="panel">
+      <h2>議題カード</h2>
+      <label for="templateSelect">テンプレート</label>
+      <select id="templateSelect">
+        <option value="">選択してください</option>
+        <option value="general">汎用テンプレ</option>
+        <option value="marketing">集客施策テンプレ</option>
+      </select>
+      <label for="topicCard">議題カード</label>
+      <textarea id="topicCard" class="topic-card" placeholder="# 議題&#10;集客について"></textarea>
+      <p id="saveStatus" class="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel step-panel">
+      <div class="step-heading">
+        <div>
+          <p class="eyebrow">現在のStep</p>
+          <h2 id="stepTitle">Step 1</h2>
+        </div>
+        <span id="completionBadge" class="badge">進行中</span>
+      </div>
+      <div class="progress" aria-label="進行状況">
+        <div id="progressBar"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>次に貼るプロンプト</h2>
+      <textarea id="promptText" class="prompt" readonly></textarea>
+      <div class="button-grid">
+        <button id="copyPromptButton" class="primary" type="button">プロンプトをコピー</button>
+        <button id="openChatGptButton" type="button">コピーしてChatGPTを開く</button>
+        <button id="openClaudeButton" type="button">コピーしてClaudeを開く</button>
+        <button id="openGeminiButton" type="button">コピーしてGeminiを開く</button>
+      </div>
+      <p id="copyStatus" class="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <h2>AI回答を貼り戻す</h2>
+      <textarea id="answerText" class="answer" placeholder="AIの回答をここに貼り付けます"></textarea>
+      <button id="saveAnswerButton" class="primary wide" type="button">回答を保存して次へ</button>
+      <p id="answerStatus" class="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <h2>会議ログプレビュー</h2>
+      <pre id="logPreview" class="preview"></pre>
+    </section>
+
+    <section class="panel">
+      <h2>Markdown</h2>
+      <textarea id="markdownText" class="markdown" readonly></textarea>
+      <div class="button-grid">
+        <button id="copyMarkdownButton" class="primary" type="button">Markdownをコピー</button>
+        <button id="downloadMarkdownButton" type="button">Markdownをダウンロード</button>
+      </div>
+      <p id="markdownStatus" class="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

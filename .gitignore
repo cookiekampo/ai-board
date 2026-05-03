@@ -1,0 +1,6 @@
+.env
+topic.txt
+__pycache__/
+*.py[cod]
+output/
+*.docx

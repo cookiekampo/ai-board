@@ -1,0 +1,36 @@
+{
+  "mode": "basic",
+  "rounds": 2,
+  "models": {
+    "proposer": {
+      "provider": "openai",
+      "model": "gpt-4.1-mini",
+      "temperature": 0.7
+    },
+    "critic": {
+      "provider": "openai",
+      "model": "gpt-4.1-mini",
+      "temperature": 0.3
+    },
+    "judge": {
+      "provider": "openai",
+      "model": "gpt-4.1",
+      "temperature": 0.2
+    }
+  },
+  "limits": {
+    "max_tokens_per_turn": 1200,
+    "max_total_turns": 6,
+    "show_estimated_cost": true
+  },
+  "output": {
+    "format": "markdown",
+    "save_dir": "output",
+    "filename_prefix": "ai_board"
+  },
+  "safety": {
+    "confirm_before_api_call": true,
+    "save_partial_on_error": true,
+    "no_secret_mode": true
+  }
+}
