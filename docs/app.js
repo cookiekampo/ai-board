@@ -853,7 +853,7 @@ function init() {
   els.modeSelect.value = state.mode;
   els.setupDoneCheckbox.checked = state.setupDone;
   fillQuickFields(state.quickFields);
-  els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value);
+  els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value, state.mode);
   bindEvents();
   renderSetupPanel();
   render();
@@ -906,11 +906,18 @@ function bindEvents() {
 }
 
 function updateTopicPrompt() {
-  els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value);
+  els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value, state.mode);
 }
 
-function generateTopicCardPrompt(roughTopic) {
+function generateTopicCardPrompt(roughTopic, mode = state.mode) {
   const topic = roughTopic.trim() || "未入力";
+  if (mode === "deepResearchPrompt") {
+    return generateDeepResearchTopicCardPrompt(topic);
+  }
+  return generateGeneralTopicCardPrompt(topic);
+}
+
+function generateGeneralTopicCardPrompt(topic) {
   return `あなたはAI会議室の事前整理担当です。
 ユーザーの雑なテーマを、AI会議で使いやすい「議題カード」に整理してください。
 
@@ -940,6 +947,45 @@ ${topic}
 - 「欲しくない回答」には、避けたい一般論や不要な方向性を書く
 - 「判断基準」には、採用案を選ぶ基準を書く
 - 「回答の粒度」には、どの程度具体的に答えるべきかを書く
+
+## 出力形式
+議題カードだけを出力してください。
+余計な説明は不要です。`;
+}
+
+function generateDeepResearchTopicCardPrompt(topic) {
+  return `あなたはAI会議室の事前整理担当です。
+ユーザーの雑なテーマを、Deep Researchプロンプト作成モードで使える「議題カード」に整理してください。
+
+## ユーザーの雑テーマ
+${topic}
+
+## 目的
+この議題カードは、Deep Researchに直接投げるものではありません。
+Deep Researchプロンプト作成モードで、最終的なDeep Research用プロンプトを作るための前提整理として使います。
+
+## 作成する議題カード
+以下の見出しで作成してください。
+
+# 調べたいテーマ
+# 背景
+# 最終的に判断したいこと
+# 使う場面
+# 重視する観点
+# 除外したいこと
+# 希望する出力形式
+# Deep Researchで明らかにしたい問い
+# 情報源の条件
+# 未入力・要確認事項
+
+## 作成方針
+- 不明な情報は勝手に断定しない
+- 不明な箇所は「未入力」または「要確認」と書く
+- ユーザーがすぐ編集できるように簡潔に書く
+- 一般論ではなく、Deep Researchプロンプト作成に使いやすい形にする
+- 「最終的に判断したいこと」と「除外したいこと」を特に明確にする
+- 「情報源の条件」には、優先したい情報源や避けたい情報源が不明なら「要確認」と書く
+- Deep Researchにそのまま投げる完成プロンプトではなく、その前段の議題カードとして作る
 
 ## 出力形式
 議題カードだけを出力してください。
@@ -985,7 +1031,55 @@ function draftTopicCardFromRoughTopic() {
   if (els.topicCard.value.trim() && !confirm("現在の議題カードを上書きします。よろしいですか？")) {
     return;
   }
-  const draft = `# 議題
+  const draft = buildDraftTopicCardFromRoughTopic(roughTopic, state.mode);
+  state.topicCard = draft;
+  els.topicCard.value = draft;
+  persist("雑なテーマから仮カードを作成しました");
+  setStatus(els.topicPromptStatus, "仮カードを議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
+  render();
+  scrollToElement(els.promptPanel);
+}
+
+function buildDraftTopicCardFromRoughTopic(roughTopic, mode = state.mode) {
+  if (mode === "deepResearchPrompt") {
+    return `# 調べたいテーマ
+${roughTopic}
+
+# 背景
+未入力
+
+# 最終的に判断したいこと
+要確認
+
+# 使う場面
+要確認
+
+# 重視する観点
+要確認
+
+# 除外したいこと
+要確認
+
+# 希望する出力形式
+要確認
+
+# Deep Researchで明らかにしたい問い
+要確認
+
+# 情報源の条件
+要確認
+
+# 未入力・要確認事項
+- 背景
+- 最終的に判断したいこと
+- 使う場面
+- 重視する観点
+- 除外したいこと
+- Deep Researchで明らかにしたい問い
+- 情報源の条件
+- 希望する出力形式`;
+  }
+  return `# 議題
 ${roughTopic}
 
 # 背景
@@ -1018,12 +1112,6 @@ ${roughTopic}
 
 # 出力形式
 採用案、却下案、主な理由、未解決論点、追加確認事項、次アクション`;
-  state.topicCard = draft;
-  els.topicCard.value = draft;
-  persist("雑なテーマから仮カードを作成しました");
-  setStatus(els.topicPromptStatus, "仮カードを議題カード欄へ反映しました。Step 1のプロンプトへ移動します。");
-  render();
-  scrollToElement(els.promptPanel);
 }
 
 function handleTopicCardPaste() {
@@ -1151,6 +1239,7 @@ function changeMode() {
   state.mode = modeSteps[mode] ? mode : "basic";
   state.currentStep = normalizeStep(state.currentStep, state.mode);
   els.modeSelect.value = state.mode;
+  updateTopicPrompt();
   persist(`会議モードを ${modeLabels[state.mode]} に変更しました`);
   render();
 }
