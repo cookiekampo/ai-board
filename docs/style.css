@@ -162,6 +162,10 @@ textarea {
   min-height: 110px;
 }
 
+.quick-field {
+  min-height: 82px;
+}
+
 .preview {
   min-height: 120px;
   max-height: 360px;
@@ -274,6 +278,10 @@ button.wide {
 
 .step-zero {
   padding-top: 8px;
+}
+
+.quick-card {
+  margin-top: 8px;
 }
 
 @media (min-width: 720px) {

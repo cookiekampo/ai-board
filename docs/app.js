@@ -379,6 +379,19 @@ const shortcutNames = {
   gemini: "AI会議 Gemini"
 };
 
+const quickFieldDefs = [
+  { key: "topic", id: "quickTopic", heading: "# 議題" },
+  { key: "background", id: "quickBackground", heading: "# 背景" },
+  { key: "decision", id: "quickDecision", heading: "# 判断したいこと" },
+  { key: "constraints", id: "quickConstraints", heading: "# 制約" },
+  { key: "resources", id: "quickResources", heading: "# 使える資源" },
+  { key: "avoid", id: "quickAvoid", heading: "# やらないこと" },
+  { key: "unwanted", id: "quickUnwanted", heading: "# 欲しくない回答" },
+  { key: "criteria", id: "quickCriteria", heading: "# 判断基準" },
+  { key: "granularity", id: "quickGranularity", heading: "# 回答の粒度" },
+  { key: "output", id: "quickOutput", heading: "# 出力形式" }
+];
+
 const state = loadState();
 
 const els = {
@@ -397,6 +410,18 @@ const els = {
   applyGeneratedTopicButton: document.getElementById("applyGeneratedTopicButton"),
   generatedTopicStatus: document.getElementById("generatedTopicStatus"),
   modeSelect: document.getElementById("modeSelect"),
+  quickTopic: document.getElementById("quickTopic"),
+  quickBackground: document.getElementById("quickBackground"),
+  quickDecision: document.getElementById("quickDecision"),
+  quickConstraints: document.getElementById("quickConstraints"),
+  quickResources: document.getElementById("quickResources"),
+  quickAvoid: document.getElementById("quickAvoid"),
+  quickUnwanted: document.getElementById("quickUnwanted"),
+  quickCriteria: document.getElementById("quickCriteria"),
+  quickGranularity: document.getElementById("quickGranularity"),
+  quickOutput: document.getElementById("quickOutput"),
+  applyQuickCardButton: document.getElementById("applyQuickCardButton"),
+  quickCardStatus: document.getElementById("quickCardStatus"),
   templateSelect: document.getElementById("templateSelect"),
   topicCard: document.getElementById("topicCard"),
   saveStatus: document.getElementById("saveStatus"),
@@ -434,6 +459,7 @@ init();
 function init() {
   els.topicCard.value = state.topicCard;
   els.modeSelect.value = state.mode;
+  fillQuickFields(state.quickFields);
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value);
   bindEvents();
   render();
@@ -453,6 +479,10 @@ function bindEvents() {
   els.draftTopicCardButton.addEventListener("click", draftTopicCardFromRoughTopic);
   els.applyGeneratedTopicButton.addEventListener("click", applyGeneratedTopicCard);
   els.modeSelect.addEventListener("change", changeMode);
+  quickFieldDefs.forEach((field) => {
+    els[field.id].addEventListener("input", saveQuickFields);
+  });
+  els.applyQuickCardButton.addEventListener("click", applyQuickCard);
   els.templateSelect.addEventListener("change", applyTemplate);
   els.topicCard.addEventListener("input", () => {
     state.topicCard = els.topicCard.value;
@@ -599,6 +629,7 @@ function loadState() {
   const fallback = {
     mode: "basic",
     topicCard: templates.general,
+    quickFields: defaultQuickFields(),
     currentStep: 1,
     answers: {},
     steeringNotes: {},
@@ -611,6 +642,7 @@ function loadState() {
     return {
       mode: modeSteps[parsed.mode] ? parsed.mode : fallback.mode,
       topicCard: typeof parsed.topicCard === "string" ? parsed.topicCard : fallback.topicCard,
+      quickFields: normalizeQuickFields(parsed.quickFields),
       currentStep: normalizeStep(parsed.currentStep),
       answers: typeof parsed.answers === "object" && parsed.answers ? parsed.answers : {},
       steeringNotes: typeof parsed.steeringNotes === "object" && parsed.steeringNotes ? parsed.steeringNotes : {},
@@ -625,6 +657,45 @@ function normalizeStep(step) {
   const n = Number(step);
   if (!Number.isFinite(n)) return 1;
   return Math.min(TOTAL_STEPS, Math.max(1, Math.trunc(n)));
+}
+
+function defaultQuickFields() {
+  return {
+    topic: "",
+    background: "",
+    decision: "",
+    constraints: "",
+    resources: "",
+    avoid: "",
+    unwanted: "",
+    criteria: "",
+    granularity: "",
+    output: "採用案、却下案、主な理由、未解決論点、追加確認事項、次アクション"
+  };
+}
+
+function normalizeQuickFields(value) {
+  const defaults = defaultQuickFields();
+  if (!value || typeof value !== "object") return defaults;
+  quickFieldDefs.forEach((field) => {
+    defaults[field.key] = typeof value[field.key] === "string" ? value[field.key] : defaults[field.key];
+  });
+  return defaults;
+}
+
+function readQuickFields() {
+  const values = {};
+  quickFieldDefs.forEach((field) => {
+    values[field.key] = els[field.id].value;
+  });
+  return values;
+}
+
+function fillQuickFields(values) {
+  const normalized = normalizeQuickFields(values);
+  quickFieldDefs.forEach((field) => {
+    els[field.id].value = normalized[field.key];
+  });
 }
 
 function persist(message) {
@@ -647,6 +718,39 @@ function changeMode() {
   els.modeSelect.value = state.mode;
   persist(`会議モードを ${modeLabels[state.mode]} に変更しました`);
   render();
+}
+
+function saveQuickFields() {
+  state.quickFields = readQuickFields();
+  persist();
+}
+
+function applyQuickCard() {
+  state.quickFields = readQuickFields();
+  if (!state.quickFields.topic.trim()) {
+    setStatus(els.quickCardStatus, "議題だけは入力してください。", "error");
+    persist();
+    return;
+  }
+  if (els.topicCard.value.trim() && !confirm("現在の議題カードをフォームの内容で上書きします。よろしいですか？")) {
+    persist();
+    return;
+  }
+  const topicCard = buildTopicCardFromQuickFields(state.quickFields);
+  state.topicCard = topicCard;
+  els.topicCard.value = topicCard;
+  persist("かんたん入力フォームから議題カードを作成しました");
+  setStatus(els.quickCardStatus, "議題カード欄へ反映しました。必要に応じて詳細編集してください。");
+  render();
+}
+
+function buildTopicCardFromQuickFields(values) {
+  return quickFieldDefs
+    .map((field) => {
+      const value = values[field.key].trim() || "未入力";
+      return `${field.heading}\n${value}`;
+    })
+    .join("\n\n");
 }
 
 function applyTemplate() {
@@ -989,10 +1093,12 @@ function resetMeeting() {
   if (!confirm("現在の会議内容をリセットします。よろしいですか？")) return;
   state.mode = "basic";
   state.topicCard = templates.general;
+  state.quickFields = defaultQuickFields();
   state.currentStep = 1;
   state.answers = {};
   state.steeringNotes = {};
   els.modeSelect.value = state.mode;
+  fillQuickFields(state.quickFields);
   els.topicCard.value = state.topicCard;
   els.steeringText.value = "";
   persist("新規会議を開始しました");
