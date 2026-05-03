@@ -24,18 +24,18 @@
     </filter>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
-  <g fill="none" stroke="#2ff6ff" stroke-width="25" stroke-linejoin="round" stroke-linecap="round" filter="url(#cyanGlow)">
-    <path d="M132 150h126c45 0 74 28 74 70v58c0 41-28 69-69 69h-25v46l-53-46h-53c-42 0-70-28-70-69v-58c0-42 28-70 70-70Z"/>
-    <path d="M766 150h126c42 0 70 28 70 70v58c0 41-28 69-70 69h-53l-53 46v-46h-25c-41 0-69-28-69-69v-58c0-42 29-70 74-70Z"/>
+  <g fill="none" stroke="#2ff6ff" stroke-width="28" stroke-linejoin="round" stroke-linecap="round" filter="url(#cyanGlow)">
+    <path d="M111 151h139c51 0 84 31 84 78v62c0 46-32 77-78 77h-27v50l-58-50h-60c-47 0-78-31-78-77v-62c0-47 31-78 78-78Z"/>
+    <path d="M774 151h139c47 0 78 31 78 78v62c0 46-31 77-78 77h-60l-58 50v-50h-27c-46 0-78-31-78-77v-62c0-47 33-78 84-78Z"/>
   </g>
   <g fill="#2ff6ff" filter="url(#cyanGlow)">
-    <circle cx="147" cy="252" r="15"/>
-    <circle cx="195" cy="252" r="15"/>
-    <circle cx="243" cy="252" r="15"/>
-    <circle cx="781" cy="252" r="15"/>
-    <circle cx="829" cy="252" r="15"/>
-    <circle cx="877" cy="252" r="15"/>
+    <circle cx="125" cy="261" r="16"/>
+    <circle cx="181" cy="261" r="16"/>
+    <circle cx="237" cy="261" r="16"/>
+    <circle cx="787" cy="261" r="16"/>
+    <circle cx="843" cy="261" r="16"/>
+    <circle cx="899" cy="261" r="16"/>
   </g>
-  <text x="512" y="650" text-anchor="middle" font-family="Arial Black, Impact, Arial, Helvetica, sans-serif" font-size="385" font-weight="900" letter-spacing="-22" fill="#ffffff" filter="url(#whiteGlow)">AI</text>
-  <text x="512" y="850" text-anchor="middle" font-family="Hiragino Sans, Yu Gothic, Meiryo, Arial, sans-serif" font-size="150" font-weight="900" letter-spacing="6" fill="#ffffff" filter="url(#whiteGlow)">会議</text>
+  <text x="512" y="670" text-anchor="middle" font-family="Arial Black, Impact, Arial, Helvetica, sans-serif" font-size="430" font-weight="900" letter-spacing="-28" fill="#ffffff" filter="url(#whiteGlow)">AI</text>
+  <text x="512" y="884" text-anchor="middle" font-family="Hiragino Sans, Yu Gothic, Meiryo, Arial, sans-serif" font-size="170" font-weight="900" letter-spacing="8" fill="#ffffff" filter="url(#whiteGlow)">会議</text>
 </svg>
