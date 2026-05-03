@@ -1,11 +1,11 @@
-const CACHE_NAME = "ai-board-static-v0.1.11";
+const CACHE_NAME = "ai-board-static-v0.1.12";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
   "./manifest.json",
-  "./icon.svg"
+  "./icon.png"
 ];
 
 self.addEventListener("install", (event) => {
