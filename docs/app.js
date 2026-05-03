@@ -341,12 +341,20 @@ const modeSteps = {
 - Step 6をSkip可能にするかの初期方針
 - 良い点
 - 改善余地
-- 最初に直すべき箇所`,
+- 最初に直すべき箇所
+
+出力の最後に必ず以下の見出しを置いてください。
+## 成果物更新
+今回のレビュー設計、評価軸、成功条件、最終成果物を簡潔に示してください。
+## Issue / 未解決論点
+この時点で残る懸念、前提不足、判断待ち事項を列挙してください。
+## 次Stepへの引き継ぎ
+Initial Criticが前提にすべき対象種別、評価軸、壊してはいけない要素を明示してください。`,
       note: `Step 6の実行方式はここでは確定せず、初期方針だけにしてください。最終判定はStep 5で行います。`
     },
     {
-      role: "Initial Critic / 元対象の問題点レビュー",
-      title: "元対象の問題点レビュー",
+      role: "Initial Critic / Issue抽出・重要度分類",
+      title: "Issue抽出・重要度分類",
       target: "Claude推奨",
       instruction: `Review Framerが定義したレビュー対象の種類・成功条件・評価軸・レビュー深度に沿って、元対象を批判的にレビューしてください。
 必ず以下を含めてください。
@@ -362,12 +370,20 @@ const modeSteps = {
 レビュー深度の扱い:
 - Light: Critical / Majorのみ簡易列挙
 - Standard: Issue ID、重要度、対応方針を出す
-- Full: Issue ID、重要度、根拠、影響範囲、対応表、未反映理由まで出す`,
+- Full: Issue ID、重要度、根拠、影響範囲、対応表、未反映理由まで出す
+
+出力の最後に必ず以下の見出しを置いてください。
+## 成果物更新
+このStepで作成・更新したIssue一覧と重要度分類を示してください。
+## Issue / 未解決論点
+未解決のCritical / Major / Minor / Optional Issueを分けて整理してください。
+## 次Stepへの引き継ぎ
+Draft Revision Builderが反映すべきIssue、反映しない方がよいIssue、重点修正箇所を明示してください。`,
       note: `単なる好みではなく、後続Stepで追跡できる問題として整理してください。`
     },
     {
-      role: "Draft Revision Builder / 初回改善案・v1修正版作成",
-      title: "初回改善案・v1修正版作成",
+      role: "Draft Revision Builder / v1修正版・Issue対応表作成",
+      title: "v1修正版・Issue対応表作成",
       target: "ChatGPT推奨",
       instruction: `Initial CriticのIssueを踏まえて、完成版ではなくv1修正版を作成してください。
 必ず以下を含めてください。
@@ -386,12 +402,20 @@ const modeSteps = {
 - 仕様レビューなら、v1仕様案を出す
 - プロンプトレビューなら、v1プロンプトを出す
 - アプリ機能レビューなら、実装指示案を出す
-- AI会議モードレビューなら、再設計案とStep別ロール案を出す`,
+- AI会議モードレビューなら、再設計案とStep別ロール案を出す
+
+出力の最後に必ず以下の見出しを置いてください。
+## 成果物更新
+v1修正版とIssue対応表を簡潔に示してください。
+## Issue / 未解決論点
+未反映Issue、後回しにしたIssue、判断待ちIssueを重要度つきで整理してください。
+## 次Stepへの引き継ぎ
+Regression Criticが重点確認すべき副作用、回帰、過剰修正リスクを明示してください。`,
       note: `ここで作るものは最終版ではありません。過剰に磨き込まず、Step 4で検証できる形にしてください。`
     },
     {
-      role: "Regression Critic / 修正版の副作用・回帰レビュー",
-      title: "v1修正版の副作用・回帰レビュー",
+      role: "Regression Critic / 副作用・回帰レビュー",
+      title: "副作用・回帰レビュー",
       target: "Claude推奨",
       instruction: `Draft Revision Builderが作成したv1修正版を、副作用・回帰の観点でレビューしてください。
 必ず以下を含めてください。
@@ -403,12 +427,20 @@ const modeSteps = {
 - 未反映Issueの扱いが妥当か
 - 過剰修正のリスク
 - 実装負荷・運用負荷
-- Step 5で判定すべき論点`,
+- Step 5で判定すべき論点
+
+出力の最後に必ず以下の見出しを置いてください。
+## 成果物更新
+v1修正版の副作用レビュー、回帰レビュー、残存Issueの状態を示してください。
+## Issue / 未解決論点
+Critical / Majorが残っているか、Step 6へ進む前に判断すべき論点を整理してください。
+## 次Stepへの引き継ぎ
+Gate JudgeがProceed / Diff / Skip / Loop back / Stopを判定するための材料を明示してください。`,
       note: `Step 2は元対象の欠陥検出、Step 4はv1修正版の副作用・回帰検出です。同じCriticでも対象が違うことを明確にしてください。`
     },
     {
-      role: "Gate Judge / 最終化可否・差し戻し・Step 6実行判定",
-      title: "最終化可否・差し戻し判定",
+      role: "Gate Judge / 最終化可否・Step 6実行判定",
+      title: "最終化可否・Step 6実行判定",
       target: "ChatGPTまたはClaude推奨",
       instruction: `ここまでのレビューを整理するだけでなく、次にどの経路へ進むかを必ず判定してください。
 必ず以下を含めてください。
@@ -426,12 +458,20 @@ const modeSteps = {
 - Skip Final Builder: Step 3のv1修正版を最終候補としてStep 7へ進む
 - Loop back: Step 3またはStep 4へ戻す
 - Stop: 情報不足や前提不備により最終化しない
-- Human decision required: 人間判断が必要な論点を明示して停止する`,
+- Human decision required: 人間判断が必要な論点を明示して停止する
+
+出力の最後に必ず以下の見出しを置いてください。
+## 成果物更新
+Gate判定、Step 6の実行方式、最終候補の扱いを示してください。
+## Issue / 未解決論点
+最終化を妨げるIssue、人間判断が必要な論点、Stop理由があれば明示してください。
+## 次Stepへの引き継ぎ
+Final BuilderまたはFinal QA Judgeが参照すべき確定方針、反映条件、禁止事項を明示してください。`,
       note: `単なる中間要約ではなく、進む・戻す・止める・人間判断に回す、のどれかを明確にしてください。Loop backは原則1回までです。`
     },
     {
-      role: "Final Builder / 確定方針に基づく最終統合版作成",
-      title: "最終統合版作成",
+      role: "Final Builder / 最終候補作成",
+      title: "最終候補作成",
       target: "ChatGPT推奨",
       instruction: `Gate Judgeの判定に基づき、最終候補を作成してください。
 必ず以下を含めてください。
@@ -456,7 +496,15 @@ const modeSteps = {
 - 新しい論点を勝手に追加しない
 - Step 1の成功条件を落とさない
 - 文章を整えるために仕様条件を削らない
-- 未反映Issueを理由なく放置しない`,
+- 未反映Issueを理由なく放置しない
+
+出力の最後に必ず以下の見出しを置いてください。
+## 成果物更新
+最終候補、v1からの差分、未反映理由を示してください。
+## Issue / 未解決論点
+最終候補に残るIssue、後回しにしたIssue、Final QAで確認すべき論点を整理してください。
+## 次Stepへの引き継ぎ
+Final QA Judgeが検証すべき成功条件、Critical / Major Issueの処理状況、受け入れ条件を明示してください。`,
       note: `Step 5がSkip Final Builderを選んだ場合は、Step 3のv1修正版を最終候補として扱い、無理に書き直さないでください。`
     },
     {
@@ -484,7 +532,13 @@ Pass / Conditional Pass / Fail: Rebuild needed / Fail: Premise issue / Human dec
 ## レビュー品質チェック
 ## 次アクション
 ## 結論の自信度
-## 自信度の理由`,
+## 自信度の理由
+## 成果物更新
+最終候補、QA判定、採用可否、Codex指示・テスト観点の最終状態を示してください。
+## Issue / 未解決論点
+残ったIssue、Conditional Passの条件、Human decision requiredの論点を整理してください。
+## 次Stepへの引き継ぎ
+実装、再レビュー、保留、または人間判断へ渡すべき内容を明示してください。`,
       note: `Step 7は締めのコメントではなく、最終候補のQA工程です。Step 1の成功条件、Critical / Major Issueの処理、最終候補とCodex指示・テスト観点のズレを必ず確認してください。Fail時は戻り先を明示してください。`
     }
   ],
