@@ -1,6 +1,14 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const TOTAL_STEPS = 6;
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {
+      // Offline support is optional; the app still works without registration.
+    });
+  });
+}
+
 const templates = {
   general: `# 議題
 
