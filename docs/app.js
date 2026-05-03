@@ -557,6 +557,7 @@ const els = {
   backStepButton: document.getElementById("backStepButton"),
   retryStepButton: document.getElementById("retryStepButton"),
   stepActionStatus: document.getElementById("stepActionStatus"),
+  promptPanel: document.getElementById("promptPanel"),
   promptText: document.getElementById("promptText"),
   copyPromptButton: document.getElementById("copyPromptButton"),
   openChatGptButton: document.getElementById("openChatGptButton"),
@@ -576,6 +577,7 @@ const els = {
   copyDeepResearchPromptButton: document.getElementById("copyDeepResearchPromptButton"),
   shortcutDeepResearchChatGptButton: document.getElementById("shortcutDeepResearchChatGptButton"),
   deepResearchCopyStatus: document.getElementById("deepResearchCopyStatus"),
+  markdownPanel: document.getElementById("markdownPanel"),
   markdownText: document.getElementById("markdownText"),
   copyMarkdownButton: document.getElementById("copyMarkdownButton"),
   shareMarkdownButton: document.getElementById("shareMarkdownButton"),
@@ -1106,6 +1108,7 @@ function saveAnswerAndNext() {
   }
   persist();
   render();
+  scrollAfterAnswerSave();
 }
 
 function saveCurrentSteeringNote() {
@@ -1118,6 +1121,23 @@ function saveCurrentSteeringNote() {
   }
   persist();
   els.markdownText.value = generateMarkdown();
+}
+
+function scrollAfterAnswerSave() {
+  const target = isComplete()
+    ? (state.mode === "deepResearchPrompt" ? els.deepResearchCopyPanel : els.markdownPanel)
+    : els.promptPanel;
+  scrollToElement(target);
+}
+
+function scrollToElement(el) {
+  if (!el) return;
+  window.requestAnimationFrame(() => {
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  });
 }
 
 async function copyAndOpen(service) {
