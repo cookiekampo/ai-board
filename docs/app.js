@@ -415,6 +415,7 @@ const els = {
   logPreview: document.getElementById("logPreview"),
   markdownText: document.getElementById("markdownText"),
   copyMarkdownButton: document.getElementById("copyMarkdownButton"),
+  shareMarkdownButton: document.getElementById("shareMarkdownButton"),
   downloadMarkdownButton: document.getElementById("downloadMarkdownButton"),
   markdownStatus: document.getElementById("markdownStatus"),
   resetButton: document.getElementById("resetButton")
@@ -462,6 +463,7 @@ function bindEvents() {
   els.steeringText.addEventListener("input", saveCurrentSteeringNote);
   els.saveAnswerButton.addEventListener("click", saveAnswerAndNext);
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
+  els.shareMarkdownButton.addEventListener("click", shareMarkdown);
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
   els.resetButton.addEventListener("click", resetMeeting);
 }
@@ -911,6 +913,27 @@ function downloadMarkdown() {
   link.remove();
   URL.revokeObjectURL(url);
   setStatus(els.markdownStatus, "ダウンロードを開始しました。iPhoneで失敗する場合はMarkdownコピーを使ってください。");
+}
+
+async function shareMarkdown() {
+  const markdown = els.markdownText.value;
+  if (!navigator.share) {
+    setStatus(els.markdownStatus, "この環境では共有できません。Markdownコピーを使ってください。", "warn");
+    return;
+  }
+  try {
+    await navigator.share({
+      title: "AI会議ログ",
+      text: markdown
+    });
+    setStatus(els.markdownStatus, "共有を開きました。");
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      setStatus(els.markdownStatus, "共有をキャンセルしました。", "warn");
+      return;
+    }
+    setStatus(els.markdownStatus, "共有に失敗しました。Markdownコピーを使ってください。", "error");
+  }
 }
 
 function buildFilename() {
