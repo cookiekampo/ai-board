@@ -271,6 +271,21 @@ node scripts/check-golden-cases.mjs --case <caseId>
 fixtureは `test-fixtures/golden-cases/` に置きます。
 fixtureはFinal QA出力の構造確認用であり、医療内容の正しさを保証するものではありません。
 
+### fixture更新方針
+
+Golden Case fixtureは、医療内容の妥当性を保証するためのものではありません。確認対象は、Deep Research設計モードの出口カード、Decision Ledger / Answer Ledger、完成プロンプト構造、マーカー抽出の回帰です。
+
+Final QAの出力仕様を変更した場合は、fixtureも同時に更新してください。特に、出口カードUIで使う以下のマーカーは、対応するGolden Caseの `expectedExitCards` と揃える必要があります。
+
+- `AI_BOARD:DR_PROMPT_COMPLETE`
+- `AI_BOARD:DR_PROMPT_ORDER`
+- `AI_BOARD:DR_PROMPT_ADDITIONAL`
+- `AI_BOARD:DR_PROMPT_DECISION_LEDGER`
+- `AI_BOARD:DR_PROMPT_ANSWER_LEDGER`
+- `AI_BOARD:DR_PROMPT_ASSUMPTIONS`
+
+`販売ページ`、`個人ブログ`、`体験談` などの扱いは、医学的根拠として採用するかどうかではなく、プロンプト内での情報源指定や危険表現レビューの構造が崩れていないかを確認するために使います。
+
 ### 全ケース判定
 
 ```bash

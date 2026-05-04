@@ -57,6 +57,12 @@
 外部公開しない内部資料として扱い、診断、処方判断、服薬変更指示、病名処方は扱わないでください。
 <!-- AI_BOARD:DR_PROMPT_ONE_SHOT:END -->
 
+<!-- AI_BOARD:DR_PROMPT_ORDER:START -->
+1. 初回は安全確認、受診勧奨、問診項目、症状クラスターを中心に調査する。
+2. 必要に応じて、相談員向けの聞き取りテンプレートと専門家への接続フローを追加調査する。
+3. 処方・生薬の深掘りは行わず、医師・薬剤師へ確認する質問に変換する。
+<!-- AI_BOARD:DR_PROMPT_ORDER:END -->
+
 <!-- AI_BOARD:DR_PROMPT_ADDITIONAL:START -->
 ## 追加Deep Research案
 
@@ -66,3 +72,13 @@
 ### 相談実務補強
 問診項目と症状クラスターを相談員が使いやすい形に整理する。
 <!-- AI_BOARD:DR_PROMPT_ADDITIONAL:END -->
+
+<!-- AI_BOARD:DR_PROMPT_ASSUMPTIONS:START -->
+## 未回答の場合の仮置き
+
+- 主読者：漢方相談員
+- 専門度：相談実務者向け
+- 用途：内部学習・相談準備用
+- 初回調査範囲：安全確認、受診勧奨、問診項目、症状クラスター
+- 処方・生薬：深掘りしない
+<!-- AI_BOARD:DR_PROMPT_ASSUMPTIONS:END -->

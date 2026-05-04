@@ -66,9 +66,17 @@
       "完成プロンプト",
       "一発版プロンプト",
       "分割版プロンプト",
+      "推奨する実行順",
       "追加調査案",
       "Decision Ledger",
-      "Answer Ledger"
+      "Answer Ledger",
+      "未回答時の仮置き",
+      "complete prompt",
+      "order",
+      "additional prompts",
+      "decision ledger",
+      "answer ledger",
+      "assumptions"
     ],
     "notes": "漢方医向け内部資料として、初回から処方・生薬・証の概観を含めるケース。"
   },
@@ -112,9 +120,17 @@
     "expectedExitCards": [
       "完成プロンプト",
       "一発版プロンプト",
+      "推奨する実行順",
       "追加調査案",
       "Decision Ledger",
-      "Answer Ledger"
+      "Answer Ledger",
+      "未回答時の仮置き",
+      "complete prompt",
+      "order",
+      "additional prompts",
+      "decision ledger",
+      "answer ledger",
+      "assumptions"
     ],
     "notes": "医師ではない漢方相談員向けに、安全確認・受診勧奨を中心へ寄せるケース。"
   },
@@ -193,7 +209,13 @@
       "Decision Ledger",
       "Answer Ledger",
       "推奨実行順",
-      "未回答時の仮置き"
+      "未回答時の仮置き",
+      "complete prompt",
+      "order",
+      "additional prompts",
+      "decision ledger",
+      "answer ledger",
+      "assumptions"
     ],
     "notes": "初回では方剤候補名を出さず、病名処方やランキングを明示的に禁止するケース。"
   }

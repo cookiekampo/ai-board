@@ -65,6 +65,12 @@
 第3回：症例報告の網羅、エビデンスレビュー、問診票テンプレート化。
 <!-- AI_BOARD:DR_PROMPT_SPLIT:END -->
 
+<!-- AI_BOARD:DR_PROMPT_ORDER:START -->
+1. 初回は医学的基礎、安全確認、問診項目、症状クラスター、証・処方群・生薬・処方意図の概観までを調査する。
+2. 次に方剤別PMDA・添付文書照合を行う。
+3. 最後に症例報告の網羅、エビデンスレビュー、問診票テンプレート化を行う。
+<!-- AI_BOARD:DR_PROMPT_ORDER:END -->
+
 <!-- AI_BOARD:DR_PROMPT_ADDITIONAL:START -->
 ## 追加Deep Research案
 
@@ -77,3 +83,12 @@
 ### 実用性
 問診票テンプレート化を行う。
 <!-- AI_BOARD:DR_PROMPT_ADDITIONAL:END -->
+
+<!-- AI_BOARD:DR_PROMPT_ASSUMPTIONS:START -->
+## 未回答の場合の仮置き
+
+- 主読者：漢方医
+- 専門度：上級者向け
+- 用途：内部学習・相談準備用
+- 初回調査範囲：医学的基礎・安全確認に加え、証・処方群・生薬・処方意図の概観も初回から含める
+<!-- AI_BOARD:DR_PROMPT_ASSUMPTIONS:END -->

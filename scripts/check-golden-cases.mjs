@@ -40,19 +40,25 @@ const headingAliases = {
 const exitCardAliases = {
   完成プロンプト: "completePrompt",
   "Deep Researchに貼る完成プロンプト": "completePrompt",
+  completeprompt: "completePrompt",
   一発版プロンプト: "oneShot",
   分割版プロンプト: "split",
   推奨実行順: "order",
   推奨する実行順: "order",
+  order: "order",
   追加調査案: "additional",
   追加DeepResearchプロンプト案: "additional",
   追加DeepResearch案: "additional",
+  additionalprompts: "additional",
   DecisionLedger: "decisionLedger",
   "Decision Ledger": "decisionLedger",
+  decisionledger: "decisionLedger",
   AnswerLedger: "answerLedger",
   "Answer Ledger": "answerLedger",
+  answerledger: "answerLedger",
   ユーザーへの確認質問: "questions",
   未回答時の仮置き: "assumptions",
+  assumptions: "assumptions",
 };
 
 const defaultSafetyContextPatterns = [
