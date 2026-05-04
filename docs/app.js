@@ -1,6 +1,6 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
-const APP_CACHE_NAME = "ai-board-static-v0.1.62";
+const APP_CACHE_NAME = "ai-board-static-v0.1.63";
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
 if ("serviceWorker" in navigator) {
@@ -1550,6 +1550,74 @@ const deepResearchReviewCompleteSectionLabels = [
   "引き継ぎ"
 ];
 
+const goldenCaseExitCardAliases = {
+  "完成プロンプト": "completePrompt",
+  "Deep Researchに貼る完成プロンプト": "completePrompt",
+  "complete prompt": "completePrompt",
+  "一発版プロンプト": "oneShot",
+  "分割版プロンプト": "split",
+  "推奨する実行順": "order",
+  "推奨実行順": "order",
+  "order": "order",
+  "追加調査案": "additional",
+  "追加Deep Researchプロンプト案": ["additional", "additionalPrompt"],
+  "additional prompts": ["additional", "additionalPrompt"],
+  "ユーザーへの確認質問": "questions",
+  "未回答時の仮置き": "assumptions",
+  "assumptions": "assumptions",
+  "Decision Ledger": "decisionLedger",
+  "decision ledger": "decisionLedger",
+  "Answer Ledger": "answerLedger",
+  "answer ledger": "answerLedger",
+  "医学的基礎プロンプト": "kampoBaseline",
+  "漢方病態・証プロンプト": "kampoPattern",
+  "処方・生薬・症状クラスター整理プロンプト": "kampoFormula",
+  "方剤別安全性・添付文書照合プロンプト": "kampoSafety",
+  "一般ユーザー向け相談前メモ化プロンプト": "kampoPublic",
+  "専門職向け分冊化プロンプト": "kampoProfessional",
+  "採用可否": "adoption",
+  "adoption": "adoption",
+  "採用条件": "adoptionConditions",
+  "adoption conditions": "adoptionConditions",
+  "採用できる内容": "usable",
+  "修正すべき内容": "fixes",
+  "危険な内容": "dangerous",
+  "risk": "dangerous",
+  "情報源レビュー": "sourceReview",
+  "source review": "sourceReview",
+  "主張・根拠対応レビュー": "claimEvidence",
+  "claim evidence review": "claimEvidence",
+  "抜け漏れ": "gaps",
+  "実用性レビュー": "practicality",
+  "改訂版成果物": "artifact",
+  "revised artifact": "artifact",
+  "次アクション": "nextActions",
+  "next action": "nextActions",
+  "結論の自信度": "confidence",
+  "confidence": "confidence",
+  "Issue / 未解決論点": "issues",
+  "issues": "issues",
+  "次Stepへの引き継ぎ": "handoff",
+  "handoff": "handoff",
+  "次調査カード": "handoffCard",
+  "Handoff Card": "handoffCard",
+  "handoff card": "handoffCard"
+};
+
+const goldenCaseDefaultAllowedSafetyContextPatterns = [
+  "禁止",
+  "避ける",
+  "しない",
+  "行わない",
+  "書かない",
+  "除外",
+  "非推奨",
+  "扱わない",
+  "断定しない",
+  "根拠にしない",
+  "含めない"
+];
+
 const goldenCaseFallbacks = [
   {
     id: "drp-kampo-fallback",
@@ -1782,8 +1850,6 @@ const els = {
   stepActions: document.querySelector(".step-actions"),
   deepResearchReviewCompleteGrid: document.querySelector(".review-complete-grid")
 };
-
-init();
 
 function init() {
   els.topicCard.value = state.topicCard;
@@ -4528,12 +4594,30 @@ async function loadGoldenCases(showStatus = false) {
   renderGoldenCaseLoadInfo();
   try {
     const jsonUrl = `./golden-cases.json?reload=${Date.now()}`;
-    const response = await fetchWithTimeout(jsonUrl, { cache: "no-store" }, GOLDEN_CASE_FETCH_TIMEOUT_MS);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const loaded = await response.json();
-    if (!Array.isArray(loaded)) throw new Error("golden-cases.json must be an array");
-    const normalized = loaded.map(normalizeGoldenCaseDefinition).filter((goldenCase) => goldenCase.id);
-    if (!normalized.length) throw new Error("golden-cases.json has no usable cases");
+    let response;
+    try {
+      response = await fetchWithTimeout(jsonUrl, { cache: "no-store" }, GOLDEN_CASE_FETCH_TIMEOUT_MS);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      throw createGoldenCaseLoadError("JSON fetch failed", error);
+    }
+
+    let loaded;
+    try {
+      loaded = await response.json();
+      if (!Array.isArray(loaded)) throw new Error("golden-cases.json must be an array");
+    } catch (error) {
+      throw createGoldenCaseLoadError("JSON parse failed", error);
+    }
+
+    let normalized;
+    try {
+      normalized = loaded.map(normalizeGoldenCaseDefinition).filter((goldenCase) => goldenCase.id);
+      if (!normalized.length) throw new Error("golden-cases.json has no usable cases");
+    } catch (error) {
+      throw createGoldenCaseLoadError("Golden Case normalize failed", error);
+    }
+
     goldenCases = normalized;
     goldenCaseLoadState.loaded = true;
     goldenCaseLoadState.failed = false;
@@ -4548,11 +4632,11 @@ async function loadGoldenCases(showStatus = false) {
     goldenCases = goldenCaseFallbacks.map(normalizeGoldenCaseDefinition);
     goldenCaseLoadState.loaded = false;
     goldenCaseLoadState.failed = true;
-    goldenCaseLoadState.error = error && error.message ? error.message : String(error);
+    goldenCaseLoadState.error = formatGoldenCaseLoadError(error);
     goldenCaseLoadState.source = "fallback";
     populateGoldenCaseSelect();
     renderGoldenCasePanel();
-    setStatus(els.goldenCaseStatus, `Golden Case JSON load failed: ${goldenCaseLoadState.error}`, "warn");
+    setStatus(els.goldenCaseStatus, goldenCaseLoadState.error, "warn");
   }
 }
 
@@ -4588,6 +4672,20 @@ function fetchWithTimeout(resource, options = {}, timeoutMs = 8000) {
   return Promise.race([fetch(resource, fetchOptions), timeout]).finally(() => {
     if (timeoutId !== null) clearTimeout(timeoutId);
   });
+}
+
+function createGoldenCaseLoadError(type, error) {
+  const message = error && error.message ? error.message : String(error);
+  const wrapped = new Error(`${type}: ${message}`);
+  wrapped.goldenCaseLoadType = type;
+  wrapped.originalError = error;
+  return wrapped;
+}
+
+function formatGoldenCaseLoadError(error) {
+  const message = error && error.message ? error.message : String(error);
+  if (error && error.goldenCaseLoadType) return message;
+  return `Golden Case internal error: ${message}`;
 }
 
 function populateGoldenCaseSelect() {
@@ -4836,74 +4934,6 @@ function formatGoldenCaseExitCards(items) {
     .map(([label, value]) => `## ${label}\n${value && String(value).trim() ? String(value).trim() : "未抽出"}`)
     .join("\n\n");
 }
-
-const goldenCaseExitCardAliases = {
-  "完成プロンプト": "completePrompt",
-  "Deep Researchに貼る完成プロンプト": "completePrompt",
-  "complete prompt": "completePrompt",
-  "一発版プロンプト": "oneShot",
-  "分割版プロンプト": "split",
-  "推奨する実行順": "order",
-  "推奨実行順": "order",
-  "order": "order",
-  "追加調査案": "additional",
-  "追加Deep Researchプロンプト案": ["additional", "additionalPrompt"],
-  "additional prompts": ["additional", "additionalPrompt"],
-  "ユーザーへの確認質問": "questions",
-  "未回答時の仮置き": "assumptions",
-  "assumptions": "assumptions",
-  "Decision Ledger": "decisionLedger",
-  "decision ledger": "decisionLedger",
-  "Answer Ledger": "answerLedger",
-  "answer ledger": "answerLedger",
-  "医学的基礎プロンプト": "kampoBaseline",
-  "漢方病態・証プロンプト": "kampoPattern",
-  "処方・生薬・症状クラスター整理プロンプト": "kampoFormula",
-  "方剤別安全性・添付文書照合プロンプト": "kampoSafety",
-  "一般ユーザー向け相談前メモ化プロンプト": "kampoPublic",
-  "専門職向け分冊化プロンプト": "kampoProfessional",
-  "採用可否": "adoption",
-  "adoption": "adoption",
-  "採用条件": "adoptionConditions",
-  "adoption conditions": "adoptionConditions",
-  "採用できる内容": "usable",
-  "修正すべき内容": "fixes",
-  "危険な内容": "dangerous",
-  "risk": "dangerous",
-  "情報源レビュー": "sourceReview",
-  "source review": "sourceReview",
-  "主張・根拠対応レビュー": "claimEvidence",
-  "claim evidence review": "claimEvidence",
-  "抜け漏れ": "gaps",
-  "実用性レビュー": "practicality",
-  "改訂版成果物": "artifact",
-  "revised artifact": "artifact",
-  "次アクション": "nextActions",
-  "next action": "nextActions",
-  "結論の自信度": "confidence",
-  "confidence": "confidence",
-  "Issue / 未解決論点": "issues",
-  "issues": "issues",
-  "次Stepへの引き継ぎ": "handoff",
-  "handoff": "handoff",
-  "次調査カード": "handoffCard",
-  "Handoff Card": "handoffCard",
-  "handoff card": "handoffCard"
-};
-
-const goldenCaseDefaultAllowedSafetyContextPatterns = [
-  "禁止",
-  "避ける",
-  "しない",
-  "行わない",
-  "書かない",
-  "除外",
-  "非推奨",
-  "扱わない",
-  "断定しない",
-  "根拠にしない",
-  "含めない"
-];
 
 function evaluateGoldenCase(goldenCase, actual) {
   const failures = [];
@@ -5513,3 +5543,5 @@ function setStatus(el, message, type = "") {
   el.classList.toggle("error", type === "error");
   el.classList.toggle("warn", type === "warn");
 }
+
+init();
