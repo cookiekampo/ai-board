@@ -433,6 +433,7 @@ function validateGoldenCases(cases) {
     validateArrayField(caseDef, "expectedDecisionLedger", id || prefix, failures, checkedItems);
     validateArrayField(caseDef, "expectedAnswerLedger", id || prefix, failures, checkedItems);
     validateArrayField(caseDef, "expectedPromptIncludes", id || prefix, failures, checkedItems);
+    validateArrayField(caseDef, "expectedHandoffCardIncludes", id || prefix, failures, checkedItems);
     validateArrayField(caseDef, "expectedPromptExcludes", id || prefix, failures, checkedItems);
     validateArrayField(caseDef, "prohibitedRecommendationPatterns", id || prefix, failures, checkedItems);
     validateArrayField(caseDef, "allowedSafetyContextPatterns", id || prefix, failures, checkedItems);
@@ -449,6 +450,7 @@ function validateGoldenCases(cases) {
         "excludes",
         "completePromptIncludes",
         "completePromptExcludes",
+        "handoffCardIncludes",
       ].forEach((field) => {
         if (caseDef.expected[field] !== undefined && !Array.isArray(caseDef.expected[field])) {
           failures.push(`${id || prefix}.expected.${field} must be an array.`);
@@ -533,6 +535,17 @@ function evaluateGoldenCase(caseDef, actualText) {
     checkedItems,
   });
 
+  checkTextExpectations({
+    label: "Handoff Card",
+    fieldName: "handoffCard",
+    expectations: normalizedCase.expectedHandoffCardIncludes,
+    primaryText: actual.parts.handoffCard.text,
+    fallbackText: actualText,
+    failures,
+    warnings,
+    checkedItems,
+  });
+
   checkPromptExcludes({
     expectations: normalizedCase.expectedPromptExcludes,
     actual,
@@ -608,6 +621,11 @@ function normalizeCase(caseDef) {
         || expected.includes
         || expected.completePromptIncludes
         || expected.promptIncludes
+        || [],
+    ),
+    expectedHandoffCardIncludes: asStringArray(
+      caseDef.expectedHandoffCardIncludes
+        || expected.handoffCardIncludes
         || [],
     ),
     expectedPromptExcludes: asStringArray(

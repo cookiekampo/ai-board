@@ -240,6 +240,17 @@
       "handoff",
       "handoff card"
     ],
+    "expectedHandoffCardIncludes": [
+      "線維筋痛症の漢方",
+      "次回Deep Researchの目的",
+      "対象読者",
+      "除外範囲",
+      "安全制約",
+      "優先情報源",
+      "出力形式",
+      "未解決Issue",
+      "仮置き条件"
+    ],
     "notes": "Deep Research reviewモードのFinal Judgeから、ユーザーが使う出口カードを抽出できるか確認するケース。医療内容の正しさではなく、出口カード構造の回帰確認用。"
   }
 ]

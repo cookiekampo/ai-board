@@ -352,6 +352,13 @@ textarea {
   margin-bottom: 0;
 }
 
+.exit-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 button.compact {
   font-size: 13px;
   min-height: 34px;
