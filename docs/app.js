@@ -1161,9 +1161,9 @@ function setupWorkflowLayoutControls() {
   if (els.stepActions && !els.jumpToReviewResultsButton) {
     const jumpButton = document.createElement("button");
     jumpButton.id = "jumpToReviewResultsButton";
-    jumpButton.className = "result-jump-button";
+    jumpButton.className = "result-jump-button primary";
     jumpButton.type = "button";
-    jumpButton.textContent = "成果物へ移動";
+    jumpButton.textContent = "レビュー完了画面へ移動";
     jumpButton.hidden = true;
     jumpButton.addEventListener("click", () => scrollToElement(els.deepResearchReviewCompletePanel));
     els.stepActions.appendChild(jumpButton);
