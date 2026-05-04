@@ -1502,85 +1502,60 @@ const deepResearchReviewCompleteSectionLabels = [
   "引き継ぎ"
 ];
 
-const goldenCases = [
+const goldenCaseFallbacks = [
   {
-    id: "drp-kampo-fibromyalgia-doctor",
-    title: "Golden Case 1: 線維筋痛症の漢方 / 漢方医向け",
+    id: "drp-kampo-fallback",
+    caseId: "drp-kampo-fallback",
+    title: "Fallback Golden Case: Deep Research設計",
     mode: "deepResearchPrompt",
     theme: "線維筋痛症の漢方",
-    steeringNotes: [
-      "1 漢方医",
-      "3 できれば初回から",
-      "1 yes",
-      "2 yes",
-      "3 yes",
-      "専門度 上級者向け",
-      "出力は長めになっても良い",
-      "処方群は広めに拾う",
-      "根拠は初回から"
-    ],
-    expectedDecisionLedger: [
-      "主読者：漢方医",
-      "副読者：薬剤師、漢方相談員、漢方薬局スタッフ、内部研修担当者",
-      "専門度：上級者向け",
-      "用途：内部学習・相談準備用",
-      "外部公開の有無：外部公開しない。患者配布・Web公開・販売促進は除外",
-      "初回調査範囲：医学的基礎・安全確認・受診勧奨・問診項目・症状クラスターに加え、証・処方群・生薬・処方意図も初回から含める",
-      "除外範囲：診断、個別処方判断、服薬変更指示、病名処方、処方ランキング、標準治療否定、販売促進",
-      "深掘りする項目：安全確認、受診勧奨、相談者分類、症状クラスター、問診項目、漢方医学的病態、証、処方群、生薬、処方意図",
-      "後続調査に回す項目：方剤別安全性の詳細、PMDA・添付文書照合、症例報告の網羅、エビデンスレビュー、問診票テンプレート化"
-    ],
+    initialTopic: "線維筋痛症の漢方",
+    steeringNotes: [],
+    steeringMemos: [],
+    expectedDecisionLedger: [],
+    expectedAnswerLedger: [],
+    expectedPromptIncludes: [],
+    expectedPromptExcludes: [],
     expectedExitCards: [
       "完成プロンプト",
-      "一発版プロンプト",
-      "分割版プロンプト",
-      "追加調査案",
       "Decision Ledger",
       "Answer Ledger"
     ],
-    expectedFinalQa: [
-      "古い仮置きの「漢方相談員・薬剤師向け」が主読者として残らない",
-      "最終プロンプトの対象読者が漢方医向けになる",
-      "処方・生薬・証・症状クラスターの概観が初回範囲に含まれる",
-      "方剤別PMDA照合、症例報告網羅、エビデンス評価は後続調査に残る"
-    ]
-  },
-  {
-    id: "drp-kampo-fibromyalgia-counselor",
-    title: "Golden Case 2: 線維筋痛症の漢方相談 / 漢方相談員向け",
-    mode: "deepResearchPrompt",
-    theme: "線維筋痛症の漢方相談",
-    steeringNotes: [
-      "医師ではない漢方相談員向け",
-      "処方や生薬は深掘りしない",
-      "安全確認と受診勧奨を中心にしたい",
-      "外部公開しない"
-    ],
-    expectedDecisionLedger: [
-      "主読者：漢方相談員",
-      "専門度：相談実務者向け",
-      "用途：内部学習・相談準備用",
-      "外部公開の有無：しない",
-      "初回調査範囲：安全確認、受診勧奨、問診項目、症状クラスター",
-      "処方・生薬：深掘りしない",
-      "除外範囲：診断、処方判断、服薬変更指示、病名処方"
-    ],
-    expectedExitCards: [
-      "完成プロンプト",
-      "一発版プロンプト",
-      "追加調査案",
-      "Decision Ledger",
-      "Answer Ledger"
-    ],
-    expectedFinalQa: [
-      "主読者が漢方相談員になる",
-      "処方・生薬を深掘りしない",
-      "安全確認と受診勧奨を中心にする",
-      "外部公開しない"
-    ]
+    notes: "docs/golden-cases.json の読み込みに失敗した場合の最小fallback。"
   }
 ];
 
+let goldenCases = goldenCaseFallbacks.map(normalizeGoldenCaseDefinition);
+const goldenCaseLoadState = {
+  loaded: false,
+  failed: false,
+  error: ""
+};
+
+function normalizeGoldenCaseDefinition(goldenCase) {
+  const id = goldenCase.id || goldenCase.caseId || "";
+  const theme = goldenCase.theme || goldenCase.initialTopic || "";
+  const steeringNotes = goldenCase.steeringNotes || goldenCase.steeringMemos || [];
+  return {
+    ...goldenCase,
+    id,
+    caseId: goldenCase.caseId || id,
+    theme,
+    initialTopic: goldenCase.initialTopic || theme,
+    steeringNotes: Array.isArray(steeringNotes) ? steeringNotes : [],
+    steeringMemos: Array.isArray(goldenCase.steeringMemos) ? goldenCase.steeringMemos : (Array.isArray(steeringNotes) ? steeringNotes : []),
+    expectedDecisionLedger: Array.isArray(goldenCase.expectedDecisionLedger) ? goldenCase.expectedDecisionLedger : [],
+    expectedAnswerLedger: Array.isArray(goldenCase.expectedAnswerLedger) ? goldenCase.expectedAnswerLedger : [],
+    expectedPromptIncludes: Array.isArray(goldenCase.expectedPromptIncludes) ? goldenCase.expectedPromptIncludes : [],
+    expectedPromptExcludes: Array.isArray(goldenCase.expectedPromptExcludes) ? goldenCase.expectedPromptExcludes : [],
+    prohibitedRecommendationPatterns: Array.isArray(goldenCase.prohibitedRecommendationPatterns) ? goldenCase.prohibitedRecommendationPatterns : [],
+    allowedSafetyContextPatterns: Array.isArray(goldenCase.allowedSafetyContextPatterns) ? goldenCase.allowedSafetyContextPatterns : [],
+    expectedExitCards: Array.isArray(goldenCase.expectedExitCards) ? goldenCase.expectedExitCards : [],
+    expectedOrderIncludes: Array.isArray(goldenCase.expectedOrderIncludes) ? goldenCase.expectedOrderIncludes : [],
+    expectedAssumptionsIncludes: Array.isArray(goldenCase.expectedAssumptionsIncludes) ? goldenCase.expectedAssumptionsIncludes : [],
+    expectedFinalQa: Array.isArray(goldenCase.expectedFinalQa) ? goldenCase.expectedFinalQa : []
+  };
+}
 const deepResearchReviewFormDefs = {
   focus: "deepResearchReviewFocus",
   risk: "deepResearchReviewRisk",
@@ -1731,6 +1706,7 @@ const els = {
   loadGoldenCaseTopicButton: document.getElementById("loadGoldenCaseTopicButton"),
   copyGoldenCaseSteeringButton: document.getElementById("copyGoldenCaseSteeringButton"),
   refreshGoldenCaseButton: document.getElementById("refreshGoldenCaseButton"),
+  copyGoldenCaseEvaluationButton: document.getElementById("copyGoldenCaseEvaluationButton"),
   goldenCaseStatus: document.getElementById("goldenCaseStatus"),
   goldenCaseExpectedText: document.getElementById("goldenCaseExpectedText"),
   goldenCaseActualLedgerText: document.getElementById("goldenCaseActualLedgerText"),
@@ -1765,6 +1741,7 @@ function init() {
   if (els.promptContextModeSelect) els.promptContextModeSelect.value = state.promptContextMode || "full";
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value, state.mode);
   populateGoldenCaseSelect();
+  void loadGoldenCases();
   bindEvents();
   setupWorkflowLayoutControls();
   renderSetupPanel();
@@ -1942,6 +1919,9 @@ function bindEvents() {
       renderGoldenCasePanel();
       setStatus(els.goldenCaseStatus, "現在の会議出力からActualを更新しました。");
     });
+  }
+  if (els.copyGoldenCaseEvaluationButton) {
+    els.copyGoldenCaseEvaluationButton.addEventListener("click", copyGoldenCaseEvaluation);
   }
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.shareMarkdownButton.addEventListener("click", shareMarkdown);
@@ -4258,6 +4238,32 @@ async function copyDeepResearchPromptCompletePart(kind) {
   await copyPlainText(payload.text, els.deepResearchCopyStatus, `${payload.label}をコピーしました。`);
 }
 
+async function loadGoldenCases() {
+  if (!els.goldenCasePanel) return;
+  try {
+    const response = await fetch("./golden-cases.json", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const loaded = await response.json();
+    if (!Array.isArray(loaded)) throw new Error("golden-cases.json must be an array");
+    const normalized = loaded.map(normalizeGoldenCaseDefinition).filter((goldenCase) => goldenCase.id);
+    if (!normalized.length) throw new Error("golden-cases.json has no usable cases");
+    goldenCases = normalized;
+    goldenCaseLoadState.loaded = true;
+    goldenCaseLoadState.failed = false;
+    goldenCaseLoadState.error = "";
+    populateGoldenCaseSelect();
+    renderGoldenCasePanel();
+  } catch (error) {
+    goldenCases = goldenCaseFallbacks.map(normalizeGoldenCaseDefinition);
+    goldenCaseLoadState.loaded = false;
+    goldenCaseLoadState.failed = true;
+    goldenCaseLoadState.error = error && error.message ? error.message : String(error);
+    populateGoldenCaseSelect();
+    renderGoldenCasePanel();
+    setStatus(els.goldenCaseStatus, `Golden Case JSON load failed: ${goldenCaseLoadState.error}`, "warn");
+  }
+}
+
 function populateGoldenCaseSelect() {
   if (!els.goldenCaseSelect) return;
   const selected = els.goldenCaseSelect.value || (goldenCases[0] ? goldenCases[0].id : "");
@@ -4294,26 +4300,40 @@ function renderGoldenCasePanel() {
   }
 
   const actual = buildGoldenCaseActual(goldenCase);
+  const evaluation = evaluateGoldenCase(goldenCase, actual);
   setReviewCompleteText(els.goldenCaseExpectedText, formatGoldenCaseExpected(goldenCase));
   setReviewCompleteText(els.goldenCaseActualLedgerText, actual.ledger);
   setReviewCompleteText(els.goldenCaseActualExitCardsText, actual.exitCards);
   setReviewCompleteText(els.goldenCaseFinalQaText, actual.finalQa);
-  setReviewCompleteText(els.goldenCaseCheckText, buildGoldenCaseCheck(goldenCase, actual.combined));
+  setReviewCompleteText(els.goldenCaseCheckText, formatGoldenCaseEvaluation(goldenCase, actual, evaluation));
 }
 
 function formatGoldenCaseExpected(goldenCase) {
+  const answerLedger = goldenCase.expectedAnswerLedger || [];
+  const promptIncludes = goldenCase.expectedPromptIncludes || [];
+  const promptExcludes = goldenCase.expectedPromptExcludes || [];
+  const prohibitedPatterns = goldenCase.prohibitedRecommendationPatterns || [];
+  const expectedFinalQa = goldenCase.expectedFinalQa || [];
   return [
     `# ${goldenCase.title}`,
     "",
-    `## 入力テーマ\n${goldenCase.theme}`,
+    `## 入力テーマ\n${goldenCase.theme || goldenCase.initialTopic || ""}`,
     "",
-    `## 途中の軌道修正\n${goldenCase.steeringNotes.map((note) => `- ${note}`).join("\n")}`,
+    `## 途中の軌道修正\n${(goldenCase.steeringNotes || []).map((note) => `- ${note}`).join("\n")}`,
     "",
-    `## 期待Decision Ledger\n${goldenCase.expectedDecisionLedger.map((item) => `- ${item}`).join("\n")}`,
+    `## 期待Decision Ledger\n${(goldenCase.expectedDecisionLedger || []).map((item) => `- ${item}`).join("\n")}`,
+    "",
+    `## 期待Answer Ledger\n${answerLedger.length ? answerLedger.map((item) => `- ${item}`).join("\n") : "- 未設定"}`,
     "",
     `## 期待出口カード\n${goldenCase.expectedExitCards.map((item) => `- ${item}`).join("\n")}`,
     "",
-    `## 期待Final QA\n${goldenCase.expectedFinalQa.map((item) => `- ${item}`).join("\n")}`
+    `## 完成プロンプトに含むべき文言\n${promptIncludes.length ? promptIncludes.map((item) => `- ${item}`).join("\n") : "- 未設定"}`,
+    "",
+    `## 完成プロンプトに含めない文言\n${promptExcludes.length ? promptExcludes.map((item) => `- ${item}`).join("\n") : "- 未設定"}`,
+    "",
+    `## 推奨・断定として出ていたらNG\n${prohibitedPatterns.length ? prohibitedPatterns.map((item) => `- ${item}`).join("\n") : "- 未設定"}`,
+    "",
+    `## 期待Final QA\n${expectedFinalQa.length ? expectedFinalQa.map((item) => `- ${item}`).join("\n") : "- 未設定"}`
   ].join("\n");
 }
 
@@ -4321,76 +4341,132 @@ function buildGoldenCaseActual(goldenCase) {
   if (state.mode !== goldenCase.mode) {
     const message = `対象モード: ${modeLabels[goldenCase.mode] || goldenCase.mode}\n現在のモード: ${modeLabels[state.mode] || state.mode}\n\nこのGolden Caseを確認するには「入力テーマをセット」で対象モードに切り替えてください。`;
     return {
+      modeMismatch: true,
       ledger: message,
       exitCards: message,
       finalQa: message,
-      combined: message
+      combined: message,
+      decisionLedger: "",
+      answerLedger: "",
+      completePrompt: "",
+      exitCardValues: {}
     };
   }
 
   if (goldenCase.mode === "deepResearchPrompt") {
     const parts = buildDeepResearchPromptCompleteParts();
+    const exitCardValues = {
+      completePrompt: parts.completePrompt,
+      oneShot: parts.oneShot,
+      split: parts.split,
+      order: parts.order,
+      additional: parts.additional,
+      questions: parts.questions,
+      assumptions: parts.assumptions,
+      decisionLedger: parts.decisionLedger,
+      answerLedger: parts.answerLedger,
+      kampoBaseline: parts.kampoBaseline,
+      kampoPattern: parts.kampoPattern,
+      kampoFormula: parts.kampoFormula,
+      kampoSafety: parts.kampoSafety,
+      kampoPublic: parts.kampoPublic,
+      kampoProfessional: parts.kampoProfessional
+    };
     const ledger = [
       parts.decisionLedger ? `## Decision Ledger\n${parts.decisionLedger}` : "## Decision Ledger\n未抽出",
       parts.answerLedger ? `## Answer Ledger\n${parts.answerLedger}` : "## Answer Ledger\n未抽出"
     ].join("\n\n");
     const exitCards = formatGoldenCaseExitCards([
-      ["完成プロンプト", parts.completePrompt],
-      ["一発版プロンプト", parts.oneShot],
-      ["分割版プロンプト", parts.split],
-      ["推奨する実行順", parts.order],
-      ["追加調査案", parts.additional],
-      ["ユーザーへの確認質問", parts.questions],
-      ["未回答時の仮置き", parts.assumptions],
-      ["Decision Ledger", parts.decisionLedger],
-      ["Answer Ledger", parts.answerLedger],
-      ["医学的基礎プロンプト", parts.kampoBaseline],
-      ["漢方病態・証プロンプト", parts.kampoPattern],
-      ["処方・生薬・症状クラスター整理プロンプト", parts.kampoFormula],
-      ["方剤別安全性・添付文書照合プロンプト", parts.kampoSafety],
-      ["一般ユーザー向け相談前メモ化プロンプト", parts.kampoPublic],
-      ["専門職向け分冊化プロンプト", parts.kampoProfessional]
+      ["完成プロンプト", exitCardValues.completePrompt],
+      ["一発版プロンプト", exitCardValues.oneShot],
+      ["分割版プロンプト", exitCardValues.split],
+      ["推奨する実行順", exitCardValues.order],
+      ["追加調査案", exitCardValues.additional],
+      ["ユーザーへの確認質問", exitCardValues.questions],
+      ["未回答時の仮置き", exitCardValues.assumptions],
+      ["Decision Ledger", exitCardValues.decisionLedger],
+      ["Answer Ledger", exitCardValues.answerLedger],
+      ["医学的基礎プロンプト", exitCardValues.kampoBaseline],
+      ["漢方病態・証プロンプト", exitCardValues.kampoPattern],
+      ["処方・生薬・症状クラスター整理プロンプト", exitCardValues.kampoFormula],
+      ["方剤別安全性・添付文書照合プロンプト", exitCardValues.kampoSafety],
+      ["一般ユーザー向け相談前メモ化プロンプト", exitCardValues.kampoPublic],
+      ["専門職向け分冊化プロンプト", exitCardValues.kampoProfessional]
     ]);
     const finalQa = extractMarkdownSubsection(parts.full, ["矛盾検出", "Final QA", "最終確認"]) || "未抽出";
     return {
       ledger,
       exitCards,
       finalQa,
-      combined: [ledger, exitCards, finalQa].join("\n\n")
+      combined: [ledger, exitCards, finalQa].join("\n\n"),
+      decisionLedger: parts.decisionLedger || "",
+      answerLedger: parts.answerLedger || "",
+      completePrompt: parts.completePrompt || parts.oneShot || parts.full || "",
+      exitCardValues
     };
   }
 
   if (goldenCase.mode === "deepResearchReview") {
     const parts = buildDeepResearchReviewCompleteParts();
+    const exitCardValues = {
+      adoption: parts.adoption,
+      adoptionConditions: parts.adoptionConditions,
+      usable: parts.usable,
+      fixes: parts.fixes,
+      dangerous: parts.dangerous,
+      sourceReview: parts.sourceReview,
+      claimEvidence: parts.claimEvidence,
+      gaps: parts.gaps,
+      practicality: parts.practicality,
+      artifact: parts.artifact,
+      additionalPrompt: parts.additionalPrompt,
+      nextActions: parts.nextActions,
+      confidence: parts.confidence,
+      issues: parts.issues,
+      handoff: parts.handoff
+    };
     const ledger = "Deep Research reviewにはDecision Ledger / Answer Ledgerはありません。Final Judge出口カードを確認してください。";
     const exitCards = formatGoldenCaseExitCards([
-      ["採用可否", parts.adoption],
-      ["採用条件", parts.adoptionConditions],
-      ["採用できる内容", parts.usable],
-      ["修正すべき内容", parts.fixes],
-      ["危険な内容", parts.dangerous],
-      ["情報源レビュー", parts.sourceReview],
-      ["主張・根拠対応レビュー", parts.claimEvidence],
-      ["抜け漏れ", parts.gaps],
-      ["実用性レビュー", parts.practicality],
-      ["改訂版成果物", parts.artifact],
-      ["追加Deep Researchプロンプト案", parts.additionalPrompt],
-      ["次アクション", parts.nextActions],
-      ["結論の自信度", parts.confidence],
-      ["Issue / 未解決論点", parts.issues],
-      ["次Stepへの引き継ぎ", parts.handoff]
+      ["採用可否", exitCardValues.adoption],
+      ["採用条件", exitCardValues.adoptionConditions],
+      ["採用できる内容", exitCardValues.usable],
+      ["修正すべき内容", exitCardValues.fixes],
+      ["危険な内容", exitCardValues.dangerous],
+      ["情報源レビュー", exitCardValues.sourceReview],
+      ["主張・根拠対応レビュー", exitCardValues.claimEvidence],
+      ["抜け漏れ", exitCardValues.gaps],
+      ["実用性レビュー", exitCardValues.practicality],
+      ["改訂版成果物", exitCardValues.artifact],
+      ["追加Deep Researchプロンプト案", exitCardValues.additionalPrompt],
+      ["次アクション", exitCardValues.nextActions],
+      ["結論の自信度", exitCardValues.confidence],
+      ["Issue / 未解決論点", exitCardValues.issues],
+      ["次Stepへの引き継ぎ", exitCardValues.handoff]
     ]);
     const finalQa = parts.handoff || parts.full || "未抽出";
     return {
       ledger,
       exitCards,
       finalQa,
-      combined: [ledger, exitCards, finalQa].join("\n\n")
+      combined: [ledger, exitCards, finalQa].join("\n\n"),
+      decisionLedger: "",
+      answerLedger: "",
+      completePrompt: parts.artifact || parts.full || "",
+      exitCardValues
     };
   }
 
   const fallback = "このGolden CaseのActual抽出は未対応です。";
-  return { ledger: fallback, exitCards: fallback, finalQa: fallback, combined: fallback };
+  return {
+    ledger: fallback,
+    exitCards: fallback,
+    finalQa: fallback,
+    combined: fallback,
+    decisionLedger: "",
+    answerLedger: "",
+    completePrompt: "",
+    exitCardValues: {}
+  };
 }
 
 function formatGoldenCaseExitCards(items) {
@@ -4399,11 +4475,358 @@ function formatGoldenCaseExitCards(items) {
     .join("\n\n");
 }
 
+const goldenCaseExitCardAliases = {
+  "完成プロンプト": "completePrompt",
+  "Deep Researchに貼る完成プロンプト": "completePrompt",
+  "一発版プロンプト": "oneShot",
+  "分割版プロンプト": "split",
+  "推奨する実行順": "order",
+  "推奨実行順": "order",
+  "追加調査案": "additional",
+  "追加Deep Researchプロンプト案": "additionalPrompt",
+  "ユーザーへの確認質問": "questions",
+  "未回答時の仮置き": "assumptions",
+  "Decision Ledger": "decisionLedger",
+  "Answer Ledger": "answerLedger",
+  "医学的基礎プロンプト": "kampoBaseline",
+  "漢方病態・証プロンプト": "kampoPattern",
+  "処方・生薬・症状クラスター整理プロンプト": "kampoFormula",
+  "方剤別安全性・添付文書照合プロンプト": "kampoSafety",
+  "一般ユーザー向け相談前メモ化プロンプト": "kampoPublic",
+  "専門職向け分冊化プロンプト": "kampoProfessional",
+  "採用可否": "adoption",
+  "採用条件": "adoptionConditions",
+  "採用できる内容": "usable",
+  "修正すべき内容": "fixes",
+  "危険な内容": "dangerous",
+  "情報源レビュー": "sourceReview",
+  "主張・根拠対応レビュー": "claimEvidence",
+  "抜け漏れ": "gaps",
+  "実用性レビュー": "practicality",
+  "改訂版成果物": "artifact",
+  "次アクション": "nextActions",
+  "結論の自信度": "confidence",
+  "Issue / 未解決論点": "issues",
+  "次Stepへの引き継ぎ": "handoff"
+};
+
+const goldenCaseDefaultAllowedSafetyContextPatterns = [
+  "禁止",
+  "避ける",
+  "しない",
+  "行わない",
+  "書かない",
+  "除外",
+  "非推奨",
+  "扱わない",
+  "断定しない",
+  "根拠にしない",
+  "含めない"
+];
+
+function evaluateGoldenCase(goldenCase, actual) {
+  const failures = [];
+  const warnings = [];
+  const checkedItems = [];
+  const actualDecisionLedger = actual.decisionLedger || actual.ledger || "";
+  const actualAnswerLedger = actual.answerLedger || actual.ledger || "";
+  const actualCompletePrompt = actual.completePrompt || actual.exitCardValues?.completePrompt || actual.combined || "";
+  const actualCombined = actual.combined || "";
+
+  if (actual.modeMismatch) {
+    warnings.push("対象モードと現在のモードが違うため、Actualは未評価です。");
+  }
+
+  checkGoldenCaseExpectations({
+    label: "Decision Ledger",
+    expectations: goldenCase.expectedDecisionLedger || [],
+    actualText: actualDecisionLedger,
+    fallbackText: actualCombined,
+    failures,
+    warnings,
+    checkedItems
+  });
+
+  checkGoldenCaseExpectations({
+    label: "Answer Ledger",
+    expectations: goldenCase.expectedAnswerLedger || [],
+    actualText: actualAnswerLedger,
+    fallbackText: [actualDecisionLedger, actualCompletePrompt].join("\n\n"),
+    failures,
+    warnings,
+    checkedItems,
+    fallbackAsWarning: true
+  });
+
+  checkGoldenCaseExpectations({
+    label: "完成プロンプト必須文言",
+    expectations: goldenCase.expectedPromptIncludes || [],
+    actualText: actualCompletePrompt,
+    fallbackText: actualCombined,
+    failures,
+    warnings,
+    checkedItems
+  });
+
+  checkGoldenCaseExpectations({
+    label: "推奨実行順",
+    expectations: goldenCase.expectedOrderIncludes || [],
+    actualText: actual.exitCardValues?.order || "",
+    fallbackText: actualCompletePrompt,
+    failures,
+    warnings,
+    checkedItems,
+    fallbackAsWarning: true
+  });
+
+  checkGoldenCaseExpectations({
+    label: "未回答時の仮置き",
+    expectations: goldenCase.expectedAssumptionsIncludes || [],
+    actualText: actual.exitCardValues?.assumptions || "",
+    fallbackText: actualCompletePrompt,
+    failures,
+    warnings,
+    checkedItems,
+    fallbackAsWarning: true
+  });
+
+  checkGoldenCaseExitCards(goldenCase, actual, failures, warnings, checkedItems);
+  checkGoldenCaseForbiddenPatterns(goldenCase, actualCompletePrompt, failures, warnings, checkedItems);
+
+  checkGoldenCaseExpectations({
+    label: "Final QA",
+    expectations: goldenCase.expectedFinalQa || [],
+    actualText: actual.finalQa || "",
+    fallbackText: actualCombined,
+    failures,
+    warnings,
+    checkedItems,
+    fallbackAsWarning: true
+  });
+
+  return {
+    pass: failures.length === 0,
+    failures,
+    warnings,
+    checkedItems,
+    summary: `Overall: ${failures.length ? "Fail" : "Pass"} / failures ${failures.length} / warnings ${warnings.length} / checked ${checkedItems.length}`
+  };
+}
+
+function checkGoldenCaseExpectations({ label, expectations, actualText, fallbackText, failures, warnings, checkedItems, fallbackAsWarning = false }) {
+  if (!expectations.length) return;
+  expectations.forEach((expectation) => {
+    const foundInPrimary = goldenCaseTextMatchesExpectation(actualText, expectation);
+    const foundInFallback = !foundInPrimary && fallbackText && goldenCaseTextMatchesExpectation(fallbackText, expectation);
+    const ok = foundInPrimary || foundInFallback;
+    checkedItems.push(`${ok ? "OK" : "Fail"} - ${label}: ${expectation}`);
+    if (!ok) {
+      failures.push(`欠落: ${label} / ${expectation}`);
+    } else if (!foundInPrimary && foundInFallback && fallbackAsWarning) {
+      warnings.push(`${label}の専用欄では未検出だが、関連出力内で検出: ${expectation}`);
+    }
+  });
+}
+
+function checkGoldenCaseExitCards(goldenCase, actual, failures, warnings, checkedItems) {
+  const expectedExitCards = goldenCase.expectedExitCards || [];
+  expectedExitCards.forEach((label) => {
+    const value = getGoldenCaseExitCardValue(actual, label);
+    const ok = Boolean(value && value.trim() && value.trim() !== "未抽出");
+    checkedItems.push(`${ok ? "OK" : "Fail"} - 出口カード: ${label}`);
+    if (!ok) failures.push(`出口カード未抽出: ${label}`);
+  });
+}
+
+function getGoldenCaseExitCardValue(actual, label) {
+  const key = goldenCaseExitCardAliases[label] || label;
+  return String(actual.exitCardValues?.[key] || "");
+}
+
+function checkGoldenCaseForbiddenPatterns(goldenCase, actualText, failures, warnings, checkedItems) {
+  const safetyPatterns = [
+    ...goldenCaseDefaultAllowedSafetyContextPatterns,
+    ...(goldenCase.allowedSafetyContextPatterns || [])
+  ];
+  const legacyExcludes = goldenCase.expectedPromptExcludes || [];
+  legacyExcludes.forEach((phrase) => {
+    const matches = findGoldenCaseUnsafeLiteralMatches(actualText, phrase, safetyPatterns);
+    const ok = matches.length === 0;
+    checkedItems.push(`${ok ? "OK" : "Fail"} - 禁止文言: ${phrase}`);
+    matches.forEach((context) => failures.push(`禁止文言を安全文脈外で検出: ${phrase}\n  近傍: ${context}`));
+  });
+
+  const patterns = goldenCase.prohibitedRecommendationPatterns || [];
+  patterns.forEach((pattern) => {
+    const matches = findGoldenCaseUnsafeRegexMatches(actualText, pattern, safetyPatterns);
+    const ok = matches.length === 0;
+    checkedItems.push(`${ok ? "OK" : "Fail"} - 推奨・断定NGパターン: ${pattern}`);
+    matches.forEach((context) => failures.push(`推奨・断定NGパターンを安全文脈外で検出: ${pattern}\n  近傍: ${context}`));
+  });
+
+  if (!legacyExcludes.length && !patterns.length) {
+    warnings.push("禁止文言・推奨断定パターンは未設定です。");
+  }
+}
+
+function findGoldenCaseUnsafeLiteralMatches(text, phrase, safetyPatterns) {
+  const source = String(text || "");
+  const candidates = buildGoldenCaseNeedles(phrase).map(String).filter(Boolean);
+  if (!candidates.length) return [];
+  return candidates.flatMap((candidate) => {
+    const matches = [];
+    let index = source.indexOf(candidate);
+    while (index >= 0) {
+      const context = getGoldenCaseContext(source, index, candidate.length);
+      if (!goldenCaseContextIsSafe(context, safetyPatterns)) matches.push(context);
+      index = source.indexOf(candidate, index + Math.max(candidate.length, 1));
+    }
+    return matches;
+  });
+}
+
+function findGoldenCaseUnsafeRegexMatches(text, pattern, safetyPatterns) {
+  const source = String(text || "");
+  if (!source.trim()) return [];
+  let regex;
+  try {
+    regex = new RegExp(pattern, "giu");
+  } catch (error) {
+    return [`正規表現エラー: ${pattern} (${error.message})`];
+  }
+  const unsafe = [];
+  let match;
+  while ((match = regex.exec(source)) !== null) {
+    const context = getGoldenCaseContext(source, match.index, match[0].length);
+    if (!goldenCaseContextIsSafe(context, safetyPatterns)) unsafe.push(context);
+    if (!match[0]) regex.lastIndex += 1;
+  }
+  return unsafe;
+}
+
+function getGoldenCaseContext(text, index, length) {
+  const source = String(text || "");
+  const start = Math.max(0, index - 60);
+  const end = Math.min(source.length, index + length + 60);
+  return source.slice(start, end).replace(/\s+/g, " ").trim();
+}
+
+function goldenCaseContextIsSafe(context, safetyPatterns) {
+  return safetyPatterns.some((pattern) => {
+    try {
+      return new RegExp(pattern, "iu").test(context);
+    } catch (_) {
+      return String(context || "").includes(String(pattern));
+    }
+  });
+}
+
+function goldenCaseTextMatchesExpectation(text, expectation) {
+  const normalizedText = normalizeGoldenCaseText(text);
+  const candidates = buildGoldenCaseNeedles(expectation).map(normalizeGoldenCaseText).filter(Boolean);
+  return candidates.some((needle) => normalizedText.includes(needle));
+}
+
+function formatGoldenCaseEvaluation(goldenCase, actual, evaluation, options = {}) {
+  const caseId = goldenCase.caseId || goldenCase.id || "";
+  const lines = [
+    "# Golden Case自動判定",
+    "",
+    `caseId: ${caseId}`,
+    `title: ${goldenCase.title}`,
+    `Overall: ${evaluation.pass ? "Pass" : "Fail"}`,
+    `failures: ${evaluation.failures.length}`,
+    `warnings: ${evaluation.warnings.length}`,
+    `checkedItems: ${evaluation.checkedItems.length}`,
+    "",
+    "## Failures",
+    evaluation.failures.length ? evaluation.failures.map((item) => `- ${item}`).join("\n") : "- なし",
+    "",
+    "## Warnings",
+    evaluation.warnings.length ? evaluation.warnings.map((item) => `- ${item}`).join("\n") : "- なし",
+    "",
+    "## Checked Items",
+    evaluation.checkedItems.length ? evaluation.checkedItems.map((item) => `- ${item}`).join("\n") : "- なし",
+    "",
+    "## Expected vs Actual",
+    `- Decision Ledger期待: ${(goldenCase.expectedDecisionLedger || []).length}件 / Actual文字数: ${String(actual.decisionLedger || "").length}`,
+    `- Answer Ledger期待: ${(goldenCase.expectedAnswerLedger || []).length}件 / Actual文字数: ${String(actual.answerLedger || "").length}`,
+    `- 完成プロンプト必須文言: ${(goldenCase.expectedPromptIncludes || []).length}件 / Actual文字数: ${String(actual.completePrompt || "").length}`
+  ];
+
+  if (options.includeActual) {
+    lines.push(
+      "",
+      "## Actual Decision Ledger",
+      actual.decisionLedger || actual.ledger || "未抽出",
+      "",
+      "## Actual Answer Ledger",
+      actual.answerLedger || actual.ledger || "未抽出"
+    );
+  }
+
+  return lines.join("\n");
+}
+
 function buildGoldenCaseCheck(goldenCase, actualText) {
+  const positiveGroups = [
+    ["Decision Ledger", goldenCase.expectedDecisionLedger || []],
+    ["Answer Ledger", goldenCase.expectedAnswerLedger || []],
+    ["出口カード", goldenCase.expectedExitCards || []],
+    ["完成プロンプト必須文言", goldenCase.expectedPromptIncludes || []],
+    ["Final QA", goldenCase.expectedFinalQa || []]
+  ];
+  const normalizedActual = normalizeGoldenCaseText(actualText);
+  const lines = [];
+  const failedMessages = [];
+  let failedCount = 0;
+  positiveGroups.forEach(([label, expectations]) => {
+    if (!expectations.length) return;
+    lines.push(`## ${label}`);
+    expectations.forEach((expectation) => {
+      const candidates = buildGoldenCaseNeedles(expectation).map(normalizeGoldenCaseText);
+      const ok = candidates.some((needle) => needle && normalizedActual.includes(needle));
+      if (!ok) {
+        failedCount += 1;
+        failedMessages.push(`- 欠落: ${label} / ${expectation}`);
+      }
+      lines.push(`${ok ? "OK" : "Fail"} - ${expectation}`);
+    });
+    lines.push("");
+  });
+
+  const excludes = goldenCase.expectedPromptExcludes || [];
+  if (excludes.length) {
+    lines.push("## 完成プロンプトに含めない文言");
+    excludes.forEach((expectation) => {
+      const candidates = buildGoldenCaseNeedles(expectation).map(normalizeGoldenCaseText);
+      const found = candidates.some((needle) => needle && normalizedActual.includes(needle));
+      if (found) {
+        failedCount += 1;
+        failedMessages.push(`- 禁止文言を検出: ${expectation}`);
+      }
+      lines.push(`${found ? "Fail" : "OK"} - ${expectation}`);
+    });
+    lines.push("");
+  }
+
+  if (!lines.length) return "期待値がありません。";
+  return [
+    `判定: ${failedCount ? "Fail" : "Pass"}`,
+    `失敗条件数: ${failedCount}`,
+    "",
+    "## 失敗した条件一覧",
+    failedMessages.length ? failedMessages.join("\n") : "- なし",
+    "",
+    ...lines
+  ].join("\n").trim();
+}
+
+function buildGoldenCaseLegacyCheck(goldenCase, actualText) {
   const expectations = [
-    ...goldenCase.expectedDecisionLedger,
-    ...goldenCase.expectedExitCards,
-    ...goldenCase.expectedFinalQa
+    ...(goldenCase.expectedDecisionLedger || []),
+    ...(goldenCase.expectedExitCards || []),
+    ...(goldenCase.expectedFinalQa || [])
   ];
   if (!expectations.length) return "期待値がありません。";
   const normalizedActual = normalizeGoldenCaseText(actualText);
@@ -4452,6 +4875,15 @@ async function copySelectedGoldenCaseSteering() {
   if (!goldenCase) return;
   const text = goldenCase.steeringNotes.join("\n");
   await copyPlainText(text, els.goldenCaseStatus, "軌道修正メモをコピーしました。");
+}
+
+async function copyGoldenCaseEvaluation() {
+  const goldenCase = getSelectedGoldenCase();
+  if (!goldenCase) return;
+  const actual = buildGoldenCaseActual(goldenCase);
+  const evaluation = evaluateGoldenCase(goldenCase, actual);
+  const text = formatGoldenCaseEvaluation(goldenCase, actual, evaluation, { includeActual: true });
+  await copyPlainText(text, els.goldenCaseStatus, "Golden Case判定結果をコピーしました。");
 }
 
 function extractDeepResearchPrompt() {

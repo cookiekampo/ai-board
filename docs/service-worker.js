@@ -1,9 +1,11 @@
-const CACHE_NAME = "ai-board-static-v0.1.44";
+const CACHE_NAME = "ai-board-static-v0.1.48";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
+  "./golden-cases.json",
+  "./golden-cases.md",
   "./manifest.json",
   "./icon.png"
 ];
