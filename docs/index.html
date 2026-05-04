@@ -281,85 +281,124 @@
       <p class="hint">Final Judgeの出力から、実際に持ち帰る成果物だけを切り出します。</p>
       <div class="button-grid">
         <button id="copyDeepResearchReviewFullButton" class="primary" type="button">レビュー全文をコピー</button>
-        <button id="copyDeepResearchReviewDecisionButton" type="button">採用可否をコピー</button>
-        <button id="copyDeepResearchReviewConditionsButton" type="button">採用条件をコピー</button>
-        <button id="copyDeepResearchReviewUsableButton" type="button">採用できる内容をコピー</button>
-        <button id="copyDeepResearchReviewFixesButton" type="button">修正すべき内容をコピー</button>
-        <button id="copyDeepResearchReviewDangerousButton" type="button">危険な内容をコピー</button>
-        <button id="copyDeepResearchReviewArtifactButton" type="button">改訂版成果物をコピー</button>
         <button id="copyDeepResearchReviewPracticalButton" type="button">実用版だけをコピー</button>
-        <button id="copyDeepResearchReviewAdditionalPromptButton" type="button">追加Deep Researchプロンプト案をコピー</button>
-        <button id="copyDeepResearchReviewSourceButton" type="button">情報源レビューをコピー</button>
-        <button id="copyDeepResearchReviewClaimEvidenceButton" type="button">主張・根拠対応レビューをコピー</button>
-        <button id="copyDeepResearchReviewGapsButton" type="button">抜け漏れをコピー</button>
-        <button id="copyDeepResearchReviewPracticalityButton" type="button">実用性レビューをコピー</button>
-        <button id="copyDeepResearchReviewIssuesButton" type="button">未解決Issueをコピー</button>
-        <button id="copyDeepResearchReviewNextActionsButton" type="button">次アクションをコピー</button>
-        <button id="copyDeepResearchReviewConfidenceButton" type="button">結論の自信度をコピー</button>
-        <button id="copyDeepResearchReviewHandoffButton" type="button">引き継ぎをコピー</button>
         <button id="startNewDeepResearchReviewButton" class="danger" type="button">新しいDeep Research reviewを開始</button>
       </div>
       <p id="deepResearchReviewCompleteStatus" class="status" aria-live="polite"></p>
       <div class="review-complete-grid">
-        <article class="review-complete-card">
-          <h3>採用可否</h3>
+        <article class="review-complete-card wide priority-card">
+          <div class="exit-card-header">
+            <div>
+              <p class="eyebrow">まず確認</p>
+              <h3>採用可否</h3>
+            </div>
+            <button id="copyDeepResearchReviewDecisionButton" class="primary compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewAdoptionText" class="review-complete-text"></pre>
         </article>
-        <article class="review-complete-card">
-          <h3>採用条件</h3>
-          <pre id="deepResearchReviewAdoptionConditionsText" class="review-complete-text"></pre>
-        </article>
-        <article class="review-complete-card">
-          <h3>採用できる内容</h3>
-          <pre id="deepResearchReviewUsableText" class="review-complete-text"></pre>
-        </article>
-        <article class="review-complete-card">
-          <h3>修正すべき内容</h3>
-          <pre id="deepResearchReviewFixesText" class="review-complete-text"></pre>
-        </article>
-        <article class="review-complete-card">
-          <h3>危険なため使わない内容</h3>
-          <pre id="deepResearchReviewDangerousText" class="review-complete-text"></pre>
-        </article>
-        <article class="review-complete-card wide">
-          <h3>改訂版成果物</h3>
+        <article class="review-complete-card wide priority-card">
+          <div class="exit-card-header">
+            <div>
+              <p class="eyebrow">まず使うもの</p>
+              <h3>改訂版成果物</h3>
+            </div>
+            <button id="copyDeepResearchReviewArtifactButton" class="primary compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewArtifactText" class="review-complete-text"></pre>
         </article>
-        <article class="review-complete-card wide">
-          <h3>追加Deep Researchプロンプト案</h3>
+        <article class="review-complete-card wide priority-card">
+          <div class="exit-card-header">
+            <div>
+              <p class="eyebrow">次に投げるもの</p>
+              <h3>追加Deep Researchプロンプト案</h3>
+            </div>
+            <button id="copyDeepResearchReviewAdditionalPromptButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewAdditionalPromptText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card wide">
-          <h3>次アクション</h3>
+          <div class="exit-card-header">
+            <h3>次アクション</h3>
+            <button id="copyDeepResearchReviewNextActionsButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewNextActionsText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>情報源レビュー</h3>
+          <div class="exit-card-header">
+            <h3>危険なため使わない内容</h3>
+            <button id="copyDeepResearchReviewDangerousButton" class="compact" type="button">コピー</button>
+          </div>
+          <pre id="deepResearchReviewDangerousText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <div class="exit-card-header">
+            <h3>修正すべき内容</h3>
+            <button id="copyDeepResearchReviewFixesButton" class="compact" type="button">コピー</button>
+          </div>
+          <pre id="deepResearchReviewFixesText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <div class="exit-card-header">
+            <h3>情報源レビュー</h3>
+            <button id="copyDeepResearchReviewSourceButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewSourceText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>主張・根拠対応レビュー</h3>
+          <div class="exit-card-header">
+            <h3>主張・根拠対応レビュー</h3>
+            <button id="copyDeepResearchReviewClaimEvidenceButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewClaimEvidenceText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>抜け漏れ</h3>
+          <div class="exit-card-header">
+            <h3>抜け漏れ</h3>
+            <button id="copyDeepResearchReviewGapsButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewGapsText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>実用性レビュー</h3>
+          <div class="exit-card-header">
+            <h3>実用性レビュー</h3>
+            <button id="copyDeepResearchReviewPracticalityButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewPracticalityText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>未解決Issue</h3>
-          <pre id="deepResearchReviewIssuesText" class="review-complete-text"></pre>
-        </article>
-        <article class="review-complete-card">
-          <h3>結論の自信度</h3>
+          <div class="exit-card-header">
+            <h3>結論の自信度</h3>
+            <button id="copyDeepResearchReviewConfidenceButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewConfidenceText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>次Stepへの引き継ぎ</h3>
+          <div class="exit-card-header">
+            <h3>未解決Issue</h3>
+            <button id="copyDeepResearchReviewIssuesButton" class="compact" type="button">コピー</button>
+          </div>
+          <pre id="deepResearchReviewIssuesText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <div class="exit-card-header">
+            <h3>次Stepへの引き継ぎ</h3>
+            <button id="copyDeepResearchReviewHandoffButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchReviewHandoffText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <div class="exit-card-header">
+            <h3>採用条件</h3>
+            <button id="copyDeepResearchReviewConditionsButton" class="compact" type="button">コピー</button>
+          </div>
+          <pre id="deepResearchReviewAdoptionConditionsText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <div class="exit-card-header">
+            <h3>採用できる内容</h3>
+            <button id="copyDeepResearchReviewUsableButton" class="compact" type="button">コピー</button>
+          </div>
+          <pre id="deepResearchReviewUsableText" class="review-complete-text"></pre>
         </article>
       </div>
     </section>

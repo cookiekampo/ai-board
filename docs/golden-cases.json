@@ -218,5 +218,27 @@
       "assumptions"
     ],
     "notes": "初回では方剤候補名を出さず、病名処方やランキングを明示的に禁止するケース。"
+  },
+  {
+    "caseId": "drr-fibromyalgia-deep-research-review",
+    "fixturePath": "test-fixtures/golden-cases/finaljudge-fibromyalgia-deep-research-review.md",
+    "title": "線維筋痛症Deep Research結果レビュー",
+    "mode": "deepResearchReview",
+    "initialTopic": "線維筋痛症Deep Research結果レビュー",
+    "steeringMemos": [
+      "Deep Research結果をそのまま採用せず、採用可否・危険な内容・改訂版成果物・追加調査案へ変換する",
+      "安全性だけでなく学習価値と改善仮説価値も評価する"
+    ],
+    "expectedExitCards": [
+      "adoption",
+      "revised artifact",
+      "additional prompts",
+      "next action",
+      "risk",
+      "confidence",
+      "issues",
+      "handoff"
+    ],
+    "notes": "Deep Research reviewモードのFinal Judgeから、ユーザーが使う出口カードを抽出できるか確認するケース。医療内容の正しさではなく、出口カード構造の回帰確認用。"
   }
 ]

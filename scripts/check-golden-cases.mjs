@@ -19,6 +19,21 @@ const markerMap = {
   answerLedger: "DR_PROMPT_ANSWER_LEDGER",
   questions: "DR_PROMPT_QUESTIONS",
   assumptions: "DR_PROMPT_ASSUMPTIONS",
+  adoption: ["DR_REVIEW_ADOPTION", "DR_REVIEW_DECISION"],
+  adoptionConditions: "DR_REVIEW_CONDITIONS",
+  usable: "DR_REVIEW_USABLE",
+  fixes: "DR_REVIEW_FIXES",
+  dangerous: ["DR_REVIEW_RISK", "DR_REVIEW_DANGEROUS"],
+  sourceReview: "DR_REVIEW_SOURCE_REVIEW",
+  claimEvidence: "DR_REVIEW_CLAIM_EVIDENCE",
+  gaps: "DR_REVIEW_GAPS",
+  practicality: "DR_REVIEW_PRACTICALITY",
+  artifact: ["DR_REVIEW_REVISED_ARTIFACT", "DR_REVIEW_ARTIFACT", "DR_REVIEW_REFINED_ARTIFACT"],
+  additionalPrompt: ["DR_REVIEW_ADDITIONAL_PROMPTS", "DR_REVIEW_ADDITIONAL_PROMPT"],
+  nextActions: ["DR_REVIEW_NEXT_ACTION", "DR_REVIEW_NEXT_ACTIONS"],
+  confidence: "DR_REVIEW_CONFIDENCE",
+  issues: "DR_REVIEW_ISSUES",
+  handoff: "DR_REVIEW_HANDOFF",
 };
 
 const headingAliases = {
@@ -35,6 +50,21 @@ const headingAliases = {
   answerLedger: ["回答済み質問 / Answer Ledger", "Answer Ledger", "回答済み質問"],
   questions: ["ユーザーへの確認質問", "確認質問"],
   assumptions: ["未回答の場合の仮置き", "未回答時の仮置き"],
+  adoption: ["採用可否"],
+  adoptionConditions: ["採用条件"],
+  usable: ["採用できる内容"],
+  fixes: ["修正すべき内容"],
+  dangerous: ["危険な内容", "危険なため使わない内容"],
+  sourceReview: ["情報源レビュー"],
+  claimEvidence: ["主張・根拠対応レビュー"],
+  gaps: ["抜け漏れ"],
+  practicality: ["実用性レビュー"],
+  artifact: ["改訂版成果物"],
+  additionalPrompt: ["追加Deep Researchプロンプト案", "追加Deep Researchプロンプト"],
+  nextActions: ["次アクション"],
+  confidence: ["結論の自信度"],
+  issues: ["Issue / 未解決論点", "未解決Issue", "未解決論点"],
+  handoff: ["次Stepへの引き継ぎ", "次Stepへの入力", "引き継ぎ"],
 };
 
 const exitCardAliases = {
@@ -49,7 +79,7 @@ const exitCardAliases = {
   追加調査案: "additional",
   追加DeepResearchプロンプト案: "additional",
   追加DeepResearch案: "additional",
-  additionalprompts: "additional",
+  additionalprompts: ["additional", "additionalPrompt"],
   DecisionLedger: "decisionLedger",
   "Decision Ledger": "decisionLedger",
   decisionledger: "decisionLedger",
@@ -59,6 +89,34 @@ const exitCardAliases = {
   ユーザーへの確認質問: "questions",
   未回答時の仮置き: "assumptions",
   assumptions: "assumptions",
+  adoption: "adoption",
+  採用可否: "adoption",
+  adoptionconditions: "adoptionConditions",
+  採用条件: "adoptionConditions",
+  usable: "usable",
+  採用できる内容: "usable",
+  fixes: "fixes",
+  修正すべき内容: "fixes",
+  risk: "dangerous",
+  危険な内容: "dangerous",
+  sourcereview: "sourceReview",
+  情報源レビュー: "sourceReview",
+  claimevidencereview: "claimEvidence",
+  主張根拠対応レビュー: "claimEvidence",
+  gaps: "gaps",
+  抜け漏れ: "gaps",
+  practicality: "practicality",
+  実用性レビュー: "practicality",
+  revisedartifact: "artifact",
+  改訂版成果物: "artifact",
+  nextaction: "nextActions",
+  次アクション: "nextActions",
+  confidence: "confidence",
+  結論の自信度: "confidence",
+  issues: "issues",
+  issue未解決論点: "issues",
+  handoff: "handoff",
+  次stepへの引き継ぎ: "handoff",
 };
 
 const defaultSafetyContextPatterns = [
@@ -590,8 +648,8 @@ function asStringArray(value) {
 
 function extractActual(text) {
   const parts = {};
-  Object.entries(markerMap).forEach(([partName, markerName]) => {
-    const markerText = extractAiBoardBlock(text, markerName);
+  Object.entries(markerMap).forEach(([partName, markerNames]) => {
+    const markerText = extractFirstAiBoardBlock(text, markerNames);
     if (markerText) {
       parts[partName] = { text: markerText, source: "marker" };
       return;
@@ -604,6 +662,15 @@ function extractActual(text) {
     parts[partName] = { text: "", source: "missing" };
   });
   return { parts };
+}
+
+function extractFirstAiBoardBlock(text, markerNames) {
+  const names = Array.isArray(markerNames) ? markerNames : [markerNames];
+  for (const markerName of names) {
+    const markerText = extractAiBoardBlock(text, markerName);
+    if (markerText) return markerText;
+  }
+  return "";
 }
 
 function extractAiBoardBlock(text, key) {
@@ -717,12 +784,14 @@ function checkExitCards({ expectations, actual, failures, checkedItems }) {
   if (expectations.length === 0) return;
   expectations.forEach((cardName) => {
     const normalizedName = normalizeLabel(cardName);
-    const partKey = exitCardAliases[normalizedName] || exitCardAliases[cardName] || "";
-    if (!partKey) {
+    const partKeys = exitCardAliases[normalizedName] || exitCardAliases[cardName] || "";
+    const keyList = Array.isArray(partKeys) ? partKeys : [partKeys].filter(Boolean);
+    if (keyList.length === 0) {
       failures.push(`Unknown expected exit card label: ${cardName}`);
       return;
     }
-    if (!actual.parts[partKey] || !actual.parts[partKey].text) {
+    const found = keyList.some((partKey) => actual.parts[partKey] && actual.parts[partKey].text);
+    if (!found) {
       failures.push(`Expected exit card was not extracted: ${cardName}`);
       return;
     }
