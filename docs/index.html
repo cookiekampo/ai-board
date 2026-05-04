@@ -368,53 +368,78 @@
       <p class="eyebrow">Deep Research設計 完了</p>
       <h2>出口カード</h2>
       <p class="hint">Final QAの出力から、Deep Researchに貼るプロンプトや次の作業に使う項目だけを切り出します。</p>
-      <div class="button-grid">
-        <button id="copyDeepResearchPromptButton" class="primary" type="button">完成プロンプトをコピー</button>
-        <button id="copyDeepResearchOneShotButton" type="button">一発版をコピー</button>
-        <button id="copyDeepResearchSplitButton" type="button">分割版をコピー</button>
-        <button id="copyDeepResearchOrderButton" type="button">推奨する実行順をコピー</button>
-        <button id="copyDeepResearchAdditionalButton" type="button">追加調査案をコピー</button>
-        <button id="copyDeepResearchQuestionsButton" type="button">確認質問をコピー</button>
-        <button id="copyDeepResearchAssumptionsButton" type="button">未回答時の仮置きをコピー</button>
-        <button id="copyDeepResearchDecisionLedgerButton" type="button">Decision Ledgerをコピー</button>
-        <button id="copyDeepResearchAnswerLedgerButton" type="button">Answer Ledgerをコピー</button>
-      </div>
+      <p class="hint"><strong>まず使うもの:</strong> 本命プロンプト → 推奨する実行順。補助カードは必要なときだけコピーしてください。</p>
       <p id="deepResearchCopyStatus" class="status" aria-live="polite"></p>
       <div class="review-complete-grid">
         <article class="review-complete-card wide priority-card">
-          <h3>Deep Researchに貼る完成プロンプト</h3>
+          <div class="exit-card-header">
+            <div>
+              <p class="eyebrow">まず使うもの</p>
+              <h3>本命プロンプト</h3>
+            </div>
+            <button id="copyDeepResearchPromptButton" class="primary compact" type="button">コピー</button>
+          </div>
+          <p class="hint">Deep Researchにそのまま貼る完成版です。</p>
           <pre id="deepResearchCompletePromptText" class="review-complete-text"></pre>
         </article>
+        <article class="review-complete-card wide priority-card">
+          <div class="exit-card-header">
+            <div>
+              <p class="eyebrow">まず使うもの</p>
+              <h3>推奨する実行順</h3>
+            </div>
+            <button id="copyDeepResearchOrderButton" class="compact" type="button">コピー</button>
+          </div>
+          <p class="hint">一発で進めるか、分割して投げるかの順番です。</p>
+          <pre id="deepResearchOrderText" class="review-complete-text"></pre>
+        </article>
         <article class="review-complete-card wide">
-          <h3>一発版プロンプト</h3>
+          <div class="exit-card-header">
+            <h3>参考: 一発版</h3>
+            <button id="copyDeepResearchOneShotButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchOneShotText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card wide">
-          <h3>分割版プロンプト</h3>
+          <div class="exit-card-header">
+            <h3>参考: 分割版</h3>
+            <button id="copyDeepResearchSplitButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchSplitText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>推奨する実行順</h3>
-          <pre id="deepResearchOrderText" class="review-complete-text"></pre>
-        </article>
-        <article class="review-complete-card">
-          <h3>追加調査案</h3>
+          <div class="exit-card-header">
+            <h3>次に投げる追加調査</h3>
+            <button id="copyDeepResearchAdditionalButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchAdditionalText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>ユーザーへの確認質問</h3>
+          <div class="exit-card-header">
+            <h3>ユーザーへの確認質問</h3>
+            <button id="copyDeepResearchQuestionsButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchQuestionsText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>未回答時の仮置き</h3>
+          <div class="exit-card-header">
+            <h3>未回答なら使う仮置き</h3>
+            <button id="copyDeepResearchAssumptionsButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchAssumptionsText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>Decision Ledger</h3>
+          <div class="exit-card-header">
+            <h3>確定済み条件</h3>
+            <button id="copyDeepResearchDecisionLedgerButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchDecisionLedgerText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
-          <h3>Answer Ledger</h3>
+          <div class="exit-card-header">
+            <h3>回答済み質問</h3>
+            <button id="copyDeepResearchAnswerLedgerButton" class="compact" type="button">コピー</button>
+          </div>
           <pre id="deepResearchAnswerLedgerText" class="review-complete-text"></pre>
         </article>
       </div>
