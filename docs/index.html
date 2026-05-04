@@ -37,15 +37,6 @@
         </ol>
         <p class="hint">一度開いた後は、基本ファイルを端末にキャッシュします。通信が弱い時でも画面を開きやすくなります。</p>
       </details>
-      <details>
-        <summary>iPhoneアプリで開くためのショートカット設定</summary>
-        <p class="hint">「iPhone: Claudeアプリ」「iPhone: Geminiアプリ」ボタンは、Appleショートカット経由でアプリを開きます。初回だけ、ショートカットアプリで以下の名前のショートカットを作ってください。</p>
-        <ul class="setup-list">
-          <li>AI会議 Claude: Claudeアプリを開く</li>
-          <li>AI会議 Gemini: Geminiアプリを開く</li>
-        </ul>
-        <p class="hint">ボタンを押すと、プロンプトをコピーしてから対応するショートカットを起動します。自動貼り付け・自動送信はしません。</p>
-      </details>
       <label class="setup-check" for="setupDoneCheckbox">
         <input id="setupDoneCheckbox" type="checkbox">
         <span>初期設定は完了した</span>
@@ -121,8 +112,6 @@
         <textarea id="topicPromptText" class="prompt short" readonly></textarea>
         <div class="button-grid">
           <button id="copyTopicPromptButton" class="primary" type="button">2. 作成プロンプトをコピー</button>
-          <button id="shortcutTopicClaudeButton" type="button">iPhone: Claudeアプリ</button>
-          <button id="shortcutTopicGeminiButton" type="button">iPhone: Geminiアプリ</button>
           <button id="draftTopicCardButton" type="button">AIを使わず仮カードにする</button>
         </div>
         <details class="fallback-actions">
@@ -236,8 +225,6 @@
       <textarea id="promptText" class="prompt" readonly></textarea>
       <div class="button-grid">
         <button id="copyPromptButton" class="primary" type="button">プロンプトをコピー</button>
-        <button id="shortcutClaudeButton" type="button">iPhone: Claudeアプリ</button>
-        <button id="shortcutGeminiButton" type="button">iPhone: Geminiアプリ</button>
       </div>
       <details class="fallback-actions">
         <summary>うまく開けない時のWeb版</summary>

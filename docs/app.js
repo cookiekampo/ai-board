@@ -1259,11 +1259,6 @@ const aiUrls = {
   gemini: "https://gemini.google.com/"
 };
 
-const shortcutNames = {
-  claude: "AI会議 Claude",
-  gemini: "AI会議 Gemini"
-};
-
 const quickFieldDefs = [
   { key: "topic", id: "quickTopic", heading: "# 議題" },
   { key: "background", id: "quickBackground", heading: "# 背景" },
@@ -1351,8 +1346,6 @@ const els = {
   openTopicChatGptButton: document.getElementById("openTopicChatGptButton"),
   openTopicClaudeButton: document.getElementById("openTopicClaudeButton"),
   openTopicGeminiButton: document.getElementById("openTopicGeminiButton"),
-  shortcutTopicClaudeButton: document.getElementById("shortcutTopicClaudeButton"),
-  shortcutTopicGeminiButton: document.getElementById("shortcutTopicGeminiButton"),
   draftTopicCardButton: document.getElementById("draftTopicCardButton"),
   topicPromptStatus: document.getElementById("topicPromptStatus"),
   deepResearchReviewInputPanel: document.getElementById("deepResearchReviewInputPanel"),
@@ -1402,8 +1395,6 @@ const els = {
   openChatGptButton: document.getElementById("openChatGptButton"),
   openClaudeButton: document.getElementById("openClaudeButton"),
   openGeminiButton: document.getElementById("openGeminiButton"),
-  shortcutClaudeButton: document.getElementById("shortcutClaudeButton"),
-  shortcutGeminiButton: document.getElementById("shortcutGeminiButton"),
   copyStatus: document.getElementById("copyStatus"),
   answerText: document.getElementById("answerText"),
   steeringText: document.getElementById("steeringText"),
@@ -1471,8 +1462,6 @@ function bindEvents() {
   els.openTopicChatGptButton.addEventListener("click", () => copyTopicPromptAndOpen("chatgpt"));
   els.openTopicClaudeButton.addEventListener("click", () => copyTopicPromptAndOpen("claude"));
   els.openTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndOpen("gemini"));
-  els.shortcutTopicClaudeButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("claude"));
-  els.shortcutTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("gemini"));
   els.draftTopicCardButton.addEventListener("click", draftTopicCardFromRoughTopic);
   [els.deepResearchReviewOriginalPrompt, els.deepResearchReviewResult, els.deepResearchReviewPurpose, els.deepResearchReviewNotes]
     .forEach((el) => {
@@ -1517,8 +1506,6 @@ function bindEvents() {
   els.openChatGptButton.addEventListener("click", () => copyAndOpen("chatgpt"));
   els.openClaudeButton.addEventListener("click", () => copyAndOpen("claude"));
   els.openGeminiButton.addEventListener("click", () => copyAndOpen("gemini"));
-  els.shortcutClaudeButton.addEventListener("click", () => copyAndRunShortcut("claude"));
-  els.shortcutGeminiButton.addEventListener("click", () => copyAndRunShortcut("gemini"));
   els.steeringText.addEventListener("input", saveCurrentSteeringNote);
   els.saveAnswerButton.addEventListener("click", saveAnswerAndNext);
   els.copyDeepResearchPromptButton.addEventListener("click", copyDeepResearchPrompt);
@@ -1849,10 +1836,6 @@ async function copyTopicPromptAndOpen(service) {
     return;
   }
   window.open(aiUrls[service], "_blank", "noopener,noreferrer");
-}
-
-async function copyTopicPromptAndRunShortcut(service) {
-  await copyTextAndRunShortcut(service, els.topicPromptText.value, els.topicPromptText, els.topicPromptStatus);
 }
 
 function applyGeneratedTopicCard() {
@@ -2609,7 +2592,6 @@ function render() {
   els.saveAnswerButton.disabled = false;
   els.backStepButton.disabled = state.currentStep <= 1;
   els.retryStepButton.disabled = !hasCurrentStepWork();
-  updateRecommendedAiButtons(step.target);
   els.logPreview.textContent = buildMeetingLog(state.answers, state.steeringNotes) || "まだ会議ログはありません。";
   els.markdownText.value = generateMarkdown();
   renderDeepResearchReviewCompletePanel();
@@ -2662,18 +2644,6 @@ function hasCurrentStepWork() {
     (state.answers[key] && String(state.answers[key]).trim()) ||
     (state.steeringNotes[key] && String(state.steeringNotes[key]).trim())
   );
-}
-
-function updateRecommendedAiButtons(target) {
-  const buttons = [
-    { service: "Claude", el: els.shortcutClaudeButton },
-    { service: "Gemini", el: els.shortcutGeminiButton }
-  ];
-  buttons.forEach(({ service, el }) => {
-    const recommended = target.includes(service);
-    el.classList.toggle("primary", recommended);
-    el.textContent = recommended ? `推奨: ${service}アプリ` : `iPhone: ${service}アプリ`;
-  });
 }
 
 function generatePrompt(stepNumber, topicCard, answers, steeringNotes) {
@@ -2963,22 +2933,6 @@ async function copyAndOpen(service) {
     return;
   }
   window.open(aiUrls[service], "_blank", "noopener,noreferrer");
-}
-
-async function copyAndRunShortcut(service) {
-  await copyTextAndRunShortcut(service, els.promptText.value, els.promptText, els.copyStatus);
-}
-
-async function copyTextAndRunShortcut(service, text, sourceEl, statusEl) {
-  const ok = await copyText(text, sourceEl, statusEl, false);
-  if (!ok) {
-    setStatus(statusEl, "コピーに失敗しました。先に手動でプロンプトをコピーしてください。", "error");
-    return;
-  }
-  const shortcutName = shortcutNames[service];
-  const shortcutUrl = `shortcuts://run-shortcut?name=${encodeURIComponent(shortcutName)}`;
-  setStatus(statusEl, `コピーしました。${shortcutName}を開きます。`);
-  window.location.href = shortcutUrl;
 }
 
 async function copyText(text, sourceEl, statusEl, showSuccess = true) {
