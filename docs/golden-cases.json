@@ -118,6 +118,9 @@
   },
   {
     "caseId": "dr-kampo-orthostatic-dysregulation-kampo-doctor",
+    "aliases": [
+      "orthostatic_kampo_doctor"
+    ],
     "title": "起立性調節障害の漢方 / 漢方医向け",
     "mode": "deepResearchPrompt",
     "initialTopic": "起立性調節障害の漢方",

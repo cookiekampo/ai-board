@@ -1,0 +1,736 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const repoRoot = path.resolve(__dirname, "..");
+const goldenCasesPath = path.join(repoRoot, "docs", "golden-cases.json");
+
+const markerMap = {
+  completePrompt: "DR_PROMPT_COMPLETE",
+  oneShot: "DR_PROMPT_ONE_SHOT",
+  split: "DR_PROMPT_SPLIT",
+  additional: "DR_PROMPT_ADDITIONAL",
+  order: "DR_PROMPT_ORDER",
+  decisionLedger: "DR_PROMPT_DECISION_LEDGER",
+  answerLedger: "DR_PROMPT_ANSWER_LEDGER",
+  questions: "DR_PROMPT_QUESTIONS",
+  assumptions: "DR_PROMPT_ASSUMPTIONS",
+};
+
+const headingAliases = {
+  completePrompt: [
+    "Deep Researchに貼る完成プロンプト",
+    "完成プロンプト",
+    "Deep Research用プロンプト案",
+  ],
+  oneShot: ["一発版プロンプト", "一発版"],
+  split: ["分割版プロンプト", "分割版"],
+  additional: ["追加Deep Researchプロンプト案", "追加調査案", "追加Deep Research案"],
+  order: ["推奨する実行順", "推奨する調査構成", "次アクション"],
+  decisionLedger: ["確定済み条件 / Decision Ledger", "Decision Ledger", "確定済み条件"],
+  answerLedger: ["回答済み質問 / Answer Ledger", "Answer Ledger", "回答済み質問"],
+  questions: ["ユーザーへの確認質問", "確認質問"],
+  assumptions: ["未回答の場合の仮置き", "未回答時の仮置き"],
+};
+
+const exitCardAliases = {
+  完成プロンプト: "completePrompt",
+  "Deep Researchに貼る完成プロンプト": "completePrompt",
+  一発版プロンプト: "oneShot",
+  分割版プロンプト: "split",
+  推奨実行順: "order",
+  推奨する実行順: "order",
+  追加調査案: "additional",
+  追加DeepResearchプロンプト案: "additional",
+  追加DeepResearch案: "additional",
+  DecisionLedger: "decisionLedger",
+  "Decision Ledger": "decisionLedger",
+  AnswerLedger: "answerLedger",
+  "Answer Ledger": "answerLedger",
+  ユーザーへの確認質問: "questions",
+  未回答時の仮置き: "assumptions",
+};
+
+const defaultSafetyContextPatterns = [
+  "禁止",
+  "避ける",
+  "しない",
+  "行わない",
+  "書かない",
+  "除外",
+  "断定しない",
+  "推奨しない",
+  "目的としない",
+  "使わない",
+  "扱わない",
+];
+
+function main() {
+  try {
+    const args = parseArgs(process.argv.slice(2));
+    if (args.list) {
+      const cases = readGoldenCases();
+      listGoldenCases(cases);
+      return;
+    }
+    if (args.validate) {
+      const cases = readGoldenCases();
+      const result = validateGoldenCases(cases);
+      printValidationResult(result);
+      process.exitCode = result.pass ? 0 : 1;
+      return;
+    }
+    if (args.caseId) {
+      if (!args.actualPath) {
+        throw usageError("--case requires --actual <path-to-finalqa.md>");
+      }
+      const cases = readGoldenCases();
+      const goldenCase = cases.find((caseDef) => caseMatches(caseDef, args.caseId));
+      if (!goldenCase) {
+        throw usageError(`Golden Case not found: ${args.caseId}`);
+      }
+      const actualPath = path.resolve(process.cwd(), args.actualPath);
+      const actualText = readTextFile(actualPath, "actual Final QA markdown");
+      const evaluation = evaluateGoldenCase(goldenCase, actualText);
+      if (args.json) {
+        console.log(JSON.stringify(evaluation, null, 2));
+      } else {
+        printEvaluation(evaluation);
+      }
+      process.exitCode = evaluation.pass ? 0 : 1;
+      return;
+    }
+    throw usageError("Specify --list, --validate, or --case <caseId> --actual <path>.");
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = error.exitCode || 2;
+  }
+}
+
+function parseArgs(argv) {
+  const args = {
+    list: false,
+    validate: false,
+    json: false,
+    caseId: "",
+    actualPath: "",
+  };
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (token === "--list") {
+      args.list = true;
+    } else if (token === "--validate") {
+      args.validate = true;
+    } else if (token === "--json") {
+      args.json = true;
+    } else if (token === "--case") {
+      index += 1;
+      if (!argv[index]) throw usageError("--case requires a caseId.");
+      args.caseId = argv[index];
+    } else if (token === "--actual") {
+      index += 1;
+      if (!argv[index]) throw usageError("--actual requires a file path.");
+      args.actualPath = argv[index];
+    } else if (token === "--help" || token === "-h") {
+      throw usageError(usageText());
+    } else {
+      throw usageError(`Unknown argument: ${token}`);
+    }
+  }
+  const commandCount = [args.list, args.validate, Boolean(args.caseId)].filter(Boolean).length;
+  if (commandCount !== 1) {
+    throw usageError("Use exactly one command: --list, --validate, or --case.");
+  }
+  return args;
+}
+
+function usageText() {
+  return [
+    "Usage:",
+    "  node scripts/check-golden-cases.mjs --list",
+    "  node scripts/check-golden-cases.mjs --validate",
+    "  node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md>",
+    "  node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md> --json",
+  ].join("\n");
+}
+
+function usageError(message) {
+  const error = new Error(`${message}\n\n${usageText()}`);
+  error.exitCode = 2;
+  return error;
+}
+
+function readGoldenCases() {
+  const raw = readTextFile(goldenCasesPath, "docs/golden-cases.json");
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    const parseError = new Error(`Golden Case JSON parse failed: ${error.message}`);
+    parseError.exitCode = 2;
+    throw parseError;
+  }
+}
+
+function readTextFile(filePath, label) {
+  try {
+    return fs.readFileSync(filePath, "utf8");
+  } catch (error) {
+    const readError = new Error(`Failed to read ${label}: ${filePath}\n${error.message}`);
+    readError.exitCode = 2;
+    throw readError;
+  }
+}
+
+function listGoldenCases(cases) {
+  if (!Array.isArray(cases)) {
+    throw usageError("Golden Case JSON must be an array.");
+  }
+  cases.forEach((caseDef, index) => {
+    const id = getCaseId(caseDef) || "(missing caseId)";
+    const title = caseDef.title || "(missing title)";
+    const mode = caseDef.mode || "(missing mode)";
+    const topic = caseDef.initialTopic || caseDef.theme || "(missing initialTopic)";
+    const note = caseDef.notes ? `\n  notes: ${caseDef.notes}` : "";
+    console.log(`${index + 1}. ${id}`);
+    console.log(`  title: ${title}`);
+    console.log(`  mode: ${mode}`);
+    console.log(`  initialTopic: ${topic}${note}`);
+  });
+}
+
+function validateGoldenCases(cases) {
+  const failures = [];
+  const warnings = [];
+  const checkedItems = [];
+
+  if (!Array.isArray(cases)) {
+    return {
+      pass: false,
+      failures: ["docs/golden-cases.json must be an array."],
+      warnings,
+      checkedItems: ["json.array"],
+    };
+  }
+
+  checkedItems.push("json.array");
+  if (cases.length === 0) {
+    failures.push("docs/golden-cases.json must include at least one case.");
+  } else {
+    checkedItems.push("json.nonEmpty");
+  }
+
+  const seenIds = new Map();
+  cases.forEach((caseDef, index) => {
+    const prefix = `case[${index}]`;
+    const id = getCaseId(caseDef);
+    if (!id || typeof id !== "string") {
+      failures.push(`${prefix}.caseId is required.`);
+    } else if (seenIds.has(id)) {
+      failures.push(`${prefix}.caseId duplicates ${seenIds.get(id)}: ${id}`);
+    } else {
+      seenIds.set(id, prefix);
+      checkedItems.push(`${id}.caseId`);
+    }
+
+    const topic = caseDef.initialTopic || caseDef.theme;
+    if (!topic || typeof topic !== "string") {
+      failures.push(`${id || prefix}.initialTopic is required.`);
+    } else {
+      checkedItems.push(`${id || prefix}.initialTopic`);
+    }
+
+    if (caseDef.steeringMemos !== undefined && !Array.isArray(caseDef.steeringMemos)) {
+      failures.push(`${id || prefix}.steeringMemos must be an array.`);
+    }
+    if (caseDef.steeringNotes !== undefined && !Array.isArray(caseDef.steeringNotes)) {
+      failures.push(`${id || prefix}.steeringNotes must be an array.`);
+    }
+    if (caseDef.aliases !== undefined && !Array.isArray(caseDef.aliases)) {
+      failures.push(`${id || prefix}.aliases must be an array.`);
+    }
+
+    const expectedKeys = collectExpectedKeys(caseDef);
+    if (expectedKeys.length === 0) {
+      failures.push(`${id || prefix} must include at least one expected* field or expected object.`);
+    } else {
+      checkedItems.push(`${id || prefix}.expected`);
+    }
+
+    validateArrayField(caseDef, "expectedDecisionLedger", id || prefix, failures, checkedItems);
+    validateArrayField(caseDef, "expectedAnswerLedger", id || prefix, failures, checkedItems);
+    validateArrayField(caseDef, "expectedPromptIncludes", id || prefix, failures, checkedItems);
+    validateArrayField(caseDef, "expectedPromptExcludes", id || prefix, failures, checkedItems);
+    validateArrayField(caseDef, "prohibitedRecommendationPatterns", id || prefix, failures, checkedItems);
+    validateArrayField(caseDef, "allowedSafetyContextPatterns", id || prefix, failures, checkedItems);
+    validateArrayField(caseDef, "expectedExitCards", id || prefix, failures, checkedItems);
+
+    if (caseDef.expected && typeof caseDef.expected !== "object") {
+      failures.push(`${id || prefix}.expected must be an object when present.`);
+    } else if (caseDef.expected) {
+      [
+        "decisionLedger",
+        "answerLedger",
+        "exitCards",
+        "includes",
+        "excludes",
+        "completePromptIncludes",
+        "completePromptExcludes",
+      ].forEach((field) => {
+        if (caseDef.expected[field] !== undefined && !Array.isArray(caseDef.expected[field])) {
+          failures.push(`${id || prefix}.expected.${field} must be an array.`);
+        }
+      });
+    }
+  });
+
+  return {
+    pass: failures.length === 0,
+    failures,
+    warnings,
+    checkedItems,
+  };
+}
+
+function collectExpectedKeys(caseDef) {
+  const directKeys = Object.keys(caseDef).filter((key) => key.startsWith("expected"));
+  const nestedKeys = caseDef.expected && typeof caseDef.expected === "object"
+    ? Object.keys(caseDef.expected).map((key) => `expected.${key}`)
+    : [];
+  return [...directKeys, ...nestedKeys];
+}
+
+function validateArrayField(caseDef, field, label, failures, checkedItems) {
+  if (caseDef[field] === undefined) return;
+  if (!Array.isArray(caseDef[field])) {
+    failures.push(`${label}.${field} must be an array.`);
+  } else {
+    checkedItems.push(`${label}.${field}`);
+  }
+}
+
+function printValidationResult(result) {
+  console.log(`Golden Case JSON: ${result.pass ? "Pass" : "Fail"}`);
+  console.log(`Failures: ${result.failures.length}`);
+  console.log(`Warnings: ${result.warnings.length}`);
+  console.log(`Checked Items: ${result.checkedItems.length}`);
+  printList("Failures", result.failures);
+  printList("Warnings", result.warnings);
+}
+
+function evaluateGoldenCase(caseDef, actualText) {
+  const normalizedCase = normalizeCase(caseDef);
+  const actual = extractActual(actualText);
+  const failures = [];
+  const warnings = [];
+  const checkedItems = [];
+
+  checkTextExpectations({
+    label: "Decision Ledger",
+    fieldName: "decisionLedger",
+    expectations: normalizedCase.expectedDecisionLedger,
+    primaryText: actual.parts.decisionLedger.text,
+    fallbackText: actualText,
+    failures,
+    warnings,
+    checkedItems,
+  });
+
+  checkTextExpectations({
+    label: "Answer Ledger",
+    fieldName: "answerLedger",
+    expectations: normalizedCase.expectedAnswerLedger,
+    primaryText: actual.parts.answerLedger.text,
+    fallbackText: [
+      actual.parts.decisionLedger.text,
+      actual.parts.completePrompt.text,
+      actualText,
+    ].join("\n\n"),
+    failures,
+    warnings,
+    checkedItems,
+  });
+
+  checkPromptIncludes({
+    expectations: normalizedCase.expectedPromptIncludes,
+    actual,
+    fullText: actualText,
+    failures,
+    warnings,
+    checkedItems,
+  });
+
+  checkPromptExcludes({
+    expectations: normalizedCase.expectedPromptExcludes,
+    actual,
+    fullText: actualText,
+    failures,
+    checkedItems,
+  });
+
+  checkForbiddenPatterns({
+    patterns: normalizedCase.prohibitedRecommendationPatterns,
+    safetyPatterns: normalizedCase.allowedSafetyContextPatterns,
+    actual,
+    fullText: actualText,
+    failures,
+    checkedItems,
+  });
+
+  checkExitCards({
+    expectations: normalizedCase.expectedExitCards,
+    actual,
+    failures,
+    checkedItems,
+  });
+
+  const pass = failures.length === 0;
+  return {
+    caseId: normalizedCase.caseId,
+    title: normalizedCase.title,
+    overall: pass ? "Pass" : "Fail",
+    pass,
+    failures,
+    warnings,
+    checkedItems,
+    summary: `${pass ? "Pass" : "Fail"}: ${failures.length} failures, ${warnings.length} warnings, ${checkedItems.length} checked items`,
+    extracted: {
+      hasCompletePrompt: Boolean(actual.parts.completePrompt.text),
+      hasDecisionLedger: Boolean(actual.parts.decisionLedger.text),
+      hasAnswerLedger: Boolean(actual.parts.answerLedger.text),
+      cards: Object.fromEntries(
+        Object.entries(actual.parts).map(([key, value]) => [
+          key,
+          { found: Boolean(value.text), source: value.source },
+        ]),
+      ),
+    },
+    actual: {
+      decisionLedger: actual.parts.decisionLedger.text,
+      answerLedger: actual.parts.answerLedger.text,
+      completePrompt: actual.parts.completePrompt.text,
+    },
+  };
+}
+
+function normalizeCase(caseDef) {
+  const expected = caseDef.expected && typeof caseDef.expected === "object" ? caseDef.expected : {};
+  return {
+    caseId: getCaseId(caseDef),
+    title: caseDef.title || getCaseId(caseDef),
+    expectedDecisionLedger: asStringArray(
+      caseDef.expectedDecisionLedger
+        || expected.decisionLedger
+        || expected.ledger
+        || [],
+    ),
+    expectedAnswerLedger: asStringArray(
+      caseDef.expectedAnswerLedger
+        || expected.answerLedger
+        || [],
+    ),
+    expectedPromptIncludes: asStringArray(
+      caseDef.expectedPromptIncludes
+        || caseDef.completePromptIncludes
+        || expected.includes
+        || expected.completePromptIncludes
+        || expected.promptIncludes
+        || [],
+    ),
+    expectedPromptExcludes: asStringArray(
+      caseDef.expectedPromptExcludes
+        || caseDef.completePromptExcludes
+        || expected.excludes
+        || expected.completePromptExcludes
+        || expected.promptExcludes
+        || [],
+    ),
+    prohibitedRecommendationPatterns: asStringArray(
+      caseDef.prohibitedRecommendationPatterns
+        || expected.prohibitedRecommendationPatterns
+        || [],
+    ),
+    allowedSafetyContextPatterns: asStringArray(
+      caseDef.allowedSafetyContextPatterns
+        || expected.allowedSafetyContextPatterns
+        || defaultSafetyContextPatterns,
+    ),
+    expectedExitCards: asStringArray(
+      caseDef.expectedExitCards
+        || expected.exitCards
+        || [],
+    ),
+  };
+}
+
+function getCaseId(caseDef) {
+  return caseDef.caseId || caseDef.id || "";
+}
+
+function caseMatches(caseDef, requestedId) {
+  const aliases = Array.isArray(caseDef.aliases) ? caseDef.aliases : [];
+  return [getCaseId(caseDef), ...aliases].filter(Boolean).includes(requestedId);
+}
+
+function asStringArray(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim());
+}
+
+function extractActual(text) {
+  const parts = {};
+  Object.entries(markerMap).forEach(([partName, markerName]) => {
+    const markerText = extractAiBoardBlock(text, markerName);
+    if (markerText) {
+      parts[partName] = { text: markerText, source: "marker" };
+      return;
+    }
+    const fallbackText = extractMarkdownSubsection(text, headingAliases[partName] || []);
+    if (fallbackText) {
+      parts[partName] = { text: fallbackText, source: "heading" };
+      return;
+    }
+    parts[partName] = { text: "", source: "missing" };
+  });
+  return { parts };
+}
+
+function extractAiBoardBlock(text, key) {
+  const pattern = new RegExp(
+    `<!--\\s*AI_BOARD:${escapeRegExp(key)}:START\\s*-->\\s*([\\s\\S]*?)\\s*<!--\\s*AI_BOARD:${escapeRegExp(key)}:END\\s*-->`,
+    "u",
+  );
+  const match = text.match(pattern);
+  return match ? match[1].trim() : "";
+}
+
+function extractMarkdownSubsection(text, aliases) {
+  for (const alias of aliases) {
+    const escaped = escapeRegExp(alias);
+    const headingRegex = new RegExp(`(^|\\n)(#{1,6})\\s*${escaped}\\s*\\n`, "u");
+    const match = headingRegex.exec(text);
+    if (!match) continue;
+    const level = match[2].length;
+    const start = match.index + match[0].length;
+    const remainder = text.slice(start);
+    const nextHeadingRegex = /\n(#{1,6})\s+/gu;
+    let endOffset = remainder.length;
+    let nextMatch = nextHeadingRegex.exec(remainder);
+    while (nextMatch) {
+      if (nextMatch[1].length <= level) {
+        endOffset = nextMatch.index;
+        break;
+      }
+      nextMatch = nextHeadingRegex.exec(remainder);
+    }
+    return remainder.slice(0, endOffset).trim();
+  }
+  return "";
+}
+
+function checkTextExpectations({
+  label,
+  fieldName,
+  expectations,
+  primaryText,
+  fallbackText,
+  failures,
+  warnings,
+  checkedItems,
+}) {
+  if (expectations.length === 0) return;
+  expectations.forEach((expectation) => {
+    const primaryMatch = expectationMatches(primaryText, expectation, true);
+    if (primaryMatch) {
+      checkedItems.push(`${fieldName}: ${expectation}`);
+      return;
+    }
+    const fallbackMatch = expectationMatches(fallbackText, expectation, true);
+    if (fallbackMatch) {
+      warnings.push(`${label} expectation found only outside extracted ${label}: ${expectation}`);
+      checkedItems.push(`${fieldName}.fallback: ${expectation}`);
+      return;
+    }
+    failures.push(`${label} missing expected value: ${expectation}`);
+  });
+}
+
+function checkPromptIncludes({ expectations, actual, fullText, failures, warnings, checkedItems }) {
+  if (expectations.length === 0) return;
+  const completePrompt = actual.parts.completePrompt.text;
+  if (!completePrompt) {
+    failures.push("Complete prompt was not extracted.");
+    return;
+  }
+  expectations.forEach((expectation) => {
+    if (expectationMatches(completePrompt, expectation, true)) {
+      checkedItems.push(`completePrompt.includes: ${expectation}`);
+      return;
+    }
+    if (expectationMatches(fullText, expectation, true)) {
+      warnings.push(`Prompt include found outside complete prompt: ${expectation}`);
+      checkedItems.push(`completePrompt.includes.fallback: ${expectation}`);
+      return;
+    }
+    failures.push(`Complete prompt missing expected text: ${expectation}`);
+  });
+}
+
+function checkPromptExcludes({ expectations, actual, fullText, failures, checkedItems }) {
+  if (expectations.length === 0) return;
+  const targetText = actual.parts.completePrompt.text || fullText;
+  expectations.forEach((expectation) => {
+    const unsafeMatches = findUnsafeLiteralMatches(targetText, expectation, defaultSafetyContextPatterns);
+    if (unsafeMatches.length > 0) {
+      failures.push(`Complete prompt contains excluded text outside safety context: ${expectation}`);
+      return;
+    }
+    checkedItems.push(`completePrompt.excludes: ${expectation}`);
+  });
+}
+
+function checkForbiddenPatterns({ patterns, safetyPatterns, actual, fullText, failures, checkedItems }) {
+  if (patterns.length === 0) return;
+  const targetText = actual.parts.completePrompt.text || fullText;
+  patterns.forEach((pattern) => {
+    const unsafeMatches = findUnsafeRegexMatches(targetText, pattern, safetyPatterns);
+    if (unsafeMatches.length > 0) {
+      failures.push(`Forbidden recommendation pattern found outside safety context: ${pattern}`);
+      return;
+    }
+    checkedItems.push(`prohibitedRecommendationPattern.safe: ${pattern}`);
+  });
+}
+
+function checkExitCards({ expectations, actual, failures, checkedItems }) {
+  if (expectations.length === 0) return;
+  expectations.forEach((cardName) => {
+    const normalizedName = normalizeLabel(cardName);
+    const partKey = exitCardAliases[normalizedName] || exitCardAliases[cardName] || "";
+    if (!partKey) {
+      failures.push(`Unknown expected exit card label: ${cardName}`);
+      return;
+    }
+    if (!actual.parts[partKey] || !actual.parts[partKey].text) {
+      failures.push(`Expected exit card was not extracted: ${cardName}`);
+      return;
+    }
+    checkedItems.push(`exitCard.exists: ${cardName}`);
+  });
+}
+
+function expectationMatches(text, expectation, splitColonValue) {
+  if (!text) return false;
+  return buildNeedles(expectation, splitColonValue).some((needle) => (
+    normalizeForMatch(text).includes(normalizeForMatch(needle))
+  ));
+}
+
+function buildNeedles(expectation, splitColonValue) {
+  const needles = [expectation];
+  if (splitColonValue) {
+    const colonIndex = Math.max(expectation.lastIndexOf("："), expectation.lastIndexOf(":"));
+    if (colonIndex >= 0 && colonIndex < expectation.length - 1) {
+      needles.push(expectation.slice(colonIndex + 1).trim());
+    }
+  }
+  return [...new Set(needles.filter(Boolean))];
+}
+
+function findUnsafeLiteralMatches(text, literal, safetyPatterns) {
+  if (!text || !literal) return [];
+  const matches = [];
+  let start = 0;
+  while (start < text.length) {
+    const index = text.indexOf(literal, start);
+    if (index < 0) break;
+    const context = getContext(text, index, literal.length);
+    if (!contextIsSafe(context, safetyPatterns)) {
+      matches.push({ index, context });
+    }
+    start = index + literal.length;
+  }
+  return matches;
+}
+
+function findUnsafeRegexMatches(text, pattern, safetyPatterns) {
+  if (!text || !pattern) return [];
+  const matches = [];
+  let regex;
+  try {
+    regex = new RegExp(pattern, "gu");
+  } catch (error) {
+    return [{ index: 0, context: `Invalid regex: ${pattern} (${error.message})` }];
+  }
+  let match = regex.exec(text);
+  while (match) {
+    const context = getContext(text, match.index, match[0].length);
+    if (!contextIsSafe(context, safetyPatterns)) {
+      matches.push({ index: match.index, context });
+    }
+    if (match[0].length === 0) regex.lastIndex += 1;
+    match = regex.exec(text);
+  }
+  return matches;
+}
+
+function contextIsSafe(context, safetyPatterns) {
+  const allPatterns = [...defaultSafetyContextPatterns, ...safetyPatterns];
+  return allPatterns.some((pattern) => {
+    if (!pattern) return false;
+    if (context.includes(pattern)) return true;
+    try {
+      return new RegExp(pattern, "u").test(context);
+    } catch {
+      return false;
+    }
+  });
+}
+
+function getContext(text, index, length) {
+  const start = Math.max(0, index - 80);
+  const end = Math.min(text.length, index + length + 80);
+  return text.slice(start, end);
+}
+
+function normalizeLabel(label) {
+  return label.replace(/\s+/g, "").replace(/[・\-/]/g, "");
+}
+
+function normalizeForMatch(value) {
+  return String(value)
+    .normalize("NFKC")
+    .replace(/[：:]/g, ":")
+    .replace(/[、。，．・\s]/g, "")
+    .toLowerCase();
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function printEvaluation(evaluation) {
+  console.log(`Golden Case: ${evaluation.caseId}`);
+  console.log(`Title: ${evaluation.title}`);
+  console.log(`Overall: ${evaluation.overall}`);
+  console.log(`Failures: ${evaluation.failures.length}`);
+  console.log(`Warnings: ${evaluation.warnings.length}`);
+  console.log(`Checked Items: ${evaluation.checkedItems.length}`);
+  printList("Failures", evaluation.failures);
+  printList("Warnings", evaluation.warnings);
+  printList("Checked Items", evaluation.checkedItems);
+}
+
+function printList(label, items) {
+  if (!items || items.length === 0) return;
+  console.log("");
+  console.log(`${label}:`);
+  items.forEach((item) => {
+    console.log(`- ${item}`);
+  });
+}
+
+main();

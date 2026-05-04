@@ -199,3 +199,74 @@ Deep Researchプロンプト作成モード
 6. Final QA完了後、Golden Case Runnerの `Actual Decision / Answer Ledger` と `Actual Exit Cards` を確認する。
 7. `自動判定` の Overall / Failures / Warnings / Checked Items を確認する。
 8. 必要なら `判定結果をコピー` で、caseId、Pass/Fail、失敗条件、警告、Actual Ledgerをコピーする。
+
+---
+
+## Node CLIチェック
+
+Golden Case定義の唯一の正は `docs/golden-cases.json` です。
+ブラウザUIのGolden Case Runnerは、現在の画面上のFinal QA結果や出口カードを目視確認するために使います。
+Node CLIは、JSON定義の破損確認と、保存済みFinal QA Markdownに対する軽量なPass/Fail確認に使います。
+
+### ケース一覧
+
+```bash
+node scripts/check-golden-cases.mjs --list
+```
+
+`caseId`、タイトル、対象モード、入力テーマを表示します。
+
+### JSON定義の検証
+
+```bash
+node scripts/check-golden-cases.mjs --validate
+```
+
+確認内容:
+
+- JSONとして読めるか
+- 配列で1件以上あるか
+- `caseId` が存在し、重複していないか
+- `initialTopic` が存在するか
+- `steeringMemos` が配列か
+- 期待値フィールドが存在し、配列型になっているか
+
+### Final QA Markdownの判定
+
+```bash
+node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md>
+```
+
+指定したGolden Caseの期待値と、保存済みFinal QA Markdownを照合します。
+マーカーがある場合は `<!-- AI_BOARD:... -->` を優先し、ない場合はMarkdown見出しから可能な範囲で抽出します。
+
+主な抽出対象:
+
+- `AI_BOARD:DR_PROMPT_COMPLETE`
+- `AI_BOARD:DR_PROMPT_ONE_SHOT`
+- `AI_BOARD:DR_PROMPT_SPLIT`
+- `AI_BOARD:DR_PROMPT_ADDITIONAL`
+- `AI_BOARD:DR_PROMPT_ORDER`
+- `AI_BOARD:DR_PROMPT_DECISION_LEDGER`
+- `AI_BOARD:DR_PROMPT_ANSWER_LEDGER`
+- `AI_BOARD:DR_PROMPT_QUESTIONS`
+- `AI_BOARD:DR_PROMPT_ASSUMPTIONS`
+
+### JSON出力
+
+```bash
+node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md> --json
+```
+
+CIや将来の自動化で使いやすい形式で、判定結果、Failures、Warnings、Checked Items、抽出状況を出力します。
+
+### Exit code
+
+- `0`: Pass
+- `1`: JSON構造またはGolden Case判定がFail
+- `2`: JSON parse不能、引数不正、指定ファイルが読めない、指定caseIdが存在しない
+
+### ブラウザUIとの役割分担
+
+- ブラウザUI: 現在の会議状態と出口カードを見ながら手動確認する
+- Node CLI: `docs/golden-cases.json` の破損確認と、保存済みFinal QA Markdownの軽量判定を行う
