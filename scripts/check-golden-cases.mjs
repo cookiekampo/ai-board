@@ -84,16 +84,24 @@ function main() {
       process.exitCode = result.pass ? 0 : 1;
       return;
     }
-    if (args.caseId) {
-      if (!args.actualPath) {
-        throw usageError("--case requires --actual <path-to-finalqa.md>");
+    if (args.all) {
+      const cases = readGoldenCases();
+      const evaluation = evaluateAllGoldenCases(cases);
+      if (args.json) {
+        console.log(JSON.stringify(evaluation, null, 2));
+      } else {
+        printAllEvaluation(evaluation);
       }
+      process.exitCode = evaluation.pass ? 0 : 1;
+      return;
+    }
+    if (args.caseId) {
       const cases = readGoldenCases();
       const goldenCase = cases.find((caseDef) => caseMatches(caseDef, args.caseId));
       if (!goldenCase) {
         throw usageError(`Golden Case not found: ${args.caseId}`);
       }
-      const actualPath = path.resolve(process.cwd(), args.actualPath);
+      const actualPath = resolveActualPath(goldenCase, args.actualPath);
       const actualText = readTextFile(actualPath, "actual Final QA markdown");
       const evaluation = evaluateGoldenCase(goldenCase, actualText);
       if (args.json) {
@@ -116,6 +124,7 @@ function parseArgs(argv) {
     list: false,
     validate: false,
     json: false,
+    all: false,
     caseId: "",
     actualPath: "",
   };
@@ -127,6 +136,8 @@ function parseArgs(argv) {
       args.validate = true;
     } else if (token === "--json") {
       args.json = true;
+    } else if (token === "--all") {
+      args.all = true;
     } else if (token === "--case") {
       index += 1;
       if (!argv[index]) throw usageError("--case requires a caseId.");
@@ -141,9 +152,9 @@ function parseArgs(argv) {
       throw usageError(`Unknown argument: ${token}`);
     }
   }
-  const commandCount = [args.list, args.validate, Boolean(args.caseId)].filter(Boolean).length;
+  const commandCount = [args.list, args.validate, args.all, Boolean(args.caseId)].filter(Boolean).length;
   if (commandCount !== 1) {
-    throw usageError("Use exactly one command: --list, --validate, or --case.");
+    throw usageError("Use exactly one command: --list, --validate, --all, or --case.");
   }
   return args;
 }
@@ -153,7 +164,10 @@ function usageText() {
     "Usage:",
     "  node scripts/check-golden-cases.mjs --list",
     "  node scripts/check-golden-cases.mjs --validate",
+    "  node scripts/check-golden-cases.mjs --all",
+    "  node scripts/check-golden-cases.mjs --all --json",
     "  node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md>",
+    "  node scripts/check-golden-cases.mjs --case <caseId>",
     "  node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md> --json",
   ].join("\n");
 }
@@ -185,6 +199,88 @@ function readTextFile(filePath, label) {
   }
 }
 
+function resolveActualPath(caseDef, actualPath) {
+  if (actualPath) return path.resolve(process.cwd(), actualPath);
+  if (typeof caseDef.fixturePath === "string" && caseDef.fixturePath.trim()) {
+    return path.resolve(repoRoot, caseDef.fixturePath);
+  }
+  throw usageError("--case requires --actual <path-to-finalqa.md> when fixturePath is not set.");
+}
+
+function evaluateAllGoldenCases(cases) {
+  if (!Array.isArray(cases)) {
+    return {
+      pass: false,
+      overall: "Fail",
+      failures: ["docs/golden-cases.json must be an array."],
+      warnings: [],
+      checkedItems: [],
+      cases: [],
+      summary: "Fail: Golden Case JSON is not an array.",
+    };
+  }
+
+  const caseResults = cases.map((caseDef) => {
+    const caseId = getCaseId(caseDef) || "(missing caseId)";
+    if (!caseDef.fixturePath) {
+      return makeFailedCaseEvaluation(caseDef, [`${caseId} fixturePath is not set.`]);
+    }
+    try {
+      const actualPath = resolveActualPath(caseDef, "");
+      const actualText = readTextFile(actualPath, `${caseId} fixture`);
+      return evaluateGoldenCase(caseDef, actualText);
+    } catch (error) {
+      return makeFailedCaseEvaluation(caseDef, [error.message]);
+    }
+  });
+
+  const failures = caseResults.flatMap((result) => (
+    result.failures.map((failure) => `${result.caseId}: ${failure}`)
+  ));
+  const warnings = caseResults.flatMap((result) => (
+    result.warnings.map((warning) => `${result.caseId}: ${warning}`)
+  ));
+  const checkedItems = caseResults.flatMap((result) => (
+    result.checkedItems.map((item) => `${result.caseId}: ${item}`)
+  ));
+  const pass = failures.length === 0;
+
+  return {
+    overall: pass ? "Pass" : "Fail",
+    pass,
+    failures,
+    warnings,
+    checkedItems,
+    cases: caseResults,
+    summary: `${pass ? "Pass" : "Fail"}: ${caseResults.length} cases, ${failures.length} failures, ${warnings.length} warnings, ${checkedItems.length} checked items`,
+  };
+}
+
+function makeFailedCaseEvaluation(caseDef, failures) {
+  const caseId = getCaseId(caseDef) || "(missing caseId)";
+  return {
+    caseId,
+    title: caseDef.title || caseId,
+    overall: "Fail",
+    pass: false,
+    failures,
+    warnings: [],
+    checkedItems: [],
+    summary: `Fail: ${failures.length} failures`,
+    extracted: {
+      hasCompletePrompt: false,
+      hasDecisionLedger: false,
+      hasAnswerLedger: false,
+      cards: {},
+    },
+    actual: {
+      decisionLedger: "",
+      answerLedger: "",
+      completePrompt: "",
+    },
+  };
+}
+
 function listGoldenCases(cases) {
   if (!Array.isArray(cases)) {
     throw usageError("Golden Case JSON must be an array.");
@@ -194,11 +290,12 @@ function listGoldenCases(cases) {
     const title = caseDef.title || "(missing title)";
     const mode = caseDef.mode || "(missing mode)";
     const topic = caseDef.initialTopic || caseDef.theme || "(missing initialTopic)";
+    const fixture = caseDef.fixturePath ? `\n  fixturePath: ${caseDef.fixturePath}` : "";
     const note = caseDef.notes ? `\n  notes: ${caseDef.notes}` : "";
     console.log(`${index + 1}. ${id}`);
     console.log(`  title: ${title}`);
     console.log(`  mode: ${mode}`);
-    console.log(`  initialTopic: ${topic}${note}`);
+    console.log(`  initialTopic: ${topic}${fixture}${note}`);
   });
 }
 
@@ -251,6 +348,11 @@ function validateGoldenCases(cases) {
     }
     if (caseDef.aliases !== undefined && !Array.isArray(caseDef.aliases)) {
       failures.push(`${id || prefix}.aliases must be an array.`);
+    }
+    if (caseDef.fixturePath !== undefined && typeof caseDef.fixturePath !== "string") {
+      failures.push(`${id || prefix}.fixturePath must be a string.`);
+    } else if (caseDef.fixturePath) {
+      checkedItems.push(`${id || prefix}.fixturePath`);
     }
 
     const expectedKeys = collectExpectedKeys(caseDef);
@@ -722,6 +824,20 @@ function printEvaluation(evaluation) {
   printList("Failures", evaluation.failures);
   printList("Warnings", evaluation.warnings);
   printList("Checked Items", evaluation.checkedItems);
+}
+
+function printAllEvaluation(evaluation) {
+  console.log(`Golden Cases Overall: ${evaluation.overall}`);
+  console.log(`Cases: ${evaluation.cases.length}`);
+  console.log(`Failures: ${evaluation.failures.length}`);
+  console.log(`Warnings: ${evaluation.warnings.length}`);
+  console.log(`Checked Items: ${evaluation.checkedItems.length}`);
+  console.log("");
+  evaluation.cases.forEach((caseResult) => {
+    console.log(`- ${caseResult.caseId}: ${caseResult.overall} (${caseResult.failures.length} failures, ${caseResult.warnings.length} warnings, ${caseResult.checkedItems.length} checked)`);
+  });
+  printList("Failures", evaluation.failures);
+  printList("Warnings", evaluation.warnings);
 }
 
 function printList(label, items) {

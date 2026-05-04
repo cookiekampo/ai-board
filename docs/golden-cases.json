@@ -1,6 +1,7 @@
 [
   {
     "caseId": "drp-kampo-fibromyalgia-doctor",
+    "fixturePath": "test-fixtures/golden-cases/finalqa-fibromyalgia-kampo-doctor.md",
     "title": "線維筋痛症の漢方 / 漢方医向け",
     "mode": "deepResearchPrompt",
     "initialTopic": "線維筋痛症の漢方",
@@ -73,6 +74,7 @@
   },
   {
     "caseId": "drp-kampo-fibromyalgia-counselor",
+    "fixturePath": "test-fixtures/golden-cases/finalqa-fibromyalgia-kampo-counselor.md",
     "title": "線維筋痛症の漢方相談 / 漢方相談員向け",
     "mode": "deepResearchPrompt",
     "initialTopic": "線維筋痛症の漢方相談",
@@ -121,6 +123,7 @@
     "aliases": [
       "orthostatic_kampo_doctor"
     ],
+    "fixturePath": "test-fixtures/golden-cases/finalqa-orthostatic-kampo.md",
     "title": "起立性調節障害の漢方 / 漢方医向け",
     "mode": "deepResearchPrompt",
     "initialTopic": "起立性調節障害の漢方",

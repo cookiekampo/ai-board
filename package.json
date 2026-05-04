@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "scripts": {
+    "golden:list": "node scripts/check-golden-cases.mjs --list",
+    "golden:validate": "node scripts/check-golden-cases.mjs --validate",
+    "golden:test": "node scripts/check-golden-cases.mjs --all"
+  }
+}

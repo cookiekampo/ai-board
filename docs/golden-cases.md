@@ -260,6 +260,38 @@ node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md
 
 CIや将来の自動化で使いやすい形式で、判定結果、Failures、Warnings、Checked Items、抽出状況を出力します。
 
+### fixturePathを使った判定
+
+各Golden Caseに `fixturePath` が設定されている場合、`--actual` を省略できます。
+
+```bash
+node scripts/check-golden-cases.mjs --case <caseId>
+```
+
+fixtureは `test-fixtures/golden-cases/` に置きます。
+fixtureはFinal QA出力の構造確認用であり、医療内容の正しさを保証するものではありません。
+
+### 全ケース判定
+
+```bash
+node scripts/check-golden-cases.mjs --all
+node scripts/check-golden-cases.mjs --all --json
+```
+
+`docs/golden-cases.json` の全ケースを走査し、各caseの `fixturePath` にあるFinal QA Markdownを判定します。
+1件でもFailがあればexit code `1` になります。
+Warningのみの場合はexit code `0` のままです。
+
+### npm scripts
+
+最小の `package.json` には、Golden Case確認用のscriptだけを定義しています。
+
+```bash
+npm run golden:list
+npm run golden:validate
+npm run golden:test
+```
+
 ### Exit code
 
 - `0`: Pass
