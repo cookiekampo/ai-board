@@ -1314,9 +1314,9 @@ Pass / Conditional Pass / Needs Revision / Needs More Research / Reject のい�
 ## 自信度の理由
 
 出口カードで正確に抽出できるよう、該当する本文を以下のHTMLコメントで必ず囲んでください。コメントは削除せず、そのまま出力してください。
-<!-- AI_BOARD:DR_REVIEW_ADOPTION:START -->
+<!-- AI_BOARD:DR_REVIEW_DECISION:START -->
 採用可否
-<!-- AI_BOARD:DR_REVIEW_ADOPTION:END -->
+<!-- AI_BOARD:DR_REVIEW_DECISION:END -->
 <!-- AI_BOARD:DR_REVIEW_CONDITIONS:START -->
 採用条件
 <!-- AI_BOARD:DR_REVIEW_CONDITIONS:END -->
@@ -1329,6 +1329,18 @@ Pass / Conditional Pass / Needs Revision / Needs More Research / Reject のい�
 <!-- AI_BOARD:DR_REVIEW_DANGEROUS:START -->
 危険な内容
 <!-- AI_BOARD:DR_REVIEW_DANGEROUS:END -->
+<!-- AI_BOARD:DR_REVIEW_SOURCE_REVIEW:START -->
+情報源レビュー
+<!-- AI_BOARD:DR_REVIEW_SOURCE_REVIEW:END -->
+<!-- AI_BOARD:DR_REVIEW_CLAIM_EVIDENCE:START -->
+主張・根拠対応レビュー
+<!-- AI_BOARD:DR_REVIEW_CLAIM_EVIDENCE:END -->
+<!-- AI_BOARD:DR_REVIEW_GAPS:START -->
+抜け漏れ
+<!-- AI_BOARD:DR_REVIEW_GAPS:END -->
+<!-- AI_BOARD:DR_REVIEW_PRACTICALITY:START -->
+実用性レビュー
+<!-- AI_BOARD:DR_REVIEW_PRACTICALITY:END -->
 <!-- AI_BOARD:DR_REVIEW_ARTIFACT:START -->
 改訂版成果物
 <!-- AI_BOARD:DR_REVIEW_ARTIFACT:END -->
@@ -1341,6 +1353,12 @@ Pass / Conditional Pass / Needs Revision / Needs More Research / Reject のい�
 <!-- AI_BOARD:DR_REVIEW_NEXT_ACTIONS:START -->
 次アクション
 <!-- AI_BOARD:DR_REVIEW_NEXT_ACTIONS:END -->
+<!-- AI_BOARD:DR_REVIEW_CONFIDENCE:START -->
+結論の自信度
+<!-- AI_BOARD:DR_REVIEW_CONFIDENCE:END -->
+<!-- AI_BOARD:DR_REVIEW_HANDOFF:START -->
+次Stepへの引き継ぎ
+<!-- AI_BOARD:DR_REVIEW_HANDOFF:END -->
 
 Final Judgeでは、Deep Research結果が「何には使えるが、何には不十分か」を必ず分けてください。
 病名×漢方テーマでは、安全性だけでなく、Learning value と Clinical hypothesis value を必ず評価してください。
@@ -1438,7 +1456,10 @@ const deepResearchReviewCompleteSectionLabels = [
   "未解決論点",
   "次アクション",
   "結論の自信度",
-  "自信度の理由"
+  "自信度の理由",
+  "次Stepへの引き継ぎ",
+  "次Stepへの入力",
+  "引き継ぎ"
 ];
 
 const deepResearchReviewFormDefs = {
@@ -1513,11 +1534,22 @@ const els = {
   logPreview: document.getElementById("logPreview"),
   deepResearchReviewCompletePanel: document.getElementById("deepResearchReviewCompletePanel"),
   copyDeepResearchReviewFullButton: document.getElementById("copyDeepResearchReviewFullButton"),
+  copyDeepResearchReviewDecisionButton: document.getElementById("copyDeepResearchReviewDecisionButton"),
+  copyDeepResearchReviewConditionsButton: document.getElementById("copyDeepResearchReviewConditionsButton"),
+  copyDeepResearchReviewUsableButton: document.getElementById("copyDeepResearchReviewUsableButton"),
+  copyDeepResearchReviewFixesButton: document.getElementById("copyDeepResearchReviewFixesButton"),
+  copyDeepResearchReviewDangerousButton: document.getElementById("copyDeepResearchReviewDangerousButton"),
+  copyDeepResearchReviewSourceButton: document.getElementById("copyDeepResearchReviewSourceButton"),
+  copyDeepResearchReviewClaimEvidenceButton: document.getElementById("copyDeepResearchReviewClaimEvidenceButton"),
+  copyDeepResearchReviewGapsButton: document.getElementById("copyDeepResearchReviewGapsButton"),
+  copyDeepResearchReviewPracticalityButton: document.getElementById("copyDeepResearchReviewPracticalityButton"),
   copyDeepResearchReviewArtifactButton: document.getElementById("copyDeepResearchReviewArtifactButton"),
   copyDeepResearchReviewPracticalButton: document.getElementById("copyDeepResearchReviewPracticalButton"),
   copyDeepResearchReviewAdditionalPromptButton: document.getElementById("copyDeepResearchReviewAdditionalPromptButton"),
   copyDeepResearchReviewIssuesButton: document.getElementById("copyDeepResearchReviewIssuesButton"),
   copyDeepResearchReviewNextActionsButton: document.getElementById("copyDeepResearchReviewNextActionsButton"),
+  copyDeepResearchReviewConfidenceButton: document.getElementById("copyDeepResearchReviewConfidenceButton"),
+  copyDeepResearchReviewHandoffButton: document.getElementById("copyDeepResearchReviewHandoffButton"),
   startNewDeepResearchReviewButton: document.getElementById("startNewDeepResearchReviewButton"),
   deepResearchReviewCompleteStatus: document.getElementById("deepResearchReviewCompleteStatus"),
   deepResearchReviewAdoptionText: document.getElementById("deepResearchReviewAdoptionText"),
@@ -1525,10 +1557,16 @@ const els = {
   deepResearchReviewUsableText: document.getElementById("deepResearchReviewUsableText"),
   deepResearchReviewFixesText: document.getElementById("deepResearchReviewFixesText"),
   deepResearchReviewDangerousText: document.getElementById("deepResearchReviewDangerousText"),
+  deepResearchReviewSourceText: document.getElementById("deepResearchReviewSourceText"),
+  deepResearchReviewClaimEvidenceText: document.getElementById("deepResearchReviewClaimEvidenceText"),
+  deepResearchReviewGapsText: document.getElementById("deepResearchReviewGapsText"),
+  deepResearchReviewPracticalityText: document.getElementById("deepResearchReviewPracticalityText"),
   deepResearchReviewArtifactText: document.getElementById("deepResearchReviewArtifactText"),
   deepResearchReviewAdditionalPromptText: document.getElementById("deepResearchReviewAdditionalPromptText"),
   deepResearchReviewIssuesText: document.getElementById("deepResearchReviewIssuesText"),
   deepResearchReviewNextActionsText: document.getElementById("deepResearchReviewNextActionsText"),
+  deepResearchReviewConfidenceText: document.getElementById("deepResearchReviewConfidenceText"),
+  deepResearchReviewHandoffText: document.getElementById("deepResearchReviewHandoffText"),
   deepResearchCopyPanel: document.getElementById("deepResearchCopyPanel"),
   copyDeepResearchPromptButton: document.getElementById("copyDeepResearchPromptButton"),
   copyDeepResearchOneShotButton: document.getElementById("copyDeepResearchOneShotButton"),
@@ -1652,6 +1690,33 @@ function bindEvents() {
   if (els.copyDeepResearchReviewFullButton) {
     els.copyDeepResearchReviewFullButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("full"));
   }
+  if (els.copyDeepResearchReviewDecisionButton) {
+    els.copyDeepResearchReviewDecisionButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("adoption"));
+  }
+  if (els.copyDeepResearchReviewConditionsButton) {
+    els.copyDeepResearchReviewConditionsButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("adoptionConditions"));
+  }
+  if (els.copyDeepResearchReviewUsableButton) {
+    els.copyDeepResearchReviewUsableButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("usable"));
+  }
+  if (els.copyDeepResearchReviewFixesButton) {
+    els.copyDeepResearchReviewFixesButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("fixes"));
+  }
+  if (els.copyDeepResearchReviewDangerousButton) {
+    els.copyDeepResearchReviewDangerousButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("dangerous"));
+  }
+  if (els.copyDeepResearchReviewSourceButton) {
+    els.copyDeepResearchReviewSourceButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("sourceReview"));
+  }
+  if (els.copyDeepResearchReviewClaimEvidenceButton) {
+    els.copyDeepResearchReviewClaimEvidenceButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("claimEvidence"));
+  }
+  if (els.copyDeepResearchReviewGapsButton) {
+    els.copyDeepResearchReviewGapsButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("gaps"));
+  }
+  if (els.copyDeepResearchReviewPracticalityButton) {
+    els.copyDeepResearchReviewPracticalityButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("practicality"));
+  }
   if (els.copyDeepResearchReviewArtifactButton) {
     els.copyDeepResearchReviewArtifactButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("artifact"));
   }
@@ -1666,6 +1731,12 @@ function bindEvents() {
   }
   if (els.copyDeepResearchReviewNextActionsButton) {
     els.copyDeepResearchReviewNextActionsButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("nextActions"));
+  }
+  if (els.copyDeepResearchReviewConfidenceButton) {
+    els.copyDeepResearchReviewConfidenceButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("confidence"));
+  }
+  if (els.copyDeepResearchReviewHandoffButton) {
+    els.copyDeepResearchReviewHandoffButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("handoff"));
   }
   if (els.startNewDeepResearchReviewButton) {
     els.startNewDeepResearchReviewButton.addEventListener("click", startNewDeepResearchReview);
@@ -3711,15 +3782,21 @@ function buildDeepResearchReviewCompleteParts() {
   const full = getDeepResearchReviewFinalAnswer();
   return {
     full,
-    adoption: extractAiBoardBlock(full, "DR_REVIEW_ADOPTION") || extractDeepResearchReviewSection(full, ["採用可否"]),
+    adoption: extractAiBoardBlock(full, "DR_REVIEW_DECISION") || extractAiBoardBlock(full, "DR_REVIEW_ADOPTION") || extractDeepResearchReviewSection(full, ["採用可否"]),
     adoptionConditions: extractAiBoardBlock(full, "DR_REVIEW_CONDITIONS") || extractDeepResearchReviewSection(full, ["採用条件"]),
     usable: extractAiBoardBlock(full, "DR_REVIEW_USABLE") || extractDeepResearchReviewSection(full, ["採用できる内容"]),
     fixes: extractAiBoardBlock(full, "DR_REVIEW_FIXES") || extractDeepResearchReviewSection(full, ["修正すべき内容"]),
     dangerous: extractAiBoardBlock(full, "DR_REVIEW_DANGEROUS") || extractDeepResearchReviewSection(full, ["危険な内容", "危険なため使わない内容"]),
+    sourceReview: extractAiBoardBlock(full, "DR_REVIEW_SOURCE_REVIEW") || extractDeepResearchReviewSection(full, ["情報源レビュー"]),
+    claimEvidence: extractAiBoardBlock(full, "DR_REVIEW_CLAIM_EVIDENCE") || extractDeepResearchReviewSection(full, ["主張・根拠対応レビュー"]),
+    gaps: extractAiBoardBlock(full, "DR_REVIEW_GAPS") || extractDeepResearchReviewSection(full, ["抜け漏れ"]),
+    practicality: extractAiBoardBlock(full, "DR_REVIEW_PRACTICALITY") || extractDeepResearchReviewSection(full, ["実用性レビュー"]),
     artifact: extractAiBoardBlock(full, "DR_REVIEW_ARTIFACT") || extractDeepResearchReviewSection(full, ["改訂版成果物"]),
     additionalPrompt: extractAiBoardBlock(full, "DR_REVIEW_ADDITIONAL_PROMPT") || extractDeepResearchReviewSection(full, ["追加Deep Researchプロンプト案", "追加Deep Researchプロンプト"]),
     issues: extractAiBoardBlock(full, "DR_REVIEW_ISSUES") || extractDeepResearchReviewSection(full, ["Issue / 未解決論点", "未解決Issue", "未解決論点"]),
-    nextActions: extractAiBoardBlock(full, "DR_REVIEW_NEXT_ACTIONS") || extractDeepResearchReviewSection(full, ["次アクション"])
+    nextActions: extractAiBoardBlock(full, "DR_REVIEW_NEXT_ACTIONS") || extractDeepResearchReviewSection(full, ["次アクション"]),
+    confidence: extractAiBoardBlock(full, "DR_REVIEW_CONFIDENCE") || extractDeepResearchReviewSection(full, ["結論の自信度"]),
+    handoff: extractAiBoardBlock(full, "DR_REVIEW_HANDOFF") || extractDeepResearchReviewSection(full, ["次Stepへの引き継ぎ", "次Stepへの入力", "引き継ぎ"])
   };
 }
 
@@ -3741,10 +3818,16 @@ function renderDeepResearchReviewCompletePanel() {
       els.deepResearchReviewUsableText,
       els.deepResearchReviewFixesText,
       els.deepResearchReviewDangerousText,
+      els.deepResearchReviewSourceText,
+      els.deepResearchReviewClaimEvidenceText,
+      els.deepResearchReviewGapsText,
+      els.deepResearchReviewPracticalityText,
       els.deepResearchReviewArtifactText,
       els.deepResearchReviewAdditionalPromptText,
       els.deepResearchReviewIssuesText,
-      els.deepResearchReviewNextActionsText
+      els.deepResearchReviewNextActionsText,
+      els.deepResearchReviewConfidenceText,
+      els.deepResearchReviewHandoffText
     ].forEach((el) => setReviewCompleteText(el, ""));
     setStatus(els.deepResearchReviewCompleteStatus, "");
     return;
@@ -3756,20 +3839,40 @@ function renderDeepResearchReviewCompletePanel() {
   setReviewCompleteText(els.deepResearchReviewUsableText, parts.usable);
   setReviewCompleteText(els.deepResearchReviewFixesText, parts.fixes);
   setReviewCompleteText(els.deepResearchReviewDangerousText, parts.dangerous);
+  setReviewCompleteText(els.deepResearchReviewSourceText, parts.sourceReview);
+  setReviewCompleteText(els.deepResearchReviewClaimEvidenceText, parts.claimEvidence);
+  setReviewCompleteText(els.deepResearchReviewGapsText, parts.gaps);
+  setReviewCompleteText(els.deepResearchReviewPracticalityText, parts.practicality);
   setReviewCompleteText(els.deepResearchReviewArtifactText, parts.artifact);
   setReviewCompleteText(els.deepResearchReviewAdditionalPromptText, parts.additionalPrompt);
   setReviewCompleteText(els.deepResearchReviewIssuesText, parts.issues);
   setReviewCompleteText(els.deepResearchReviewNextActionsText, parts.nextActions);
+  setReviewCompleteText(els.deepResearchReviewConfidenceText, parts.confidence);
+  setReviewCompleteText(els.deepResearchReviewHandoffText, parts.handoff);
 }
 
 function getDeepResearchReviewCopyPayload(kind) {
   const parts = buildDeepResearchReviewCompleteParts();
+  const payloads = {
+    adoption: { text: parts.adoption || parts.full, label: "採用可否" },
+    adoptionConditions: { text: parts.adoptionConditions || parts.full, label: "採用条件" },
+    usable: { text: parts.usable || parts.full, label: "採用できる内容" },
+    fixes: { text: parts.fixes || parts.full, label: "修正すべき内容" },
+    dangerous: { text: parts.dangerous || parts.full, label: "危険な内容" },
+    sourceReview: { text: parts.sourceReview || parts.full, label: "情報源レビュー" },
+    claimEvidence: { text: parts.claimEvidence || parts.full, label: "主張・根拠対応レビュー" },
+    gaps: { text: parts.gaps || parts.full, label: "抜け漏れ" },
+    practicality: { text: parts.practicality || parts.full, label: "実用性レビュー" },
+    artifact: { text: parts.artifact || parts.full, label: "改訂版成果物" },
+    practical: { text: parts.artifact || parts.full, label: "実用版" },
+    additionalPrompt: { text: parts.additionalPrompt || parts.full, label: "追加Deep Researchプロンプト案" },
+    issues: { text: parts.issues || parts.full, label: "未解決Issue" },
+    nextActions: { text: parts.nextActions || parts.full, label: "次アクション" },
+    confidence: { text: parts.confidence || parts.full, label: "結論の自信度" },
+    handoff: { text: parts.handoff || parts.full, label: "次Stepへの引き継ぎ" }
+  };
   if (kind === "full") return { text: parts.full, label: "レビュー全文" };
-  if (kind === "artifact") return { text: parts.artifact || parts.full, label: "改訂版成果物" };
-  if (kind === "practical") return { text: parts.artifact || parts.full, label: "実用版" };
-  if (kind === "additionalPrompt") return { text: parts.additionalPrompt || parts.full, label: "追加Deep Researchプロンプト案" };
-  if (kind === "issues") return { text: parts.issues || parts.full, label: "未解決Issue" };
-  if (kind === "nextActions") return { text: parts.nextActions || parts.full, label: "次アクション" };
+  if (payloads[kind]) return payloads[kind];
   return { text: parts.full, label: "レビュー全文" };
 }
 
