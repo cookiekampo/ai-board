@@ -1,4 +1,4 @@
-const CACHE_NAME = "ai-board-static-v0.1.57";
+const CACHE_NAME = "ai-board-static-v0.1.58";
 const APP_ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const APP_ASSETS = [
   "./app.js",
   "./golden-cases.json",
   "./golden-cases.md",
+  "./manual-smoke-tests.md",
   "./manifest.json",
   "./icon.png"
 ];
