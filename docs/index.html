@@ -247,6 +247,27 @@
       <p id="answerStatus" class="status" aria-live="polite"></p>
     </section>
 
+    <section id="deepResearchLedgerPanel" class="panel review-complete-panel" hidden>
+      <p class="eyebrow">Deep Research設計 Ledger</p>
+      <h2>確定条件・回答履歴</h2>
+      <p id="deepResearchLedgerSummary" class="hint">軌道修正メモから抽出された条件を確認できます。</p>
+      <div class="button-grid">
+        <button id="copyCurrentDecisionLedgerButton" type="button">現在のDecision Ledgerをコピー</button>
+        <button id="copyCurrentAnswerLedgerButton" type="button">現在のAnswer Ledgerをコピー</button>
+      </div>
+      <p id="deepResearchLedgerStatus" class="status" aria-live="polite"></p>
+      <div class="review-complete-grid">
+        <article class="review-complete-card">
+          <h3>Decision Ledger</h3>
+          <pre id="currentDecisionLedgerText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>Answer Ledger</h3>
+          <pre id="currentAnswerLedgerText" class="review-complete-text"></pre>
+        </article>
+      </div>
+    </section>
+
     <section class="panel secondary-panel">
       <details>
         <summary>会議ログプレビュー</summary>
@@ -360,6 +381,10 @@
       </div>
       <p id="deepResearchCopyStatus" class="status" aria-live="polite"></p>
       <div class="review-complete-grid">
+        <article class="review-complete-card wide priority-card">
+          <h3>Deep Researchに貼る完成プロンプト</h3>
+          <pre id="deepResearchCompletePromptText" class="review-complete-text"></pre>
+        </article>
         <article class="review-complete-card wide">
           <h3>一発版プロンプト</h3>
           <pre id="deepResearchOneShotText" class="review-complete-text"></pre>

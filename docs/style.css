@@ -326,6 +326,11 @@ textarea {
   padding: 10px;
 }
 
+.review-complete-card.priority-card {
+  background: rgba(66, 170, 150, 0.08);
+  border-color: var(--accent);
+}
+
 .review-complete-card.wide {
   grid-column: 1 / -1;
 }
