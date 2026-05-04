@@ -237,7 +237,8 @@
       "risk",
       "confidence",
       "issues",
-      "handoff"
+      "handoff",
+      "handoff card"
     ],
     "notes": "Deep Research reviewモードのFinal Judgeから、ユーザーが使う出口カードを抽出できるか確認するケース。医療内容の正しさではなく、出口カード構造の回帰確認用。"
   }

@@ -34,6 +34,7 @@ const markerMap = {
   confidence: "DR_REVIEW_CONFIDENCE",
   issues: "DR_REVIEW_ISSUES",
   handoff: "DR_REVIEW_HANDOFF",
+  handoffCard: "DR_REVIEW_HANDOFF_CARD",
 };
 
 const headingAliases = {
@@ -65,6 +66,7 @@ const headingAliases = {
   confidence: ["結論の自信度"],
   issues: ["Issue / 未解決論点", "未解決Issue", "未解決論点"],
   handoff: ["次Stepへの引き継ぎ", "次Stepへの入力", "引き継ぎ"],
+  handoffCard: ["次調査カード", "Handoff Card", "次調査議題カード"],
 };
 
 const exitCardAliases = {
@@ -117,6 +119,8 @@ const exitCardAliases = {
   issue未解決論点: "issues",
   handoff: "handoff",
   次stepへの引き継ぎ: "handoff",
+  handoffcard: "handoffCard",
+  次調査カード: "handoffCard",
 };
 
 const defaultSafetyContextPatterns = [
