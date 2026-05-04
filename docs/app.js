@@ -1462,6 +1462,85 @@ const deepResearchReviewCompleteSectionLabels = [
   "引き継ぎ"
 ];
 
+const goldenCases = [
+  {
+    id: "drp-kampo-fibromyalgia-doctor",
+    title: "Golden Case 1: 線維筋痛症の漢方 / 漢方医向け",
+    mode: "deepResearchPrompt",
+    theme: "線維筋痛症の漢方",
+    steeringNotes: [
+      "1 漢方医",
+      "3 できれば初回から",
+      "1 yes",
+      "2 yes",
+      "3 yes",
+      "専門度 上級者向け",
+      "出力は長めになっても良い",
+      "処方群は広めに拾う",
+      "根拠は初回から"
+    ],
+    expectedDecisionLedger: [
+      "主読者：漢方医",
+      "副読者：薬剤師、漢方相談員、漢方薬局スタッフ、内部研修担当者",
+      "専門度：上級者向け",
+      "用途：内部学習・相談準備用",
+      "外部公開の有無：外部公開しない。患者配布・Web公開・販売促進は除外",
+      "初回調査範囲：医学的基礎・安全確認・受診勧奨・問診項目・症状クラスターに加え、証・処方群・生薬・処方意図も初回から含める",
+      "除外範囲：診断、個別処方判断、服薬変更指示、病名処方、処方ランキング、標準治療否定、販売促進",
+      "深掘りする項目：安全確認、受診勧奨、相談者分類、症状クラスター、問診項目、漢方医学的病態、証、処方群、生薬、処方意図",
+      "後続調査に回す項目：方剤別安全性の詳細、PMDA・添付文書照合、症例報告の網羅、エビデンスレビュー、問診票テンプレート化"
+    ],
+    expectedExitCards: [
+      "完成プロンプト",
+      "一発版プロンプト",
+      "分割版プロンプト",
+      "追加調査案",
+      "Decision Ledger",
+      "Answer Ledger"
+    ],
+    expectedFinalQa: [
+      "古い仮置きの「漢方相談員・薬剤師向け」が主読者として残らない",
+      "最終プロンプトの対象読者が漢方医向けになる",
+      "処方・生薬・証・症状クラスターの概観が初回範囲に含まれる",
+      "方剤別PMDA照合、症例報告網羅、エビデンス評価は後続調査に残る"
+    ]
+  },
+  {
+    id: "drp-kampo-fibromyalgia-counselor",
+    title: "Golden Case 2: 線維筋痛症の漢方相談 / 漢方相談員向け",
+    mode: "deepResearchPrompt",
+    theme: "線維筋痛症の漢方相談",
+    steeringNotes: [
+      "医師ではない漢方相談員向け",
+      "処方や生薬は深掘りしない",
+      "安全確認と受診勧奨を中心にしたい",
+      "外部公開しない"
+    ],
+    expectedDecisionLedger: [
+      "主読者：漢方相談員",
+      "専門度：相談実務者向け",
+      "用途：内部学習・相談準備用",
+      "外部公開の有無：しない",
+      "初回調査範囲：安全確認、受診勧奨、問診項目、症状クラスター",
+      "処方・生薬：深掘りしない",
+      "除外範囲：診断、処方判断、服薬変更指示、病名処方"
+    ],
+    expectedExitCards: [
+      "完成プロンプト",
+      "一発版プロンプト",
+      "追加調査案",
+      "Decision Ledger",
+      "Answer Ledger"
+    ],
+    expectedFinalQa: [
+      "主読者が漢方相談員になる",
+      "処方・生薬を深掘りしない",
+      "安全確認と受診勧奨を中心にする",
+      "外部公開しない"
+    ]
+  }
+];
+
 const deepResearchReviewFormDefs = {
   focus: "deepResearchReviewFocus",
   risk: "deepResearchReviewRisk",
@@ -1599,6 +1678,17 @@ const els = {
   deepResearchKampoSafetyText: document.getElementById("deepResearchKampoSafetyText"),
   deepResearchKampoPublicText: document.getElementById("deepResearchKampoPublicText"),
   deepResearchKampoProfessionalText: document.getElementById("deepResearchKampoProfessionalText"),
+  goldenCasePanel: document.getElementById("goldenCasePanel"),
+  goldenCaseSelect: document.getElementById("goldenCaseSelect"),
+  loadGoldenCaseTopicButton: document.getElementById("loadGoldenCaseTopicButton"),
+  copyGoldenCaseSteeringButton: document.getElementById("copyGoldenCaseSteeringButton"),
+  refreshGoldenCaseButton: document.getElementById("refreshGoldenCaseButton"),
+  goldenCaseStatus: document.getElementById("goldenCaseStatus"),
+  goldenCaseExpectedText: document.getElementById("goldenCaseExpectedText"),
+  goldenCaseActualLedgerText: document.getElementById("goldenCaseActualLedgerText"),
+  goldenCaseActualExitCardsText: document.getElementById("goldenCaseActualExitCardsText"),
+  goldenCaseFinalQaText: document.getElementById("goldenCaseFinalQaText"),
+  goldenCaseCheckText: document.getElementById("goldenCaseCheckText"),
   markdownPanel: document.getElementById("markdownPanel"),
   markdownText: document.getElementById("markdownText"),
   copyMarkdownButton: document.getElementById("copyMarkdownButton"),
@@ -1626,6 +1716,7 @@ function init() {
   if (els.deepResearchReviewImportLog) els.deepResearchReviewImportLog.value = state.deepResearchReviewImportLog || "";
   if (els.promptContextModeSelect) els.promptContextModeSelect.value = state.promptContextMode || "full";
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value, state.mode);
+  populateGoldenCaseSelect();
   bindEvents();
   setupWorkflowLayoutControls();
   renderSetupPanel();
@@ -1782,6 +1873,21 @@ function bindEvents() {
   }
   if (els.copyDeepResearchKampoProfessionalButton) {
     els.copyDeepResearchKampoProfessionalButton.addEventListener("click", () => copyDeepResearchPromptCompletePart("kampoProfessional"));
+  }
+  if (els.goldenCaseSelect) {
+    els.goldenCaseSelect.addEventListener("change", renderGoldenCasePanel);
+  }
+  if (els.loadGoldenCaseTopicButton) {
+    els.loadGoldenCaseTopicButton.addEventListener("click", loadSelectedGoldenCaseTopic);
+  }
+  if (els.copyGoldenCaseSteeringButton) {
+    els.copyGoldenCaseSteeringButton.addEventListener("click", copySelectedGoldenCaseSteering);
+  }
+  if (els.refreshGoldenCaseButton) {
+    els.refreshGoldenCaseButton.addEventListener("click", () => {
+      renderGoldenCasePanel();
+      setStatus(els.goldenCaseStatus, "現在の会議出力からActualを更新しました。");
+    });
   }
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.shareMarkdownButton.addEventListener("click", shareMarkdown);
@@ -2852,6 +2958,7 @@ function render() {
   els.markdownText.value = generateMarkdown();
   renderDeepResearchReviewCompletePanel();
   renderDeepResearchCopyPanel();
+  renderGoldenCasePanel();
   renderWorkflowLayout(complete);
 }
 
@@ -3791,7 +3898,7 @@ function buildDeepResearchReviewCompleteParts() {
     claimEvidence: extractAiBoardBlock(full, "DR_REVIEW_CLAIM_EVIDENCE") || extractDeepResearchReviewSection(full, ["主張・根拠対応レビュー"]),
     gaps: extractAiBoardBlock(full, "DR_REVIEW_GAPS") || extractDeepResearchReviewSection(full, ["抜け漏れ"]),
     practicality: extractAiBoardBlock(full, "DR_REVIEW_PRACTICALITY") || extractDeepResearchReviewSection(full, ["実用性レビュー"]),
-    artifact: extractAiBoardBlock(full, "DR_REVIEW_ARTIFACT") || extractDeepResearchReviewSection(full, ["改訂版成果物"]),
+    artifact: extractAiBoardBlock(full, "DR_REVIEW_ARTIFACT") || extractAiBoardBlock(full, "DR_REVIEW_REFINED_ARTIFACT") || extractDeepResearchReviewSection(full, ["改訂版成果物"]),
     additionalPrompt: extractAiBoardBlock(full, "DR_REVIEW_ADDITIONAL_PROMPT") || extractDeepResearchReviewSection(full, ["追加Deep Researchプロンプト案", "追加Deep Researchプロンプト"]),
     issues: extractAiBoardBlock(full, "DR_REVIEW_ISSUES") || extractDeepResearchReviewSection(full, ["Issue / 未解決論点", "未解決Issue", "未解決論点"]),
     nextActions: extractAiBoardBlock(full, "DR_REVIEW_NEXT_ACTIONS") || extractDeepResearchReviewSection(full, ["次アクション"]),
@@ -4042,6 +4149,202 @@ async function copyDeepResearchPromptCompletePart(kind) {
     return;
   }
   await copyPlainText(payload.text, els.deepResearchCopyStatus, `${payload.label}をコピーしました。`);
+}
+
+function populateGoldenCaseSelect() {
+  if (!els.goldenCaseSelect) return;
+  const selected = els.goldenCaseSelect.value || (goldenCases[0] ? goldenCases[0].id : "");
+  els.goldenCaseSelect.textContent = "";
+  goldenCases.forEach((goldenCase) => {
+    const option = document.createElement("option");
+    option.value = goldenCase.id;
+    option.textContent = goldenCase.title;
+    els.goldenCaseSelect.appendChild(option);
+  });
+  if (goldenCases.some((goldenCase) => goldenCase.id === selected)) {
+    els.goldenCaseSelect.value = selected;
+  }
+}
+
+function getSelectedGoldenCase() {
+  if (!goldenCases.length) return null;
+  const selectedId = els.goldenCaseSelect ? els.goldenCaseSelect.value : goldenCases[0].id;
+  return goldenCases.find((goldenCase) => goldenCase.id === selectedId) || goldenCases[0];
+}
+
+function renderGoldenCasePanel() {
+  if (!els.goldenCasePanel) return;
+  const goldenCase = getSelectedGoldenCase();
+  if (!goldenCase) {
+    [
+      els.goldenCaseExpectedText,
+      els.goldenCaseActualLedgerText,
+      els.goldenCaseActualExitCardsText,
+      els.goldenCaseFinalQaText,
+      els.goldenCaseCheckText
+    ].forEach((el) => setReviewCompleteText(el, ""));
+    return;
+  }
+
+  const actual = buildGoldenCaseActual(goldenCase);
+  setReviewCompleteText(els.goldenCaseExpectedText, formatGoldenCaseExpected(goldenCase));
+  setReviewCompleteText(els.goldenCaseActualLedgerText, actual.ledger);
+  setReviewCompleteText(els.goldenCaseActualExitCardsText, actual.exitCards);
+  setReviewCompleteText(els.goldenCaseFinalQaText, actual.finalQa);
+  setReviewCompleteText(els.goldenCaseCheckText, buildGoldenCaseCheck(goldenCase, actual.combined));
+}
+
+function formatGoldenCaseExpected(goldenCase) {
+  return [
+    `# ${goldenCase.title}`,
+    "",
+    `## 入力テーマ\n${goldenCase.theme}`,
+    "",
+    `## 途中の軌道修正\n${goldenCase.steeringNotes.map((note) => `- ${note}`).join("\n")}`,
+    "",
+    `## 期待Decision Ledger\n${goldenCase.expectedDecisionLedger.map((item) => `- ${item}`).join("\n")}`,
+    "",
+    `## 期待出口カード\n${goldenCase.expectedExitCards.map((item) => `- ${item}`).join("\n")}`,
+    "",
+    `## 期待Final QA\n${goldenCase.expectedFinalQa.map((item) => `- ${item}`).join("\n")}`
+  ].join("\n");
+}
+
+function buildGoldenCaseActual(goldenCase) {
+  if (state.mode !== goldenCase.mode) {
+    const message = `対象モード: ${modeLabels[goldenCase.mode] || goldenCase.mode}\n現在のモード: ${modeLabels[state.mode] || state.mode}\n\nこのGolden Caseを確認するには「入力テーマをセット」で対象モードに切り替えてください。`;
+    return {
+      ledger: message,
+      exitCards: message,
+      finalQa: message,
+      combined: message
+    };
+  }
+
+  if (goldenCase.mode === "deepResearchPrompt") {
+    const parts = buildDeepResearchPromptCompleteParts();
+    const ledger = [
+      parts.decisionLedger ? `## Decision Ledger\n${parts.decisionLedger}` : "## Decision Ledger\n未抽出",
+      parts.answerLedger ? `## Answer Ledger\n${parts.answerLedger}` : "## Answer Ledger\n未抽出"
+    ].join("\n\n");
+    const exitCards = formatGoldenCaseExitCards([
+      ["完成プロンプト", parts.completePrompt],
+      ["一発版プロンプト", parts.oneShot],
+      ["分割版プロンプト", parts.split],
+      ["推奨する実行順", parts.order],
+      ["追加調査案", parts.additional],
+      ["ユーザーへの確認質問", parts.questions],
+      ["未回答時の仮置き", parts.assumptions],
+      ["Decision Ledger", parts.decisionLedger],
+      ["Answer Ledger", parts.answerLedger],
+      ["医学的基礎プロンプト", parts.kampoBaseline],
+      ["漢方病態・証プロンプト", parts.kampoPattern],
+      ["処方・生薬・症状クラスター整理プロンプト", parts.kampoFormula],
+      ["方剤別安全性・添付文書照合プロンプト", parts.kampoSafety],
+      ["一般ユーザー向け相談前メモ化プロンプト", parts.kampoPublic],
+      ["専門職向け分冊化プロンプト", parts.kampoProfessional]
+    ]);
+    const finalQa = extractMarkdownSubsection(parts.full, ["矛盾検出", "Final QA", "最終確認"]) || "未抽出";
+    return {
+      ledger,
+      exitCards,
+      finalQa,
+      combined: [ledger, exitCards, finalQa].join("\n\n")
+    };
+  }
+
+  if (goldenCase.mode === "deepResearchReview") {
+    const parts = buildDeepResearchReviewCompleteParts();
+    const ledger = "Deep Research reviewにはDecision Ledger / Answer Ledgerはありません。Final Judge出口カードを確認してください。";
+    const exitCards = formatGoldenCaseExitCards([
+      ["採用可否", parts.adoption],
+      ["採用条件", parts.adoptionConditions],
+      ["採用できる内容", parts.usable],
+      ["修正すべき内容", parts.fixes],
+      ["危険な内容", parts.dangerous],
+      ["情報源レビュー", parts.sourceReview],
+      ["主張・根拠対応レビュー", parts.claimEvidence],
+      ["抜け漏れ", parts.gaps],
+      ["実用性レビュー", parts.practicality],
+      ["改訂版成果物", parts.artifact],
+      ["追加Deep Researchプロンプト案", parts.additionalPrompt],
+      ["次アクション", parts.nextActions],
+      ["結論の自信度", parts.confidence],
+      ["Issue / 未解決論点", parts.issues],
+      ["次Stepへの引き継ぎ", parts.handoff]
+    ]);
+    const finalQa = parts.handoff || parts.full || "未抽出";
+    return {
+      ledger,
+      exitCards,
+      finalQa,
+      combined: [ledger, exitCards, finalQa].join("\n\n")
+    };
+  }
+
+  const fallback = "このGolden CaseのActual抽出は未対応です。";
+  return { ledger: fallback, exitCards: fallback, finalQa: fallback, combined: fallback };
+}
+
+function formatGoldenCaseExitCards(items) {
+  return items
+    .map(([label, value]) => `## ${label}\n${value && String(value).trim() ? String(value).trim() : "未抽出"}`)
+    .join("\n\n");
+}
+
+function buildGoldenCaseCheck(goldenCase, actualText) {
+  const expectations = [
+    ...goldenCase.expectedDecisionLedger,
+    ...goldenCase.expectedExitCards,
+    ...goldenCase.expectedFinalQa
+  ];
+  if (!expectations.length) return "期待値がありません。";
+  const normalizedActual = normalizeGoldenCaseText(actualText);
+  return expectations.map((expectation) => {
+    const candidates = buildGoldenCaseNeedles(expectation).map(normalizeGoldenCaseText);
+    const ok = candidates.some((needle) => needle && normalizedActual.includes(needle));
+    return `${ok ? "OK" : "要確認"} - ${expectation}`;
+  }).join("\n");
+}
+
+function buildGoldenCaseNeedles(expectation) {
+  const value = String(expectation).includes("：")
+    ? String(expectation).split("：").slice(1).join("：").trim()
+    : String(expectation).includes(":")
+      ? String(expectation).split(":").slice(1).join(":").trim()
+      : "";
+  return value ? [expectation, value] : [expectation];
+}
+
+function normalizeGoldenCaseText(value) {
+  return String(value || "")
+    .replace(/[：:]/g, ":")
+    .replace(/[、，,／\/・\s]/g, "")
+    .trim();
+}
+
+function loadSelectedGoldenCaseTopic() {
+  const goldenCase = getSelectedGoldenCase();
+  if (!goldenCase) return;
+  if (state.mode !== goldenCase.mode && countCompletedAnswers() > 0 && !confirm("Golden Caseの対象モードへ切り替えます。既存ログは消しませんが、表示Step名が変わる可能性があります。続けますか？")) {
+    return;
+  }
+  state.mode = goldenCase.mode;
+  state.currentStep = normalizeStep(state.currentStep, state.mode);
+  if (els.modeSelect) els.modeSelect.value = state.mode;
+  if (els.roughTopic) els.roughTopic.value = goldenCase.theme;
+  if (els.topicPromptText) els.topicPromptText.value = generateTopicCardPrompt(goldenCase.theme, state.mode);
+  persist("Golden Caseの入力テーマをセットしました");
+  render();
+  setStatus(els.goldenCaseStatus, "入力テーマと対象モードをセットしました。会議ログは変更していません。");
+  scrollToElement(els.goldenCasePanel);
+}
+
+async function copySelectedGoldenCaseSteering() {
+  const goldenCase = getSelectedGoldenCase();
+  if (!goldenCase) return;
+  const text = goldenCase.steeringNotes.join("\n");
+  await copyPlainText(text, els.goldenCaseStatus, "軌道修正メモをコピーしました。");
 }
 
 function extractDeepResearchPrompt() {

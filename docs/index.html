@@ -432,6 +432,43 @@
       </details>
     </section>
 
+    <section id="goldenCasePanel" class="panel secondary-panel">
+      <details>
+        <summary>Golden Case Runner / 開発者用</summary>
+        <p class="hint">過去の失敗ケースの期待値と、現在のDecision Ledger / Answer Ledger / 出口カード抽出結果を並べて確認します。完全自動判定ではなく、手動回帰確認の補助です。</p>
+        <label for="goldenCaseSelect">Golden Case</label>
+        <select id="goldenCaseSelect"></select>
+        <div class="button-grid">
+          <button id="loadGoldenCaseTopicButton" type="button">入力テーマをセット</button>
+          <button id="copyGoldenCaseSteeringButton" type="button">軌道修正メモをコピー</button>
+          <button id="refreshGoldenCaseButton" type="button">現在値を更新</button>
+        </div>
+        <p id="goldenCaseStatus" class="status" aria-live="polite"></p>
+        <div class="review-complete-grid">
+          <article class="review-complete-card">
+            <h3>期待値</h3>
+            <pre id="goldenCaseExpectedText" class="review-complete-text"></pre>
+          </article>
+          <article class="review-complete-card">
+            <h3>Actual Decision / Answer Ledger</h3>
+            <pre id="goldenCaseActualLedgerText" class="review-complete-text"></pre>
+          </article>
+          <article class="review-complete-card wide">
+            <h3>Actual Exit Cards</h3>
+            <pre id="goldenCaseActualExitCardsText" class="review-complete-text"></pre>
+          </article>
+          <article class="review-complete-card">
+            <h3>Final QA 矛盾検出</h3>
+            <pre id="goldenCaseFinalQaText" class="review-complete-text"></pre>
+          </article>
+          <article class="review-complete-card">
+            <h3>簡易チェック</h3>
+            <pre id="goldenCaseCheckText" class="review-complete-text"></pre>
+          </article>
+        </div>
+      </details>
+    </section>
+
     <section id="markdownPanel" class="panel secondary-panel">
       <details>
         <summary>Markdown</summary>
