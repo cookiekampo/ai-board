@@ -1260,7 +1260,6 @@ const aiUrls = {
 };
 
 const shortcutNames = {
-  chatgpt: "AI会議 ChatGPT",
   claude: "AI会議 Claude",
   gemini: "AI会議 Gemini"
 };
@@ -1352,7 +1351,6 @@ const els = {
   openTopicChatGptButton: document.getElementById("openTopicChatGptButton"),
   openTopicClaudeButton: document.getElementById("openTopicClaudeButton"),
   openTopicGeminiButton: document.getElementById("openTopicGeminiButton"),
-  shortcutTopicChatGptButton: document.getElementById("shortcutTopicChatGptButton"),
   shortcutTopicClaudeButton: document.getElementById("shortcutTopicClaudeButton"),
   shortcutTopicGeminiButton: document.getElementById("shortcutTopicGeminiButton"),
   draftTopicCardButton: document.getElementById("draftTopicCardButton"),
@@ -1404,7 +1402,6 @@ const els = {
   openChatGptButton: document.getElementById("openChatGptButton"),
   openClaudeButton: document.getElementById("openClaudeButton"),
   openGeminiButton: document.getElementById("openGeminiButton"),
-  shortcutChatGptButton: document.getElementById("shortcutChatGptButton"),
   shortcutClaudeButton: document.getElementById("shortcutClaudeButton"),
   shortcutGeminiButton: document.getElementById("shortcutGeminiButton"),
   copyStatus: document.getElementById("copyStatus"),
@@ -1432,7 +1429,6 @@ const els = {
   deepResearchCopyPanel: document.getElementById("deepResearchCopyPanel"),
   deepResearchPromptText: document.getElementById("deepResearchPromptText"),
   copyDeepResearchPromptButton: document.getElementById("copyDeepResearchPromptButton"),
-  shortcutDeepResearchChatGptButton: document.getElementById("shortcutDeepResearchChatGptButton"),
   deepResearchCopyStatus: document.getElementById("deepResearchCopyStatus"),
   markdownPanel: document.getElementById("markdownPanel"),
   markdownText: document.getElementById("markdownText"),
@@ -1475,7 +1471,6 @@ function bindEvents() {
   els.openTopicChatGptButton.addEventListener("click", () => copyTopicPromptAndOpen("chatgpt"));
   els.openTopicClaudeButton.addEventListener("click", () => copyTopicPromptAndOpen("claude"));
   els.openTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndOpen("gemini"));
-  els.shortcutTopicChatGptButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("chatgpt"));
   els.shortcutTopicClaudeButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("claude"));
   els.shortcutTopicGeminiButton.addEventListener("click", () => copyTopicPromptAndRunShortcut("gemini"));
   els.draftTopicCardButton.addEventListener("click", draftTopicCardFromRoughTopic);
@@ -1522,13 +1517,11 @@ function bindEvents() {
   els.openChatGptButton.addEventListener("click", () => copyAndOpen("chatgpt"));
   els.openClaudeButton.addEventListener("click", () => copyAndOpen("claude"));
   els.openGeminiButton.addEventListener("click", () => copyAndOpen("gemini"));
-  els.shortcutChatGptButton.addEventListener("click", () => copyAndRunShortcut("chatgpt"));
   els.shortcutClaudeButton.addEventListener("click", () => copyAndRunShortcut("claude"));
   els.shortcutGeminiButton.addEventListener("click", () => copyAndRunShortcut("gemini"));
   els.steeringText.addEventListener("input", saveCurrentSteeringNote);
   els.saveAnswerButton.addEventListener("click", saveAnswerAndNext);
   els.copyDeepResearchPromptButton.addEventListener("click", copyDeepResearchPrompt);
-  els.shortcutDeepResearchChatGptButton.addEventListener("click", copyDeepResearchPromptAndRunChatGptShortcut);
   if (els.copyDeepResearchReviewFullButton) {
     els.copyDeepResearchReviewFullButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("full"));
   }
@@ -2673,7 +2666,6 @@ function hasCurrentStepWork() {
 
 function updateRecommendedAiButtons(target) {
   const buttons = [
-    { service: "ChatGPT", el: els.shortcutChatGptButton },
     { service: "Claude", el: els.shortcutClaudeButton },
     { service: "Gemini", el: els.shortcutGeminiButton }
   ];
@@ -3211,15 +3203,6 @@ async function copyDeepResearchPrompt() {
     return;
   }
   await copyText(prompt, els.deepResearchPromptText, els.deepResearchCopyStatus);
-}
-
-async function copyDeepResearchPromptAndRunChatGptShortcut() {
-  const prompt = els.deepResearchPromptText.value.trim();
-  if (!prompt) {
-    setStatus(els.deepResearchCopyStatus, "コピーできるDeep Research用プロンプトがまだありません。", "warn");
-    return;
-  }
-  await copyTextAndRunShortcut("chatgpt", prompt, els.deepResearchPromptText, els.deepResearchCopyStatus);
 }
 
 function extractDeepResearchPrompt() {
