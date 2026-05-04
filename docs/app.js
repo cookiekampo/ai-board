@@ -1,6 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
-const APP_CACHE_NAME = "ai-board-static-v0.1.63";
+const DEFAULT_MODE = "deepResearchPrompt";
+const APP_CACHE_NAME = "ai-board-static-v0.1.64";
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
 if ("serviceWorker" in navigator) {
@@ -2636,7 +2637,7 @@ function handleTopicCardPaste() {
 
 function loadState() {
   const fallback = {
-    mode: "basic",
+    mode: DEFAULT_MODE,
     topicCard: templates.general,
     setupDone: false,
     quickFields: defaultQuickFields(),
@@ -3016,7 +3017,7 @@ function changeMode() {
     els.modeSelect.value = state.mode;
     return;
   }
-  state.mode = modeSteps[mode] ? mode : "basic";
+  state.mode = modeSteps[mode] ? mode : DEFAULT_MODE;
   state.currentStep = normalizeStep(state.currentStep, state.mode);
   els.modeSelect.value = state.mode;
   updateTopicPrompt();
@@ -3086,7 +3087,7 @@ function currentStepIndex() {
 }
 
 function getStepsForMode(mode) {
-  return modeSteps[mode] || modeSteps.basic;
+  return modeSteps[mode] || modeSteps[DEFAULT_MODE] || modeSteps.basic;
 }
 
 function getSteps() {

@@ -44,6 +44,21 @@
       <p class="hint">完了にすると、右上ボタンが薄く「初期設定済み」と表示されます。後からいつでも開けます。</p>
     </section>
 
+    <section class="panel secondary-panel">
+      <details open>
+        <summary>まず会議モードを選びます</summary>
+        <label for="modeSelect">会議モード</label>
+        <select id="modeSelect">
+          <option value="deepResearchPrompt">Deep Researchプロンプト作成</option>
+          <option value="deepResearchReview">Deep Research結果レビュー</option>
+          <option value="review">review: 文章・企画・仕様のレビュー</option>
+          <option value="decision">decision: 複数案の比較・判断</option>
+          <option value="basic">basic: 通常の提案・批判・結論</option>
+        </select>
+        <p class="hint">次に議題カードを作成します。保存済みの有効なモードがある場合は、その選択を維持します。</p>
+      </details>
+    </section>
+
     <section class="panel">
       <h2>まずテーマを書く</h2>
       <div class="step-zero">
@@ -133,15 +148,6 @@
     <section class="panel secondary-panel">
       <details open>
         <summary>会議設定・議題カードの確認</summary>
-        <label for="modeSelect">会議モード</label>
-        <select id="modeSelect">
-          <option value="basic">basic: 通常の提案・批判・結論</option>
-          <option value="decision">decision: 複数案の比較判断</option>
-          <option value="review">review: 文章・企画・仕様のレビュー</option>
-          <option value="deepResearchPrompt">Deep Researchプロンプト作成</option>
-          <option value="deepResearchReview">Deep Research結果レビュー</option>
-        </select>
-        <p class="hint">モードを変えると、Step 1〜6の指示文が変わります。会議ログや議題カードは消えません。</p>
         <details class="quick-card compact-card">
           <summary>項目フォームで作る（任意）</summary>
           <p class="hint">書けるところだけ入力してください。空欄は「未入力」として議題カード化します。</p>
