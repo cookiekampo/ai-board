@@ -1,6 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
-const APP_CACHE_NAME = "ai-board-static-v0.1.61";
+const APP_CACHE_NAME = "ai-board-static-v0.1.62";
+const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -4526,7 +4527,8 @@ async function loadGoldenCases(showStatus = false) {
   goldenCaseLoadState.source = "loading";
   renderGoldenCaseLoadInfo();
   try {
-    const response = await fetch("./golden-cases.json", { cache: "no-store" });
+    const jsonUrl = `./golden-cases.json?reload=${Date.now()}`;
+    const response = await fetchWithTimeout(jsonUrl, { cache: "no-store" }, GOLDEN_CASE_FETCH_TIMEOUT_MS);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const loaded = await response.json();
     if (!Array.isArray(loaded)) throw new Error("golden-cases.json must be an array");
@@ -4556,7 +4558,36 @@ async function loadGoldenCases(showStatus = false) {
 
 async function reloadGoldenCases() {
   setStatus(els.goldenCaseStatus, "Golden Case JSONを再読み込みしています...");
-  await loadGoldenCases(true);
+  if (els.reloadGoldenCasesButton) {
+    els.reloadGoldenCasesButton.disabled = true;
+    els.reloadGoldenCasesButton.textContent = "再読み込み中...";
+  }
+  try {
+    await loadGoldenCases(true);
+  } catch (error) {
+    const message = error && error.message ? error.message : String(error);
+    setStatus(els.goldenCaseStatus, `Golden Case JSON reload failed: ${message}`, "warn");
+  } finally {
+    if (els.reloadGoldenCasesButton) {
+      els.reloadGoldenCasesButton.disabled = false;
+      els.reloadGoldenCasesButton.textContent = "Golden Case JSONを再読み込み";
+    }
+  }
+}
+
+function fetchWithTimeout(resource, options = {}, timeoutMs = 8000) {
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const fetchOptions = controller ? { ...options, signal: controller.signal } : options;
+  let timeoutId = null;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      if (controller) controller.abort();
+      reject(new Error(`request timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+  return Promise.race([fetch(resource, fetchOptions), timeout]).finally(() => {
+    if (timeoutId !== null) clearTimeout(timeoutId);
+  });
 }
 
 function populateGoldenCaseSelect() {
@@ -4612,6 +4643,7 @@ function renderGoldenCaseLoadInfo() {
     els.goldenCaseLoadInfo.textContent = [
       "Loading docs/golden-cases.json...",
       `fallback cases available: ${goldenCases.length}`,
+      `timeout: ${GOLDEN_CASE_FETCH_TIMEOUT_MS / 1000}s`,
       `App cache: ${APP_CACHE_NAME}`
     ].join("\n");
     return;
@@ -5476,6 +5508,7 @@ function resetMeeting() {
 }
 
 function setStatus(el, message, type = "") {
+  if (!el) return;
   el.textContent = message || "";
   el.classList.toggle("error", type === "error");
   el.classList.toggle("warn", type === "warn");
