@@ -220,6 +220,98 @@
     "notes": "初回では方剤候補名を出さず、病名処方やランキングを明示的に禁止するケース。"
   },
   {
+    "caseId": "orthostatic_kampo_doctor_conflict_resolution",
+    "aliases": [
+      "orthostatic_conflict_resolution",
+      "orthostatic_kampo_conflict"
+    ],
+    "fixturePath": "test-fixtures/golden-cases/finalqa-orthostatic-kampo-doctor-conflict-resolution.md",
+    "title": "起立性調節障害の漢方相談 / 漢方医向け conflict resolution",
+    "mode": "deepResearchPrompt",
+    "initialTopic": "起立性調節障害の漢方相談",
+    "steeringMemos": [
+      "1 漢方医",
+      "内部資料のため外部に出すことなし",
+      "専門度 上級者向け",
+      "第1回は安全確認・医療連携・問診設計中心",
+      "処方・生薬・証・クラスター整理は論点出しまで",
+      "Answer Ledgerに矛盾がある場合はDecision Ledgerを優先"
+    ],
+    "expectedDecisionLedger": [
+      "主読者：漢方医",
+      "副読者：薬剤師、漢方薬局スタッフ、内部研修担当者、漢方相談員",
+      "専門度：上級者向け",
+      "用途：内部学習、相談準備、問診設計、勉強会、症例検討",
+      "外部公開の有無：外部公開しない",
+      "初回調査範囲：医学的基礎、安全確認、受診勧奨、医療連携、問診項目、困りごと分類、症状クラスターの入口、年齢別注意、不登校・心理面・家族対応・学校対応は軽く触れる",
+      "漢方医学的病態・処方群・生薬は後続調査の論点出しまで",
+      "除外範囲：診断、処方決定、服薬変更指示、標準医療否定、受診不要の示唆、効果保証、治癒保証、病名処方、処方ランキング、Web公開、患者配布、販売促進、個人ブログ・体験談・SNS・販売ページ・広告LPを根拠にすること"
+    ],
+    "expectedAnswerLedger": [
+      "漢方医",
+      "外部公開しない",
+      "上級者向け",
+      "Decision Ledgerを優先"
+    ],
+    "expectedPromptIncludes": [
+      "起立性調節障害の漢方相談",
+      "初回安全確認・医療連携・問診設計チェックシート",
+      "漢方医",
+      "外部公開しない",
+      "診断をしない",
+      "処方決定をしない",
+      "病名処方を作らない",
+      "危険サイン",
+      "受診勧奨",
+      "鑑別すべき疾患",
+      "本人・保護者への問診",
+      "後続Deep Research論点一覧",
+      "危険表現レビュー"
+    ],
+    "expectedPromptExcludes": [
+      "患者配布用として作成",
+      "Web公開用として作成",
+      "販売促進を目的とする"
+    ],
+    "prohibitedRecommendationPatterns": [
+      "起立性調節障害には〇〇湯",
+      "おすすめランキング",
+      "治る",
+      "必ず改善",
+      "受診不要",
+      "標準医療を否定"
+    ],
+    "allowedSafetyContextPatterns": [
+      "禁止",
+      "避ける",
+      "しない",
+      "行わない",
+      "書かない",
+      "除外",
+      "断定しない",
+      "推奨しない",
+      "目的としない",
+      "使わない",
+      "扱わない",
+      "作らない"
+    ],
+    "expectedExitCards": [
+      "完成プロンプト",
+      "推奨する実行順",
+      "追加調査案",
+      "Decision Ledger",
+      "Answer Ledger",
+      "未回答時の仮置き",
+      "complete prompt",
+      "order",
+      "additional prompts",
+      "decision ledger",
+      "answer ledger",
+      "assumptions"
+    ],
+    "notes": "Answer Ledger内の矛盾をDecision Ledger優先で解決し、第1回は安全確認・医療連携・問診設計中心、処方・生薬は論点出しまでに寄せるケース。"
+  },
+  {
     "caseId": "drr-fibromyalgia-deep-research-review",
     "fixturePath": "test-fixtures/golden-cases/finaljudge-fibromyalgia-deep-research-review.md",
     "title": "線維筋痛症Deep Research結果レビュー",

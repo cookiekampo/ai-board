@@ -340,6 +340,25 @@ textarea {
   margin: 0 0 8px;
 }
 
+.golden-case-load-info {
+  margin: 10px 0 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(13, 107, 95, 0.05);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.golden-case-load-info.warn {
+  color: var(--fg);
+  border-color: var(--warn);
+  background: rgba(122, 82, 0, 0.12);
+}
+
 .exit-card-header {
   align-items: flex-start;
   display: flex;
@@ -357,6 +376,20 @@ textarea {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.collapsible-exit-card.is-collapsed > .hint,
+.collapsible-exit-card.is-collapsed .review-complete-text {
+  display: none;
+}
+
+.exit-card-toggle-button {
+  color: var(--muted);
+}
+
+button.copy-success {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 button.compact {

@@ -147,7 +147,7 @@ function main() {
     }
     if (args.validate) {
       const cases = readGoldenCases();
-      const result = validateGoldenCases(cases);
+      const result = validateGoldenCases(cases, { minCases: args.minCases });
       printValidationResult(result);
       process.exitCode = result.pass ? 0 : 1;
       return;
@@ -195,6 +195,7 @@ function parseArgs(argv) {
     all: false,
     caseId: "",
     actualPath: "",
+    minCases: 4,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
@@ -214,6 +215,14 @@ function parseArgs(argv) {
       index += 1;
       if (!argv[index]) throw usageError("--actual requires a file path.");
       args.actualPath = argv[index];
+    } else if (token === "--min-cases") {
+      index += 1;
+      if (!argv[index]) throw usageError("--min-cases requires a number.");
+      const parsed = Number.parseInt(argv[index], 10);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        throw usageError("--min-cases must be a non-negative integer.");
+      }
+      args.minCases = parsed;
     } else if (token === "--help" || token === "-h") {
       throw usageError(usageText());
     } else {
@@ -231,7 +240,7 @@ function usageText() {
   return [
     "Usage:",
     "  node scripts/check-golden-cases.mjs --list",
-    "  node scripts/check-golden-cases.mjs --validate",
+    "  node scripts/check-golden-cases.mjs --validate [--min-cases <n>]",
     "  node scripts/check-golden-cases.mjs --all",
     "  node scripts/check-golden-cases.mjs --all --json",
     "  node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md>",
@@ -367,10 +376,11 @@ function listGoldenCases(cases) {
   });
 }
 
-function validateGoldenCases(cases) {
+function validateGoldenCases(cases, options = {}) {
   const failures = [];
   const warnings = [];
   const checkedItems = [];
+  const minCases = Number.isFinite(options.minCases) ? options.minCases : 4;
 
   if (!Array.isArray(cases)) {
     return {
@@ -386,6 +396,11 @@ function validateGoldenCases(cases) {
     failures.push("docs/golden-cases.json must include at least one case.");
   } else {
     checkedItems.push("json.nonEmpty");
+  }
+  if (cases.length < minCases) {
+    warnings.push(`docs/golden-cases.json has ${cases.length} cases; expected at least ${minCases}.`);
+  } else {
+    checkedItems.push(`json.minCases:${minCases}`);
   }
 
   const seenIds = new Map();
@@ -421,6 +436,12 @@ function validateGoldenCases(cases) {
       failures.push(`${id || prefix}.fixturePath must be a string.`);
     } else if (caseDef.fixturePath) {
       checkedItems.push(`${id || prefix}.fixturePath`);
+      const fixtureFullPath = path.resolve(repoRoot, caseDef.fixturePath);
+      if (!fs.existsSync(fixtureFullPath)) {
+        failures.push(`${id || prefix}.fixturePath does not exist: ${caseDef.fixturePath}`);
+      } else {
+        checkedItems.push(`${id || prefix}.fixturePath.exists`);
+      }
     }
 
     const expectedKeys = collectExpectedKeys(caseDef);

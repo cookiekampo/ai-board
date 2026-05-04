@@ -539,9 +539,11 @@
       <details>
         <summary>Golden Case Runner / 開発者用</summary>
         <p class="hint">過去の失敗ケースの期待値と、現在のDecision Ledger / Answer Ledger / 出口カード抽出結果を並べて確認します。完全自動判定ではなく、手動回帰確認の補助です。</p>
+        <div id="goldenCaseLoadInfo" class="golden-case-load-info" aria-live="polite"></div>
         <label for="goldenCaseSelect">Golden Case</label>
         <select id="goldenCaseSelect"></select>
         <div class="button-grid">
+          <button id="reloadGoldenCasesButton" type="button">Golden Case JSONを再読み込み</button>
           <button id="loadGoldenCaseTopicButton" type="button">入力テーマをセット</button>
           <button id="copyGoldenCaseSteeringButton" type="button">軌道修正メモをコピー</button>
           <button id="refreshGoldenCaseButton" type="button">現在値を更新</button>

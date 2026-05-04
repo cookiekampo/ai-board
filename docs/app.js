@@ -1,5 +1,6 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
+const APP_CACHE_NAME = "ai-board-static-v0.1.61";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -1575,7 +1576,8 @@ let goldenCases = goldenCaseFallbacks.map(normalizeGoldenCaseDefinition);
 const goldenCaseLoadState = {
   loaded: false,
   failed: false,
-  error: ""
+  error: "",
+  source: "loading"
 };
 
 function normalizeGoldenCaseDefinition(goldenCase) {
@@ -1751,7 +1753,9 @@ const els = {
   deepResearchKampoPublicText: document.getElementById("deepResearchKampoPublicText"),
   deepResearchKampoProfessionalText: document.getElementById("deepResearchKampoProfessionalText"),
   goldenCasePanel: document.getElementById("goldenCasePanel"),
+  goldenCaseLoadInfo: document.getElementById("goldenCaseLoadInfo"),
   goldenCaseSelect: document.getElementById("goldenCaseSelect"),
+  reloadGoldenCasesButton: document.getElementById("reloadGoldenCasesButton"),
   loadGoldenCaseTopicButton: document.getElementById("loadGoldenCaseTopicButton"),
   copyGoldenCaseSteeringButton: document.getElementById("copyGoldenCaseSteeringButton"),
   refreshGoldenCaseButton: document.getElementById("refreshGoldenCaseButton"),
@@ -1792,6 +1796,7 @@ function init() {
   populateGoldenCaseSelect();
   void loadGoldenCases();
   bindEvents();
+  setupExternalLinkDiagnostics();
   setupWorkflowLayoutControls();
   renderSetupPanel();
   render();
@@ -1962,6 +1967,9 @@ function bindEvents() {
   }
   if (els.goldenCaseSelect) {
     els.goldenCaseSelect.addEventListener("change", renderGoldenCasePanel);
+  }
+  if (els.reloadGoldenCasesButton) {
+    els.reloadGoldenCasesButton.addEventListener("click", reloadGoldenCases);
   }
   if (els.loadGoldenCaseTopicButton) {
     els.loadGoldenCaseTopicButton.addEventListener("click", loadSelectedGoldenCaseTopic);
@@ -3054,6 +3062,8 @@ function render() {
   renderDeepResearchCopyPanel();
   renderGoldenCasePanel();
   renderWorkflowLayout(complete);
+  applyExitCardDisclosures();
+  hardenExternalLinks(document);
 }
 
 function renderDeepResearchReviewInputPanel() {
@@ -3084,6 +3094,82 @@ function renderPromptContextModePanel(step) {
     const lightPrompt = generateLightPrompt(state.currentStep, step, state.answers);
     els.promptLengthInfo.textContent = `完全版: ${formatCharacterCount(fullPrompt.length)}文字 / 軽量版: ${formatCharacterCount(lightPrompt.length)}文字`;
   }
+}
+
+const deepResearchPromptOpenExitCards = new Set([
+  "deepResearchCompletePromptText",
+  "deepResearchOrderText"
+]);
+
+const deepResearchReviewOpenExitCards = new Set([
+  "deepResearchReviewAdoptionText",
+  "deepResearchReviewArtifactText"
+]);
+
+function applyExitCardDisclosures() {
+  applyExitCardDisclosuresForPanel(els.deepResearchCopyPanel, deepResearchPromptOpenExitCards);
+  applyExitCardDisclosuresForPanel(els.deepResearchReviewCompletePanel, deepResearchReviewOpenExitCards);
+}
+
+function resetExitCardDisclosureState(panel) {
+  if (!panel) return;
+  panel.querySelectorAll(".collapsible-exit-card").forEach((card) => {
+    delete card.dataset.exitDisclosureInitialized;
+  });
+}
+
+function applyExitCardDisclosuresForPanel(panel, openTextIds) {
+  if (!panel || panel.hidden) return;
+  panel.querySelectorAll(".review-complete-card").forEach((card) => {
+    const body = card.querySelector(".review-complete-text");
+    if (!body || !body.id) return;
+    const header = ensureExitCardHeader(card);
+    if (!header) return;
+    card.classList.add("collapsible-exit-card");
+    let toggle = card.querySelector(".exit-card-toggle-button");
+    if (!toggle) {
+      toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "exit-card-toggle-button compact";
+      toggle.setAttribute("aria-controls", body.id);
+      toggle.addEventListener("click", () => {
+        setExitCardCollapsed(card, !card.classList.contains("is-collapsed"));
+      });
+      const actions = header.querySelector(".exit-card-actions");
+      if (actions) {
+        actions.insertBefore(toggle, actions.firstChild);
+      } else {
+        const firstButton = header.querySelector("button");
+        header.insertBefore(toggle, firstButton || null);
+      }
+    }
+    if (card.dataset.exitDisclosureInitialized !== "true") {
+      setExitCardCollapsed(card, !openTextIds.has(body.id));
+      card.dataset.exitDisclosureInitialized = "true";
+    } else {
+      setExitCardCollapsed(card, card.classList.contains("is-collapsed"));
+    }
+  });
+}
+
+function ensureExitCardHeader(card) {
+  const existingHeader = card.querySelector(".exit-card-header");
+  if (existingHeader) return existingHeader;
+  const heading = card.querySelector("h3");
+  if (!heading) return null;
+  const header = document.createElement("div");
+  header.className = "exit-card-header";
+  heading.parentNode.insertBefore(header, heading);
+  header.appendChild(heading);
+  return header;
+}
+
+function setExitCardCollapsed(card, collapsed) {
+  card.classList.toggle("is-collapsed", collapsed);
+  const toggle = card.querySelector(".exit-card-toggle-button");
+  if (!toggle) return;
+  toggle.textContent = collapsed ? "開く" : "閉じる";
+  toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
 }
 
 function countCompletedAnswers() {
@@ -3429,7 +3515,21 @@ async function copyText(text, sourceEl, statusEl, showSuccess = true) {
   return false;
 }
 
+function flashCopyButton(button) {
+  if (!(button instanceof HTMLButtonElement)) return;
+  if (!button.closest(".review-complete-card")) return;
+  const previousText = button.textContent;
+  button.textContent = "コピーしました";
+  button.classList.add("copy-success");
+  window.setTimeout(() => {
+    if (!button.isConnected) return;
+    button.textContent = previousText;
+    button.classList.remove("copy-success");
+  }, 1400);
+}
+
 async function copyPlainText(text, statusEl, successMessage) {
+  const activeButton = document.activeElement;
   const buffer = document.createElement("textarea");
   buffer.value = text;
   buffer.setAttribute("readonly", "");
@@ -3439,7 +3539,10 @@ async function copyPlainText(text, statusEl, successMessage) {
   document.body.appendChild(buffer);
   const ok = await copyText(text, buffer, statusEl, false);
   document.body.removeChild(buffer);
-  if (ok) setStatus(statusEl, successMessage || "コピーしました");
+  if (ok) {
+    setStatus(statusEl, successMessage || "コピーしました");
+    flashCopyButton(activeButton);
+  }
   return ok;
 }
 
@@ -4101,6 +4204,7 @@ function renderDeepResearchReviewCompletePanel() {
   const canShow = state.mode === "deepResearchReview" && finalStep.role.includes("Final Judge") && (isComplete() || hasImportedFinal);
   els.deepResearchReviewCompletePanel.hidden = !canShow;
   if (!canShow) {
+    resetExitCardDisclosureState(els.deepResearchReviewCompletePanel);
     [
       els.deepResearchReviewAdoptionText,
       els.deepResearchReviewAdoptionConditionsText,
@@ -4279,6 +4383,7 @@ function renderDeepResearchCopyPanel() {
   const canCopy = state.mode === "deepResearchPrompt" && isComplete();
   els.deepResearchCopyPanel.hidden = !canCopy;
   if (!canCopy) {
+    resetExitCardDisclosureState(els.deepResearchCopyPanel);
     clearDeepResearchPromptCompleteTexts();
     return;
   }
@@ -4413,8 +4518,13 @@ async function copyDeepResearchPromptCompletePart(kind) {
   await copyPlainText(payload.text, els.deepResearchCopyStatus, `${payload.label}をコピーしました。`);
 }
 
-async function loadGoldenCases() {
+async function loadGoldenCases(showStatus = false) {
   if (!els.goldenCasePanel) return;
+  goldenCaseLoadState.loaded = false;
+  goldenCaseLoadState.failed = false;
+  goldenCaseLoadState.error = "";
+  goldenCaseLoadState.source = "loading";
+  renderGoldenCaseLoadInfo();
   try {
     const response = await fetch("./golden-cases.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -4426,17 +4536,27 @@ async function loadGoldenCases() {
     goldenCaseLoadState.loaded = true;
     goldenCaseLoadState.failed = false;
     goldenCaseLoadState.error = "";
+    goldenCaseLoadState.source = "json";
     populateGoldenCaseSelect();
     renderGoldenCasePanel();
+    if (showStatus) {
+      setStatus(els.goldenCaseStatus, `Golden Case JSONを読み込みました: ${goldenCases.length}件`);
+    }
   } catch (error) {
     goldenCases = goldenCaseFallbacks.map(normalizeGoldenCaseDefinition);
     goldenCaseLoadState.loaded = false;
     goldenCaseLoadState.failed = true;
     goldenCaseLoadState.error = error && error.message ? error.message : String(error);
+    goldenCaseLoadState.source = "fallback";
     populateGoldenCaseSelect();
     renderGoldenCasePanel();
     setStatus(els.goldenCaseStatus, `Golden Case JSON load failed: ${goldenCaseLoadState.error}`, "warn");
   }
+}
+
+async function reloadGoldenCases() {
+  setStatus(els.goldenCaseStatus, "Golden Case JSONを再読み込みしています...");
+  await loadGoldenCases(true);
 }
 
 function populateGoldenCaseSelect() {
@@ -4462,6 +4582,7 @@ function getSelectedGoldenCase() {
 
 function renderGoldenCasePanel() {
   if (!els.goldenCasePanel) return;
+  renderGoldenCaseLoadInfo();
   const goldenCase = getSelectedGoldenCase();
   if (!goldenCase) {
     [
@@ -4481,6 +4602,38 @@ function renderGoldenCasePanel() {
   setReviewCompleteText(els.goldenCaseActualExitCardsText, actual.exitCards);
   setReviewCompleteText(els.goldenCaseFinalQaText, actual.finalQa);
   setReviewCompleteText(els.goldenCaseCheckText, formatGoldenCaseEvaluation(goldenCase, actual, evaluation));
+}
+
+function renderGoldenCaseLoadInfo() {
+  if (!els.goldenCaseLoadInfo) return;
+  const caseIds = goldenCases.map((goldenCase) => goldenCase.id || goldenCase.caseId).filter(Boolean);
+  if (goldenCaseLoadState.source === "loading") {
+    els.goldenCaseLoadInfo.classList.remove("warn");
+    els.goldenCaseLoadInfo.textContent = [
+      "Loading docs/golden-cases.json...",
+      `fallback cases available: ${goldenCases.length}`,
+      `App cache: ${APP_CACHE_NAME}`
+    ].join("\n");
+    return;
+  }
+  const usingFallback = goldenCaseLoadState.failed || !goldenCaseLoadState.loaded;
+  els.goldenCaseLoadInfo.classList.toggle("warn", usingFallback);
+  if (!usingFallback) {
+    els.goldenCaseLoadInfo.textContent = [
+      `Loaded from docs/golden-cases.json: ${goldenCases.length} cases`,
+      `caseIds: ${caseIds.join(", ") || "(none)"}`,
+      `App cache: ${APP_CACHE_NAME}`
+    ].join("\n");
+    return;
+  }
+  els.goldenCaseLoadInfo.textContent = [
+    "Fallback mode: golden-cases.json load failed",
+    `Error: ${goldenCaseLoadState.error || "not loaded"}`,
+    `fallback cases: ${goldenCases.length}`,
+    `caseIds: ${caseIds.join(", ") || "(none)"}`,
+    `App cache: ${APP_CACHE_NAME}`,
+    "これは通常状態ではありません。local server / Service Worker cache / JSON parseを確認してください。"
+  ].join("\n");
 }
 
 function formatGoldenCaseExpected(goldenCase) {
@@ -5141,6 +5294,61 @@ function extractMarkdownSection(text, headings) {
     return afterHeading.trim();
   }
   return "";
+}
+
+function isExternalHttpUrl(url) {
+  return (url.protocol === "http:" || url.protocol === "https:") && url.origin !== window.location.origin;
+}
+
+function getExternalLinkContext(link) {
+  const context = link.closest("[data-exit-card-key], .review-complete-card, .deep-research-copy-card, .panel, section, article, [id]");
+  if (!context) return "unknown";
+  const id = context.id ? `#${context.id}` : "";
+  const dataLabel = context.dataset ? context.dataset.exitCardKey || context.dataset.cardKey || "" : "";
+  const heading = context.querySelector("h2, h3, h4, summary, legend")?.textContent?.trim() || "";
+  const classLabel = typeof context.className === "string" ? context.className.trim().split(/\s+/).slice(0, 3).join(".") : "";
+  return [id, dataLabel, heading, classLabel].filter(Boolean).join(" / ") || context.tagName.toLowerCase();
+}
+
+function hardenExternalLinks(root = document) {
+  if (!root || typeof root.querySelectorAll !== "function") return;
+  root.querySelectorAll("a[href]").forEach((link) => {
+    let url;
+    try {
+      url = new URL(link.getAttribute("href") || "", window.location.href);
+    } catch (error) {
+      return;
+    }
+    if (!isExternalHttpUrl(url)) return;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.dataset.externalLink = "true";
+    if (!link.title) link.title = `外部サイトを開きます: ${url.hostname}`;
+  });
+}
+
+function setupExternalLinkDiagnostics() {
+  hardenExternalLinks(document);
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const link = target ? target.closest("a[href]") : null;
+    if (!link) return;
+    let url;
+    try {
+      url = new URL(link.getAttribute("href") || "", window.location.href);
+    } catch (error) {
+      return;
+    }
+    if (!isExternalHttpUrl(url)) return;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    console.info("[AI Board] external link click", {
+      href: url.href,
+      hostname: url.hostname,
+      linkText: link.textContent.trim().slice(0, 120),
+      context: getExternalLinkContext(link)
+    });
+  }, true);
 }
 
 function generateMarkdown() {
