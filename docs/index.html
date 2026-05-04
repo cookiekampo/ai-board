@@ -264,6 +264,7 @@
         <button id="copyDeepResearchReviewPracticalButton" type="button">実用版だけをコピー</button>
         <button id="copyDeepResearchReviewAdditionalPromptButton" type="button">追加Deep Researchプロンプト案をコピー</button>
         <button id="copyDeepResearchReviewIssuesButton" type="button">未解決Issueをコピー</button>
+        <button id="copyDeepResearchReviewNextActionsButton" type="button">次アクションをコピー</button>
         <button id="startNewDeepResearchReviewButton" class="danger" type="button">新しいDeep Research reviewを開始</button>
       </div>
       <p id="deepResearchReviewCompleteStatus" class="status" aria-live="polite"></p>
@@ -279,6 +280,10 @@
         <article class="review-complete-card">
           <h3>採用できる内容</h3>
           <pre id="deepResearchReviewUsableText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>修正すべき内容</h3>
+          <pre id="deepResearchReviewFixesText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card">
           <h3>危険なため使わない内容</h3>
@@ -304,13 +309,81 @@
     </section>
 
     <section id="deepResearchCopyPanel" class="panel" hidden>
-      <h2>Deep Researchへ貼る</h2>
-      <p class="hint">Step 6の回答から、Deep Researchに貼る完成プロンプトだけを抽出します。</p>
-      <textarea id="deepResearchPromptText" class="markdown compact" readonly></textarea>
+      <p class="eyebrow">Deep Research設計 完了</p>
+      <h2>出口カード</h2>
+      <p class="hint">Final QAの出力から、Deep Researchに貼るプロンプトや次の作業に使う項目だけを切り出します。</p>
       <div class="button-grid">
-        <button id="copyDeepResearchPromptButton" class="primary" type="button">Deep Research用プロンプトをコピー</button>
+        <button id="copyDeepResearchPromptButton" class="primary" type="button">完成プロンプトをコピー</button>
+        <button id="copyDeepResearchOneShotButton" type="button">一発版をコピー</button>
+        <button id="copyDeepResearchSplitButton" type="button">分割版をコピー</button>
+        <button id="copyDeepResearchOrderButton" type="button">推奨する実行順をコピー</button>
+        <button id="copyDeepResearchAdditionalButton" type="button">追加調査案をコピー</button>
+        <button id="copyDeepResearchQuestionsButton" type="button">確認質問をコピー</button>
       </div>
       <p id="deepResearchCopyStatus" class="status" aria-live="polite"></p>
+      <div class="review-complete-grid">
+        <article class="review-complete-card wide">
+          <h3>一発版プロンプト</h3>
+          <pre id="deepResearchOneShotText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card wide">
+          <h3>分割版プロンプト</h3>
+          <pre id="deepResearchSplitText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>推奨する実行順</h3>
+          <pre id="deepResearchOrderText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>追加調査案</h3>
+          <pre id="deepResearchAdditionalText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>ユーザーへの確認質問</h3>
+          <pre id="deepResearchQuestionsText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card">
+          <h3>未回答時の仮置き</h3>
+          <pre id="deepResearchAssumptionsText" class="review-complete-text"></pre>
+        </article>
+      </div>
+      <details id="deepResearchKampoExitDetails" class="quick-card">
+        <summary>病名×漢方テーマ用の出口カード</summary>
+        <div class="button-grid">
+          <button id="copyDeepResearchKampoBaselineButton" type="button">医学的基礎をコピー</button>
+          <button id="copyDeepResearchKampoPatternButton" type="button">漢方病態・証をコピー</button>
+          <button id="copyDeepResearchKampoFormulaButton" type="button">処方・生薬・症状クラスターをコピー</button>
+          <button id="copyDeepResearchKampoSafetyButton" type="button">方剤別安全性をコピー</button>
+          <button id="copyDeepResearchKampoPublicButton" type="button">相談前メモ化をコピー</button>
+          <button id="copyDeepResearchKampoProfessionalButton" type="button">専門職向け分冊化をコピー</button>
+        </div>
+        <div class="review-complete-grid">
+          <article class="review-complete-card">
+            <h3>医学的基礎プロンプト</h3>
+            <pre id="deepResearchKampoBaselineText" class="review-complete-text"></pre>
+          </article>
+          <article class="review-complete-card">
+            <h3>漢方病態・証プロンプト</h3>
+            <pre id="deepResearchKampoPatternText" class="review-complete-text"></pre>
+          </article>
+          <article class="review-complete-card wide">
+            <h3>処方・生薬・症状クラスター整理プロンプト</h3>
+            <pre id="deepResearchKampoFormulaText" class="review-complete-text"></pre>
+          </article>
+          <article class="review-complete-card">
+            <h3>方剤別安全性・添付文書照合プロンプト</h3>
+            <pre id="deepResearchKampoSafetyText" class="review-complete-text"></pre>
+          </article>
+          <article class="review-complete-card">
+            <h3>一般ユーザー向け相談前メモ化プロンプト</h3>
+            <pre id="deepResearchKampoPublicText" class="review-complete-text"></pre>
+          </article>
+          <article class="review-complete-card wide">
+            <h3>専門職向け分冊化プロンプト</h3>
+            <pre id="deepResearchKampoProfessionalText" class="review-complete-text"></pre>
+          </article>
+        </div>
+      </details>
     </section>
 
     <section id="markdownPanel" class="panel secondary-panel">
