@@ -1,0 +1,41 @@
+name: Golden Cases
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  golden-cases:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: Install dependencies when lockfile exists
+        if: ${{ hashFiles('package-lock.json') != '' }}
+        run: npm ci
+
+      - name: Syntax checks
+        run: |
+          node --check scripts/check-golden-cases.mjs
+          node --check docs/app.js
+          node --check docs/service-worker.js
+
+      - name: Golden Case JSON parse
+        run: node -e "JSON.parse(require('fs').readFileSync('docs/golden-cases.json','utf8'))"
+
+      - name: Golden Case validation
+        run: npm run golden:validate
+
+      - name: Golden Case fixtures
+        run: npm run golden:test
+
+      - name: Golden Case fixtures JSON output
+        run: npm run golden:test -- --json

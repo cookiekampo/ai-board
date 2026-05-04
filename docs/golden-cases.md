@@ -290,7 +290,27 @@ Warningのみの場合はexit code `0` のままです。
 npm run golden:list
 npm run golden:validate
 npm run golden:test
+npm run golden:test -- --json
 ```
+
+### CI
+
+GitHub Actions の `Golden Cases` workflow では、push / pull_request / workflow_dispatch 時に以下を実行します。
+
+```bash
+node --check scripts/check-golden-cases.mjs
+node --check docs/app.js
+node --check docs/service-worker.js
+node -e "JSON.parse(require('fs').readFileSync('docs/golden-cases.json','utf8'))"
+npm run golden:validate
+npm run golden:test
+npm run golden:test -- --json
+```
+
+`package-lock.json` が存在する場合のみ `npm ci` を実行します。存在しない場合は依存インストールをスキップします。
+
+Golden Caseは、Deep Research設計モードのプロンプト構造、Decision Ledger / Answer Ledger の反映、出口カード抽出の回帰確認です。
+fixtureは個人情報や実患者情報を含めず、医療内容の正しさを保証するものではありません。
 
 ### Exit code
 
