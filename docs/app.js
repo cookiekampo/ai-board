@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.69";
+const APP_CACHE_NAME = "ai-board-static-v0.1.70";
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
 if ("serviceWorker" in navigator) {
@@ -1411,6 +1411,36 @@ Pass / Conditional Pass / Needs Revision / Needs More Research / Reject のい�
 <!-- AI_BOARD:DR_REVIEW_REVISED_ARTIFACT:START -->
 改訂版成果物
 <!-- AI_BOARD:DR_REVIEW_REVISED_ARTIFACT:END -->
+<!-- AI_BOARD:DR_REVIEW_RESEARCH_BRIEF:START -->
+# Research Brief
+
+## Executive Summary
+
+## Research Question
+
+## Key Findings
+
+## Claim / Evidence Table
+この表はreview結果の整理であり、検証済みの真実や推奨ではないことを明記してください。
+
+## Source Quality
+
+## Risk / Safety Notes
+
+## What Can Be Used
+
+## What Cannot Be Used
+
+## Open Questions
+
+## Next Research Prompts
+
+## Decision Ledger
+入力に存在する場合のみ反映してください。存在しない場合は「未提供」または「未抽出」と書いてください。
+
+## Answer Ledger
+入力に存在する場合のみ反映してください。存在しない場合は「未提供」または「未抽出」と書いてください。
+<!-- AI_BOARD:DR_REVIEW_RESEARCH_BRIEF:END -->
 <!-- AI_BOARD:DR_REVIEW_PUBLIC_SAFE_ARTIFACT:START -->
 一般ユーザー向けに安全加工した成果物。
 処方名・生薬名・証・症例報告の処方名は原則出さない。
@@ -1572,6 +1602,8 @@ const deepResearchReviewCompleteSectionLabels = [
   "ユーザーの本来目的に照らした不足",
   "次に必要なDeep Research",
   "改訂版成果物",
+  "Research Brief",
+  "研究ブリーフ",
   "一般向け安全変換版",
   "薬剤師・相談員向け安全確認版",
   "専門職向け内部資料版",
@@ -1644,6 +1676,12 @@ const goldenCaseExitCardAliases = {
   "実用性レビュー": "practicality",
   "改訂版成果物": "artifact",
   "revised artifact": "artifact",
+  "Research Brief": "researchBrief",
+  "research brief": "researchBrief",
+  "研究ブリーフ": "researchBrief",
+  "brief": "researchBrief",
+  "knowledge brief": "researchBrief",
+  "brief card": "researchBrief",
   "一般向け安全変換版": "publicSafeArtifact",
   "public safe artifact": "publicSafeArtifact",
   "public safe conversion": "publicSafeArtifact",
@@ -1832,6 +1870,7 @@ const els = {
   copyDeepResearchReviewGapsButton: document.getElementById("copyDeepResearchReviewGapsButton"),
   copyDeepResearchReviewPracticalityButton: document.getElementById("copyDeepResearchReviewPracticalityButton"),
   copyDeepResearchReviewArtifactButton: document.getElementById("copyDeepResearchReviewArtifactButton"),
+  copyDeepResearchReviewResearchBriefButton: document.getElementById("copyDeepResearchReviewResearchBriefButton"),
   copyDeepResearchReviewPublicSafeButton: document.getElementById("copyDeepResearchReviewPublicSafeButton"),
   copyDeepResearchReviewPharmacySafetyButton: document.getElementById("copyDeepResearchReviewPharmacySafetyButton"),
   copyDeepResearchReviewProInternalButton: document.getElementById("copyDeepResearchReviewProInternalButton"),
@@ -1855,6 +1894,8 @@ const els = {
   deepResearchReviewGapsText: document.getElementById("deepResearchReviewGapsText"),
   deepResearchReviewPracticalityText: document.getElementById("deepResearchReviewPracticalityText"),
   deepResearchReviewArtifactText: document.getElementById("deepResearchReviewArtifactText"),
+  deepResearchReviewResearchBriefCard: document.getElementById("deepResearchReviewResearchBriefCard"),
+  deepResearchReviewResearchBriefText: document.getElementById("deepResearchReviewResearchBriefText"),
   deepResearchReviewPublicSafeText: document.getElementById("deepResearchReviewPublicSafeText"),
   deepResearchReviewPharmacySafetyText: document.getElementById("deepResearchReviewPharmacySafetyText"),
   deepResearchReviewProInternalText: document.getElementById("deepResearchReviewProInternalText"),
@@ -2048,6 +2089,9 @@ function bindEvents() {
   }
   if (els.copyDeepResearchReviewArtifactButton) {
     els.copyDeepResearchReviewArtifactButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("artifact"));
+  }
+  if (els.copyDeepResearchReviewResearchBriefButton) {
+    els.copyDeepResearchReviewResearchBriefButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("researchBrief"));
   }
   if (els.copyDeepResearchReviewPublicSafeButton) {
     els.copyDeepResearchReviewPublicSafeButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("publicSafeArtifact"));
@@ -3344,6 +3388,7 @@ const deepResearchReviewOpenExitCards = new Set([
   "deepResearchReviewAdoptionText",
   "deepResearchReviewPublicSafeText",
   "deepResearchReviewArtifactText",
+  "deepResearchReviewResearchBriefText",
   "deepResearchReviewHandoffCardText",
   "deepResearchReviewNextActionsText"
 ]);
@@ -3845,6 +3890,31 @@ function extractMarkdownSubsection(text, aliases) {
   return body.join("\n").trim();
 }
 
+const researchBriefRequiredSections = [
+  "Executive Summary",
+  "Research Question",
+  "Key Findings",
+  "Claim / Evidence Table",
+  "Source Quality",
+  "Risk / Safety Notes",
+  "What Can Be Used",
+  "What Cannot Be Used",
+  "Open Questions",
+  "Next Research Prompts",
+  "Decision Ledger",
+  "Answer Ledger"
+];
+
+function hasResearchBriefSections(text) {
+  const headings = new Set(
+    String(text || "")
+      .split(/\r?\n/)
+      .map((line) => normalizeMarkdownHeading(line))
+      .filter(Boolean)
+  );
+  return researchBriefRequiredSections.every((section) => headings.has(section));
+}
+
 function createEmptyDecisionLedger() {
   return deepResearchDecisionLedgerFields.reduce((ledger, field) => {
     ledger[field.key] = [];
@@ -4327,6 +4397,16 @@ function extractDeepResearchReviewSection(text, aliases) {
   return body.join("\n").trim();
 }
 
+function extractDeepResearchReviewResearchBrief(text) {
+  const source = String(text || "");
+  const marker = extractAiBoardBlock(source, "DR_REVIEW_RESEARCH_BRIEF");
+  if (marker) return marker;
+  const body = extractMarkdownSubsection(source, ["Research Brief", "研究ブリーフ"]);
+  if (!body) return "";
+  const candidate = `# Research Brief\n\n${body}`.trim();
+  return hasResearchBriefSections(candidate) ? candidate : "";
+}
+
 function buildDeepResearchReviewCompleteParts() {
   const full = getDeepResearchReviewFinalAnswer();
   const parts = {
@@ -4341,6 +4421,7 @@ function buildDeepResearchReviewCompleteParts() {
     gaps: extractAiBoardBlock(full, "DR_REVIEW_GAPS") || extractDeepResearchReviewSection(full, ["抜け漏れ"]),
     practicality: extractAiBoardBlock(full, "DR_REVIEW_PRACTICALITY") || extractDeepResearchReviewSection(full, ["実用性レビュー"]),
     artifact: extractAiBoardBlock(full, "DR_REVIEW_REVISED_ARTIFACT") || extractAiBoardBlock(full, "DR_REVIEW_ARTIFACT") || extractAiBoardBlock(full, "DR_REVIEW_REFINED_ARTIFACT") || extractDeepResearchReviewSection(full, ["改訂版成果物"]),
+    researchBrief: extractDeepResearchReviewResearchBrief(full),
     additionalPrompt: extractAiBoardBlock(full, "DR_REVIEW_ADDITIONAL_PROMPTS") || extractAiBoardBlock(full, "DR_REVIEW_ADDITIONAL_PROMPT") || extractDeepResearchReviewSection(full, ["追加Deep Researchプロンプト案", "追加Deep Researchプロンプト"]),
     issues: extractAiBoardBlock(full, "DR_REVIEW_ISSUES") || extractDeepResearchReviewSection(full, ["Issue / 未解決論点", "未解決Issue", "未解決論点"]),
     nextActions: extractAiBoardBlock(full, "DR_REVIEW_NEXT_ACTION") || extractAiBoardBlock(full, "DR_REVIEW_NEXT_ACTIONS") || extractDeepResearchReviewSection(full, ["次アクション"]),
@@ -4504,6 +4585,7 @@ function renderDeepResearchReviewCompletePanel() {
       els.deepResearchReviewGapsText,
       els.deepResearchReviewPracticalityText,
       els.deepResearchReviewArtifactText,
+      els.deepResearchReviewResearchBriefText,
       els.deepResearchReviewPublicSafeText,
       els.deepResearchReviewPharmacySafetyText,
       els.deepResearchReviewProInternalText,
@@ -4514,6 +4596,7 @@ function renderDeepResearchReviewCompletePanel() {
       els.deepResearchReviewHandoffText,
       els.deepResearchReviewHandoffCardText
     ].forEach((el) => setReviewCompleteText(el, ""));
+    if (els.deepResearchReviewResearchBriefCard) els.deepResearchReviewResearchBriefCard.hidden = true;
     setStatus(els.deepResearchReviewCompleteStatus, "");
     return;
   }
@@ -4529,6 +4612,10 @@ function renderDeepResearchReviewCompletePanel() {
   setReviewCompleteText(els.deepResearchReviewGapsText, parts.gaps);
   setReviewCompleteText(els.deepResearchReviewPracticalityText, parts.practicality);
   setReviewCompleteText(els.deepResearchReviewArtifactText, parts.artifact);
+  setReviewCompleteText(els.deepResearchReviewResearchBriefText, parts.researchBrief);
+  if (els.deepResearchReviewResearchBriefCard) {
+    els.deepResearchReviewResearchBriefCard.hidden = !Boolean(String(parts.researchBrief || "").trim());
+  }
   setReviewCompleteText(els.deepResearchReviewPublicSafeText, parts.publicSafeArtifact);
   setReviewCompleteText(els.deepResearchReviewPharmacySafetyText, parts.pharmacySafetyArtifact);
   setReviewCompleteText(els.deepResearchReviewProInternalText, parts.proInternalArtifact);
@@ -4553,6 +4640,7 @@ function getDeepResearchReviewCopyPayload(kind) {
     gaps: { text: parts.gaps || parts.full, label: "抜け漏れ" },
     practicality: { text: parts.practicality || parts.full, label: "実用性レビュー" },
     artifact: { text: parts.artifact || parts.full, label: "改訂版成果物" },
+    researchBrief: { text: parts.researchBrief || "", label: "Research Brief / 研究ブリーフ" },
     publicSafeArtifact: { text: parts.publicSafeArtifact || parts.full, label: "一般向け安全変換版" },
     pharmacySafetyArtifact: { text: parts.pharmacySafetyArtifact || parts.full, label: "薬剤師・相談員向け安全確認版" },
     proInternalArtifact: { text: parts.proInternalArtifact || parts.full, label: "専門職向け内部資料版" },
@@ -5127,6 +5215,7 @@ function buildGoldenCaseActual(goldenCase) {
       gaps: parts.gaps,
       practicality: parts.practicality,
       artifact: parts.artifact,
+      researchBrief: parts.researchBrief,
       publicSafeArtifact: parts.publicSafeArtifact,
       pharmacySafetyArtifact: parts.pharmacySafetyArtifact,
       proInternalArtifact: parts.proInternalArtifact,
@@ -5149,6 +5238,7 @@ function buildGoldenCaseActual(goldenCase) {
       ["抜け漏れ", exitCardValues.gaps],
       ["実用性レビュー", exitCardValues.practicality],
       ["改訂版成果物", exitCardValues.artifact],
+      ["Research Brief", exitCardValues.researchBrief],
       ["一般向け安全変換版", exitCardValues.publicSafeArtifact],
       ["薬剤師・相談員向け安全確認版", exitCardValues.pharmacySafetyArtifact],
       ["専門職向け内部資料版", exitCardValues.proInternalArtifact],

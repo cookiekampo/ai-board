@@ -146,6 +146,30 @@ Golden Caseでは拾えない、実ブラウザ上の初期導線と出口カー
 - topicCard欄に次調査カード本文が入る。
 - 新規側のDecision Ledger / Answer Ledgerは、前回reviewのものを直接引き継がず、新規Deep Research設計側で再構築される。
 
+## Deep Research review Research Brief card
+
+- Deep Research review完了後に `Research Brief / 研究ブリーフ` カードが表示される。
+- Research Briefカードは初期展開され、個別コピーできる。
+- Brief内に以下の12セクションがある。
+  - Executive Summary
+  - Research Question
+  - Key Findings
+  - Claim / Evidence Table
+  - Source Quality
+  - Risk / Safety Notes
+  - What Can Be Used
+  - What Cannot Be Used
+  - Open Questions
+  - Next Research Prompts
+  - Decision Ledger
+  - Answer Ledger
+- Claim / Evidence Tableが、検証済みの真実や推奨ではなくreview結果の整理として書かれている。
+- What Can Be Used と What Cannot Be Used が分離されている。
+- Next Research Prompts に追加調査プロンプトまたは次調査の方向性が残る。
+- Decision Ledger / Answer Ledger がない場合、推測で生成されず `未提供` または `未抽出` と表示される。
+- 一般向け安全変換版とは別カードとして表示される。
+- Golden Case Runnerで `research brief` がPassする。
+
 ## Deep Research default strategy and canonical Golden Cases
 
 ## Deep Research review purpose-specific exit cards

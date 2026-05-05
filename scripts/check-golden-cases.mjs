@@ -30,6 +30,7 @@ const markerMap = {
   gaps: "DR_REVIEW_GAPS",
   practicality: "DR_REVIEW_PRACTICALITY",
   artifact: ["DR_REVIEW_REVISED_ARTIFACT", "DR_REVIEW_ARTIFACT", "DR_REVIEW_REFINED_ARTIFACT"],
+  researchBrief: "DR_REVIEW_RESEARCH_BRIEF",
   publicSafeArtifact: "DR_REVIEW_PUBLIC_SAFE_ARTIFACT",
   pharmacySafetyArtifact: "DR_REVIEW_PHARMACY_SAFETY_ARTIFACT",
   proInternalArtifact: "DR_REVIEW_PRO_INTERNAL_ARTIFACT",
@@ -66,6 +67,7 @@ const headingAliases = {
   gaps: ["抜け漏れ"],
   practicality: ["実用性レビュー"],
   artifact: ["改訂版成果物"],
+  researchBrief: ["Research Brief", "研究ブリーフ"],
   publicSafeArtifact: ["一般向け安全変換版", "public safe artifact", "public safe conversion", "public memo", "safe consultation memo"],
   pharmacySafetyArtifact: ["薬剤師・相談員向け安全確認版", "pharmacy safety artifact", "counselor safety artifact"],
   proInternalArtifact: ["専門職向け内部資料版", "professional internal artifact", "pro internal artifact"],
@@ -131,6 +133,11 @@ const exitCardAliases = {
   practicality: "practicality",
   実用性レビュー: "practicality",
   revisedartifact: "artifact",
+  researchbrief: "researchBrief",
+  brief: "researchBrief",
+  knowledgebrief: "researchBrief",
+  briefcard: "researchBrief",
+  研究ブリーフ: "researchBrief",
   publicsafeartifact: "publicSafeArtifact",
   publicsafeconversion: "publicSafeArtifact",
   publicmemo: "publicSafeArtifact",
@@ -620,6 +627,13 @@ function evaluateGoldenCase(caseDef, actualText) {
     checkedItems,
   });
 
+  checkExitCardIncludes({
+    expectations: normalizedCase.expectedExitCardIncludes,
+    actual,
+    failures,
+    checkedItems,
+  });
+
   const pass = failures.length === 0;
   return {
     caseId: normalizedCase.caseId,
@@ -701,6 +715,11 @@ function normalizeCase(caseDef) {
         || expected.exitCards
         || [],
     ),
+    expectedExitCardIncludes: normalizeExitCardIncludes(
+      caseDef.expectedExitCardIncludes
+        || expected.exitCardIncludes
+        || {},
+    ),
   };
 }
 
@@ -716,6 +735,19 @@ function caseMatches(caseDef, requestedId) {
 function asStringArray(value) {
   if (!Array.isArray(value)) return [];
   return value.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim());
+}
+
+function normalizeExitCardIncludes(value) {
+  if (!value || typeof value !== "object") return {};
+  if (Array.isArray(value)) {
+    return Object.fromEntries(value
+      .filter((item) => item && typeof item === "object")
+      .map((item) => [item.card || item.name || "", asStringArray(item.includes || item.expectations || [])])
+      .filter(([card, includes]) => card && includes.length > 0));
+  }
+  return Object.fromEntries(Object.entries(value)
+    .map(([card, includes]) => [card, asStringArray(includes)])
+    .filter(([card, includes]) => card && includes.length > 0));
 }
 
 function extractActual(text) {
@@ -871,6 +903,30 @@ function checkExitCards({ expectations, actual, failures, checkedItems }) {
       return;
     }
     checkedItems.push(`exitCard.exists: ${cardName}`);
+  });
+}
+
+function checkExitCardIncludes({ expectations, actual, failures, checkedItems }) {
+  Object.entries(expectations).forEach(([cardName, includes]) => {
+    const normalizedName = normalizeLabel(cardName);
+    const partKeys = exitCardAliases[normalizedName] || exitCardAliases[cardName] || "";
+    const keyList = Array.isArray(partKeys) ? partKeys : [partKeys].filter(Boolean);
+    if (keyList.length === 0) {
+      failures.push(`Unknown expected exit card include label: ${cardName}`);
+      return;
+    }
+    const partKey = keyList.find((key) => actual.parts[key] && actual.parts[key].text);
+    if (!partKey) {
+      failures.push(`Expected exit card was not extracted for include check: ${cardName}`);
+      return;
+    }
+    includes.forEach((expectation) => {
+      if (!expectationMatches(actual.parts[partKey].text, expectation, true)) {
+        failures.push(`Exit card "${cardName}" missing expected text: ${expectation}`);
+        return;
+      }
+      checkedItems.push(`exitCard.includes:${cardName}: ${expectation}`);
+    });
   });
 }
 

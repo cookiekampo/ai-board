@@ -94,6 +94,67 @@ Conditional Pass
 - 好転反応ではなく医療者相談サインとして扱う。
 <!-- AI_BOARD:DR_REVIEW_REVISED_ARTIFACT:END -->
 
+<!-- AI_BOARD:DR_REVIEW_RESEARCH_BRIEF:START -->
+# Research Brief
+
+## Executive Summary
+間質性肺炎×漢方相談のDeep Research結果は、一般ユーザー向けの処方提案ではなく、安全確認、医療者相談、薬歴整理、追加調査設計の材料として条件付きで使う。
+
+## Research Question
+漢方相談で間質性肺炎リスクを扱うDeep Research結果を、どの範囲なら安全に再利用でき、どの範囲は追加確認に回すべきか。
+
+## Key Findings
+- Conditional Pass。
+- PMDA・添付文書を最優先する。
+- 漢方開始後の発熱・咳・息切れは医療者相談サインとして扱う。
+- 方剤別最新添付文書照合が未完。
+- 小柴胡湯は安全性上の重点注意方剤。
+- 症例報告は仮説生成に限定する。
+
+## Claim / Evidence Table
+この表はreview結果の整理であり、検証済みの真実や推奨ではない。
+
+| Claim | Evidence status | Source quality | Review note |
+|---|---|---|---|
+| 漢方開始後の発熱・咳・息切れは相談サイン | 公的情報・添付文書照合が必要 | PMDA・添付文書を最優先 | 推奨ではなく安全確認メモとして扱う |
+| 小柴胡湯は安全性上の重点注意方剤 | 方剤別最新添付文書照合が未完 | 要追加確認 | 一般向けには処方名を前面に出さない |
+| 症例報告は参考になる | 仮説生成に限定 | 低〜中 | 効果根拠として使わない |
+
+## Source Quality
+PMDA・添付文書を最優先。症例報告は仮説生成に限定。広告・体験談・SNSは根拠にしない。
+
+## Risk / Safety Notes
+標準治療否定、受診不要示唆、効果保証をしない。一般ユーザー向けでは処方名・生薬名・証を原則出さない。
+
+## What Can Be Used
+- 一般ユーザー向け相談前メモ
+- 薬剤師・相談員向け安全確認メモ
+- 主治医に聞く質問リスト
+- 薬剤師に伝える薬歴リスト
+- すぐ医療機関に相談するサイン
+
+## What Cannot Be Used
+- 間質性肺炎にはこの漢方、という病名処方
+- 小柴胡湯は間質性肺炎に使える、という推奨
+- 人参養栄湯はIPFに有効、という断定
+- 好転反応だから様子を見る、という説明
+- 漢方は自然だから安全、という安全保証
+
+## Open Questions
+- 方剤別最新添付文書・PMDA・IF照合
+- 小柴胡湯を含む重点注意方剤の最新安全性確認
+- 一般向けメモと専門職向けメモの分離精度
+
+## Next Research Prompts
+方剤別最新添付文書・PMDA・IF照合を行い、間質性肺炎リスク、相談サイン、薬歴確認項目を整理する。処方推奨や服薬変更指示は行わない。
+
+## Decision Ledger
+未提供。元のDeep Research設計Ledgerがある場合のみ反映する。
+
+## Answer Ledger
+未提供。元のDeep Research設計Answer Ledgerがある場合のみ反映する。
+<!-- AI_BOARD:DR_REVIEW_RESEARCH_BRIEF:END -->
+
 <!-- AI_BOARD:DR_REVIEW_PUBLIC_SAFE_ARTIFACT:START -->
 # 一般向け安全変換版
 

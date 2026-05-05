@@ -348,8 +348,7 @@
       "仮置き条件"
     ],
     "notes": "Deep Research reviewモードのFinal Judgeから、ユーザーが使う出口カードを抽出できるか確認するケース。医療内容の正しさではなく、出口カード構造の回帰確認用。"
-  }
-  ,
+  },
   {
     "caseId": "interstitial_pneumonia_kampo_review_public_memo",
     "aliases": [
@@ -369,6 +368,7 @@
     "expectedExitCards": [
       "adoption",
       "revised artifact",
+      "research brief",
       "additional prompts",
       "handoff card",
       "next action",
@@ -422,7 +422,23 @@
       "断定しない",
       "推奨しない"
     ],
-    "notes": "間質性肺炎×漢方相談のDeep Research review回帰ケース。医療内容の正しさ保証ではなく、review出口カード構造、安全制約、一般向け再編集方針の回帰確認用。一般ユーザー向けでは処方名・生薬名・証を出しすぎないことを確認する。"
+    "notes": "間質性肺炎×漢方相談のDeep Research review回帰ケース。医療内容の正しさ保証ではなく、review出口カード構造、安全制約、一般向け再編集方針の回帰確認用。一般ユーザー向けでは処方名・生薬名・証を出しすぎないことを確認する。",
+    "expectedExitCardIncludes": {
+      "research brief": [
+        "Executive Summary",
+        "Research Question",
+        "Key Findings",
+        "Claim / Evidence Table",
+        "Source Quality",
+        "Risk / Safety Notes",
+        "What Can Be Used",
+        "What Cannot Be Used",
+        "Open Questions",
+        "Next Research Prompts",
+        "Decision Ledger",
+        "Answer Ledger"
+      ]
+    }
   },
   {
     "caseId": "deep_research_wide_deep_one_shot",
