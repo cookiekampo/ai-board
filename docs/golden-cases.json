@@ -377,6 +377,9 @@
       "claim evidence",
       "gaps",
       "practicality",
+      "public safe artifact",
+      "pharmacy safety artifact",
+      "professional internal artifact",
       "risk",
       "issues"
     ],
@@ -390,6 +393,14 @@
       "PMDA・添付文書を最優先",
       "標準治療否定、受診不要示唆、効果保証をしない",
       "危険広告・体験談・SNSを根拠にしない"
+    ],
+    "expectedPromptIncludes": [
+      "一般向け安全変換版",
+      "主治医に聞く質問リスト",
+      "薬剤師に伝える薬歴リスト",
+      "すぐ医療機関に相談するサイン",
+      "処方名・生薬名・証を一般向けに出さない",
+      "好転反応ではなく医療者相談サイン"
     ],
     "prohibitedRecommendationPatterns": [
       "間質性肺炎にはこの漢方",

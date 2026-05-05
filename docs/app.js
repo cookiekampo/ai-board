@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.68";
+const APP_CACHE_NAME = "ai-board-static-v0.1.69";
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
 if ("serviceWorker" in navigator) {
@@ -1411,6 +1411,21 @@ Pass / Conditional Pass / Needs Revision / Needs More Research / Reject のい�
 <!-- AI_BOARD:DR_REVIEW_REVISED_ARTIFACT:START -->
 改訂版成果物
 <!-- AI_BOARD:DR_REVIEW_REVISED_ARTIFACT:END -->
+<!-- AI_BOARD:DR_REVIEW_PUBLIC_SAFE_ARTIFACT:START -->
+一般ユーザー向けに安全加工した成果物。
+処方名・生薬名・証・症例報告の処方名は原則出さない。
+主治医に聞く質問、薬剤師に伝える薬歴、すぐ受診すべきサイン、自己判断で避けることを中心にする。
+<!-- AI_BOARD:DR_REVIEW_PUBLIC_SAFE_ARTIFACT:END -->
+<!-- AI_BOARD:DR_REVIEW_PHARMACY_SAFETY_ARTIFACT:START -->
+薬剤師・漢方相談員・薬局スタッフ向けの安全確認メモ。
+薬歴整理、副作用確認、受診勧奨、主治医確認につなげる内容。
+診断・処方判断・服薬変更指示はしない。
+<!-- AI_BOARD:DR_REVIEW_PHARMACY_SAFETY_ARTIFACT:END -->
+<!-- AI_BOARD:DR_REVIEW_PRO_INTERNAL_ARTIFACT:START -->
+漢方医・医師・専門職向けの内部学習資料。
+処方名・生薬名・証を扱ってよいが、病名処方・処方推奨・効果保証にはしない。
+根拠レベル、安全性、追加調査が必要な点を併記する。
+<!-- AI_BOARD:DR_REVIEW_PRO_INTERNAL_ARTIFACT:END -->
 <!-- AI_BOARD:DR_REVIEW_ADDITIONAL_PROMPTS:START -->
 追加Deep Researchプロンプト案
 <!-- AI_BOARD:DR_REVIEW_ADDITIONAL_PROMPTS:END -->
@@ -1557,6 +1572,9 @@ const deepResearchReviewCompleteSectionLabels = [
   "ユーザーの本来目的に照らした不足",
   "次に必要なDeep Research",
   "改訂版成果物",
+  "一般向け安全変換版",
+  "薬剤師・相談員向け安全確認版",
+  "専門職向け内部資料版",
   "追加Deep Researchプロンプト案",
   "追加Deep Researchプロンプト",
   "安全性を補う調査",
@@ -1626,9 +1644,17 @@ const goldenCaseExitCardAliases = {
   "実用性レビュー": "practicality",
   "改訂版成果物": "artifact",
   "revised artifact": "artifact",
-  "public safe conversion": "artifact",
-  "public memo": "artifact",
-  "safe consultation memo": "artifact",
+  "一般向け安全変換版": "publicSafeArtifact",
+  "public safe artifact": "publicSafeArtifact",
+  "public safe conversion": "publicSafeArtifact",
+  "public memo": "publicSafeArtifact",
+  "safe consultation memo": "publicSafeArtifact",
+  "薬剤師・相談員向け安全確認版": "pharmacySafetyArtifact",
+  "pharmacy safety artifact": "pharmacySafetyArtifact",
+  "counselor safety artifact": "pharmacySafetyArtifact",
+  "専門職向け内部資料版": "proInternalArtifact",
+  "professional internal artifact": "proInternalArtifact",
+  "pro internal artifact": "proInternalArtifact",
   "次アクション": "nextActions",
   "next action": "nextActions",
   "結論の自信度": "confidence",
@@ -1806,6 +1832,9 @@ const els = {
   copyDeepResearchReviewGapsButton: document.getElementById("copyDeepResearchReviewGapsButton"),
   copyDeepResearchReviewPracticalityButton: document.getElementById("copyDeepResearchReviewPracticalityButton"),
   copyDeepResearchReviewArtifactButton: document.getElementById("copyDeepResearchReviewArtifactButton"),
+  copyDeepResearchReviewPublicSafeButton: document.getElementById("copyDeepResearchReviewPublicSafeButton"),
+  copyDeepResearchReviewPharmacySafetyButton: document.getElementById("copyDeepResearchReviewPharmacySafetyButton"),
+  copyDeepResearchReviewProInternalButton: document.getElementById("copyDeepResearchReviewProInternalButton"),
   copyDeepResearchReviewPracticalButton: document.getElementById("copyDeepResearchReviewPracticalButton"),
   copyDeepResearchReviewAdditionalPromptButton: document.getElementById("copyDeepResearchReviewAdditionalPromptButton"),
   copyDeepResearchReviewIssuesButton: document.getElementById("copyDeepResearchReviewIssuesButton"),
@@ -1826,6 +1855,9 @@ const els = {
   deepResearchReviewGapsText: document.getElementById("deepResearchReviewGapsText"),
   deepResearchReviewPracticalityText: document.getElementById("deepResearchReviewPracticalityText"),
   deepResearchReviewArtifactText: document.getElementById("deepResearchReviewArtifactText"),
+  deepResearchReviewPublicSafeText: document.getElementById("deepResearchReviewPublicSafeText"),
+  deepResearchReviewPharmacySafetyText: document.getElementById("deepResearchReviewPharmacySafetyText"),
+  deepResearchReviewProInternalText: document.getElementById("deepResearchReviewProInternalText"),
   deepResearchReviewAdditionalPromptText: document.getElementById("deepResearchReviewAdditionalPromptText"),
   deepResearchReviewIssuesText: document.getElementById("deepResearchReviewIssuesText"),
   deepResearchReviewNextActionsText: document.getElementById("deepResearchReviewNextActionsText"),
@@ -2016,6 +2048,15 @@ function bindEvents() {
   }
   if (els.copyDeepResearchReviewArtifactButton) {
     els.copyDeepResearchReviewArtifactButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("artifact"));
+  }
+  if (els.copyDeepResearchReviewPublicSafeButton) {
+    els.copyDeepResearchReviewPublicSafeButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("publicSafeArtifact"));
+  }
+  if (els.copyDeepResearchReviewPharmacySafetyButton) {
+    els.copyDeepResearchReviewPharmacySafetyButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("pharmacySafetyArtifact"));
+  }
+  if (els.copyDeepResearchReviewProInternalButton) {
+    els.copyDeepResearchReviewProInternalButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("proInternalArtifact"));
   }
   if (els.copyDeepResearchReviewPracticalButton) {
     els.copyDeepResearchReviewPracticalButton.addEventListener("click", () => copyDeepResearchReviewCompletePart("practical"));
@@ -3301,6 +3342,7 @@ const deepResearchPromptExitCardOrder = new Map([
 
 const deepResearchReviewOpenExitCards = new Set([
   "deepResearchReviewAdoptionText",
+  "deepResearchReviewPublicSafeText",
   "deepResearchReviewArtifactText",
   "deepResearchReviewHandoffCardText",
   "deepResearchReviewNextActionsText"
@@ -4305,8 +4347,50 @@ function buildDeepResearchReviewCompleteParts() {
     confidence: extractAiBoardBlock(full, "DR_REVIEW_CONFIDENCE") || extractDeepResearchReviewSection(full, ["結論の自信度"]),
     handoff: extractAiBoardBlock(full, "DR_REVIEW_HANDOFF") || extractDeepResearchReviewSection(full, ["次Stepへの引き継ぎ", "次Stepへの入力", "引き継ぎ"])
   };
+  parts.publicSafeArtifact = extractAiBoardBlock(full, "DR_REVIEW_PUBLIC_SAFE_ARTIFACT") || buildDeepResearchReviewPurposeArtifact(parts, "public");
+  parts.pharmacySafetyArtifact = extractAiBoardBlock(full, "DR_REVIEW_PHARMACY_SAFETY_ARTIFACT") || buildDeepResearchReviewPurposeArtifact(parts, "pharmacy");
+  parts.proInternalArtifact = extractAiBoardBlock(full, "DR_REVIEW_PRO_INTERNAL_ARTIFACT") || buildDeepResearchReviewPurposeArtifact(parts, "professional");
   parts.handoffCard = extractAiBoardBlock(full, "DR_REVIEW_HANDOFF_CARD") || buildDeepResearchReviewHandoffCard(parts);
   return parts;
+}
+
+function buildDeepResearchReviewPurposeArtifact(parts, type) {
+  const configs = {
+    public: {
+      title: "一般向け安全変換版",
+      lead: "既存の改訂版成果物・危険な内容・次アクションから、一般ユーザーに渡す前提で安全側に抜き出したfallbackです。処方名・生薬名・証の自己判断には使わないでください。",
+      sections: [
+        ["一般向けに使う内容", parts.artifact],
+        ["危険なためそのまま出さない内容", parts.dangerous],
+        ["次アクション", parts.nextActions]
+      ]
+    },
+    pharmacy: {
+      title: "薬剤師・相談員向け安全確認版",
+      lead: "既存の改訂版成果物・情報源レビュー・未解決Issueから、薬歴整理、副作用確認、受診勧奨、主治医確認に使う前提で抜き出したfallbackです。",
+      sections: [
+        ["安全確認メモ", parts.artifact],
+        ["情報源レビュー", parts.sourceReview],
+        ["未解決Issue", parts.issues]
+      ]
+    },
+    professional: {
+      title: "専門職向け内部資料版",
+      lead: "既存の改訂版成果物・主張根拠対応・追加調査案から、内部学習用に抜き出したfallbackです。病名処方・処方推奨・効果保証には使わないでください。",
+      sections: [
+        ["内部資料として使う内容", parts.artifact],
+        ["主張・根拠対応レビュー", parts.claimEvidence],
+        ["追加Deep Researchプロンプト案", parts.additionalPrompt]
+      ]
+    }
+  };
+  const config = configs[type] || configs.public;
+  const body = config.sections
+    .filter(([, value]) => String(value || "").trim())
+    .map(([heading, value]) => `## ${heading}\n${String(value).trim()}`)
+    .join("\n\n");
+  if (!body.trim()) return "";
+  return `# ${config.title}\n${config.lead}\n\n${body}`;
 }
 
 function buildDeepResearchReviewHandoffCard(parts) {
@@ -4420,6 +4504,9 @@ function renderDeepResearchReviewCompletePanel() {
       els.deepResearchReviewGapsText,
       els.deepResearchReviewPracticalityText,
       els.deepResearchReviewArtifactText,
+      els.deepResearchReviewPublicSafeText,
+      els.deepResearchReviewPharmacySafetyText,
+      els.deepResearchReviewProInternalText,
       els.deepResearchReviewAdditionalPromptText,
       els.deepResearchReviewIssuesText,
       els.deepResearchReviewNextActionsText,
@@ -4442,6 +4529,9 @@ function renderDeepResearchReviewCompletePanel() {
   setReviewCompleteText(els.deepResearchReviewGapsText, parts.gaps);
   setReviewCompleteText(els.deepResearchReviewPracticalityText, parts.practicality);
   setReviewCompleteText(els.deepResearchReviewArtifactText, parts.artifact);
+  setReviewCompleteText(els.deepResearchReviewPublicSafeText, parts.publicSafeArtifact);
+  setReviewCompleteText(els.deepResearchReviewPharmacySafetyText, parts.pharmacySafetyArtifact);
+  setReviewCompleteText(els.deepResearchReviewProInternalText, parts.proInternalArtifact);
   setReviewCompleteText(els.deepResearchReviewAdditionalPromptText, parts.additionalPrompt);
   setReviewCompleteText(els.deepResearchReviewIssuesText, parts.issues);
   setReviewCompleteText(els.deepResearchReviewNextActionsText, parts.nextActions);
@@ -4463,6 +4553,9 @@ function getDeepResearchReviewCopyPayload(kind) {
     gaps: { text: parts.gaps || parts.full, label: "抜け漏れ" },
     practicality: { text: parts.practicality || parts.full, label: "実用性レビュー" },
     artifact: { text: parts.artifact || parts.full, label: "改訂版成果物" },
+    publicSafeArtifact: { text: parts.publicSafeArtifact || parts.full, label: "一般向け安全変換版" },
+    pharmacySafetyArtifact: { text: parts.pharmacySafetyArtifact || parts.full, label: "薬剤師・相談員向け安全確認版" },
+    proInternalArtifact: { text: parts.proInternalArtifact || parts.full, label: "専門職向け内部資料版" },
     practical: { text: parts.artifact || parts.full, label: "実用版" },
     additionalPrompt: { text: parts.additionalPrompt || parts.full, label: "追加Deep Researchプロンプト案" },
     issues: { text: parts.issues || parts.full, label: "未解決Issue" },
@@ -5034,6 +5127,9 @@ function buildGoldenCaseActual(goldenCase) {
       gaps: parts.gaps,
       practicality: parts.practicality,
       artifact: parts.artifact,
+      publicSafeArtifact: parts.publicSafeArtifact,
+      pharmacySafetyArtifact: parts.pharmacySafetyArtifact,
+      proInternalArtifact: parts.proInternalArtifact,
       additionalPrompt: parts.additionalPrompt,
       nextActions: parts.nextActions,
       confidence: parts.confidence,
@@ -5053,6 +5149,9 @@ function buildGoldenCaseActual(goldenCase) {
       ["抜け漏れ", exitCardValues.gaps],
       ["実用性レビュー", exitCardValues.practicality],
       ["改訂版成果物", exitCardValues.artifact],
+      ["一般向け安全変換版", exitCardValues.publicSafeArtifact],
+      ["薬剤師・相談員向け安全確認版", exitCardValues.pharmacySafetyArtifact],
+      ["専門職向け内部資料版", exitCardValues.proInternalArtifact],
       ["追加Deep Researchプロンプト案", exitCardValues.additionalPrompt],
       ["次アクション", exitCardValues.nextActions],
       ["結論の自信度", exitCardValues.confidence],

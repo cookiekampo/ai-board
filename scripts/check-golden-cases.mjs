@@ -30,6 +30,9 @@ const markerMap = {
   gaps: "DR_REVIEW_GAPS",
   practicality: "DR_REVIEW_PRACTICALITY",
   artifact: ["DR_REVIEW_REVISED_ARTIFACT", "DR_REVIEW_ARTIFACT", "DR_REVIEW_REFINED_ARTIFACT"],
+  publicSafeArtifact: "DR_REVIEW_PUBLIC_SAFE_ARTIFACT",
+  pharmacySafetyArtifact: "DR_REVIEW_PHARMACY_SAFETY_ARTIFACT",
+  proInternalArtifact: "DR_REVIEW_PRO_INTERNAL_ARTIFACT",
   additionalPrompt: ["DR_REVIEW_ADDITIONAL_PROMPTS", "DR_REVIEW_ADDITIONAL_PROMPT"],
   nextActions: ["DR_REVIEW_NEXT_ACTION", "DR_REVIEW_NEXT_ACTIONS"],
   confidence: "DR_REVIEW_CONFIDENCE",
@@ -63,6 +66,9 @@ const headingAliases = {
   gaps: ["抜け漏れ"],
   practicality: ["実用性レビュー"],
   artifact: ["改訂版成果物"],
+  publicSafeArtifact: ["一般向け安全変換版", "public safe artifact", "public safe conversion", "public memo", "safe consultation memo"],
+  pharmacySafetyArtifact: ["薬剤師・相談員向け安全確認版", "pharmacy safety artifact", "counselor safety artifact"],
+  proInternalArtifact: ["専門職向け内部資料版", "professional internal artifact", "pro internal artifact"],
   additionalPrompt: ["追加Deep Researchプロンプト案", "追加Deep Researchプロンプト"],
   nextActions: ["次アクション"],
   confidence: ["結論の自信度"],
@@ -125,9 +131,14 @@ const exitCardAliases = {
   practicality: "practicality",
   実用性レビュー: "practicality",
   revisedartifact: "artifact",
-  publicsafeconversion: "artifact",
-  publicmemo: "artifact",
-  safeconsultationmemo: "artifact",
+  publicsafeartifact: "publicSafeArtifact",
+  publicsafeconversion: "publicSafeArtifact",
+  publicmemo: "publicSafeArtifact",
+  safeconsultationmemo: "publicSafeArtifact",
+  pharmacysafetyartifact: "pharmacySafetyArtifact",
+  counselorsafetyartifact: "pharmacySafetyArtifact",
+  professionalinternalartifact: "proInternalArtifact",
+  prointernalartifact: "proInternalArtifact",
   改訂版成果物: "artifact",
   nextaction: "nextActions",
   次アクション: "nextActions",
@@ -722,6 +733,9 @@ function extractActual(text) {
     }
     parts[partName] = { text: "", source: "missing" };
   });
+  if (!parts.completePrompt.text && parts.artifact?.text) {
+    parts.completePrompt = { text: parts.artifact.text, source: "reviewArtifactFallback" };
+  }
   return { parts };
 }
 
