@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.70";
+const APP_CACHE_NAME = "ai-board-static-v0.1.71";
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
 if ("serviceWorker" in navigator) {
@@ -1625,6 +1625,28 @@ const deepResearchReviewCompleteSectionLabels = [
   "引き継ぎ"
 ];
 
+const deepResearchReviewRestoreCardConfigs = [
+  { key: "adoption", label: "採用可否" },
+  { key: "adoptionConditions", label: "採用条件" },
+  { key: "usable", label: "採用できる内容" },
+  { key: "fixes", label: "修正すべき内容" },
+  { key: "dangerous", label: "危険な内容" },
+  { key: "sourceReview", label: "情報源レビュー" },
+  { key: "claimEvidence", label: "主張・根拠対応レビュー" },
+  { key: "gaps", label: "抜け漏れ" },
+  { key: "practicality", label: "実用性レビュー" },
+  { key: "artifact", label: "改訂版成果物" },
+  { key: "researchBrief", label: "Research Brief" },
+  { key: "publicSafeArtifact", label: "一般向け安全変換版" },
+  { key: "pharmacySafetyArtifact", label: "薬剤師・相談員向け安全確認版" },
+  { key: "proInternalArtifact", label: "専門職向け内部資料版" },
+  { key: "additionalPrompt", label: "追加Deep Researchプロンプト案" },
+  { key: "nextActions", label: "次アクション" },
+  { key: "issues", label: "Issue / 未解決論点" },
+  { key: "handoffCard", label: "次調査カード" },
+  { key: "confidence", label: "結論の自信度" }
+];
+
 const goldenCaseExitCardAliases = {
   "完成プロンプト": "completePrompt",
   "Deep Researchに貼る完成プロンプト": "completePrompt",
@@ -1970,12 +1992,31 @@ const els = {
   deepResearchReviewCompleteGrid: document.querySelector(".review-complete-grid")
 };
 
+function updateDeepResearchReviewImportCopy() {
+  const card = document.querySelector(".review-import-card");
+  if (!card) return;
+  const summary = card.querySelector("summary");
+  const hint = card.querySelector(".hint");
+  const label = card.querySelector("label[for=\"deepResearchReviewImportLog\"]");
+  if (summary) summary.textContent = "保存済みログから出口カードを復元";
+  if (hint) {
+    hint.textContent = "外部保存したAI会議ログ、またはStep 8 Final Judge回答を貼ると、Research Brief・改訂版成果物・一般向け安全変換版・次調査カードなどを再表示します。現在の会議ログやStep回答は上書きしません。";
+  }
+  if (label) label.textContent = "保存済みAI会議ログ / Final Judge回答";
+  if (els.deepResearchReviewImportLog) {
+    els.deepResearchReviewImportLog.placeholder = "AI会議ログ全体、または Step 8 Final Judge の回答を貼ります。DR_REVIEW_* マーカー付きログを推奨します。";
+  }
+  if (els.applyDeepResearchReviewImportButton) els.applyDeepResearchReviewImportButton.textContent = "出口カードを復元";
+  if (els.clearDeepResearchReviewImportButton) els.clearDeepResearchReviewImportButton.textContent = "復元表示をクリア";
+}
+
 function init() {
   els.topicCard.value = state.topicCard;
   els.modeSelect.value = state.mode;
   els.setupDoneCheckbox.checked = state.setupDone;
   fillQuickFields(state.quickFields);
   fillDeepResearchReviewForm(state.deepResearchReviewForm);
+  updateDeepResearchReviewImportCopy();
   if (els.deepResearchReviewImportLog) els.deepResearchReviewImportLog.value = state.deepResearchReviewImportLog || "";
   if (els.promptContextModeSelect) els.promptContextModeSelect.value = state.promptContextMode || "full";
   els.topicPromptText.value = generateTopicCardPrompt(els.roughTopic.value, state.mode);
@@ -2804,8 +2845,8 @@ function loadState() {
       setupDone: typeof parsed.setupDone === "boolean" ? parsed.setupDone : fallback.setupDone,
       quickFields: normalizeQuickFields(parsed.quickFields),
       deepResearchReviewForm: normalizeDeepResearchReviewForm(parsed.deepResearchReviewForm),
-      deepResearchReviewImportLog: typeof parsed.deepResearchReviewImportLog === "string" ? parsed.deepResearchReviewImportLog : "",
-      deepResearchReviewImportedFinalAnswer: typeof parsed.deepResearchReviewImportedFinalAnswer === "string" ? parsed.deepResearchReviewImportedFinalAnswer : "",
+      deepResearchReviewImportLog: "",
+      deepResearchReviewImportedFinalAnswer: "",
       promptContextMode: parsed.promptContextMode === "light" ? "light" : "full",
       preparationCollapsed: typeof parsed.preparationCollapsed === "boolean" ? parsed.preparationCollapsed : fallback.preparationCollapsed,
       reviewResultsCollapsed: typeof parsed.reviewResultsCollapsed === "boolean" ? parsed.reviewResultsCollapsed : fallback.reviewResultsCollapsed,
@@ -2937,6 +2978,7 @@ function saveDeepResearchReviewImportLog() {
 function extractDeepResearchReviewFinalJudgeAnswer(text) {
   const source = String(text || "").trim().replace(/\r\n/g, "\n");
   if (!source) return "";
+  if (/AI_BOARD:DR_REVIEW_[A-Z_]+:START/u.test(source)) return source;
   const stepMatch = source.match(/(?:^|\n)##\s*Step\s*8\s*:[^\n]*\n/);
   if (stepMatch) {
     const headingStart = stepMatch.index + (stepMatch[0].startsWith("\n") ? 1 : 0);
@@ -2962,12 +3004,12 @@ function applyDeepResearchReviewImportedLog() {
   if (!els.deepResearchReviewImportLog) return;
   const raw = els.deepResearchReviewImportLog.value.trim();
   if (!raw) {
-    setStatus(els.deepResearchReviewImportStatus, "過去のAI会議ログ、またはStep 8 Final Judgeの回答を貼ってください。", "error");
+    setStatus(els.deepResearchReviewImportStatus, "保存済みAI会議ログ、またはStep 8 Final Judgeの回答を貼ってください。", "error");
     return;
   }
   const finalAnswer = extractDeepResearchReviewFinalJudgeAnswer(raw);
   if (!finalAnswer) {
-    setStatus(els.deepResearchReviewImportStatus, "Step 8 Final Judge、またはFinal Judgeの見出し付き回答を抽出できませんでした。", "error");
+    setStatus(els.deepResearchReviewImportStatus, "復元できる出口カードが見つかりませんでした。DR_REVIEW_* マーカー付きのFinal Judgeログを貼ってください。", "error");
     return;
   }
   state.mode = "deepResearchReview";
@@ -2976,9 +3018,15 @@ function applyDeepResearchReviewImportedLog() {
   state.preparationCollapsed = true;
   state.reviewResultsCollapsed = false;
   els.modeSelect.value = state.mode;
-  persist("過去ログからDeep Research reviewの出口カードを作成しました");
+  const restoredLabels = getDeepResearchReviewRestoredCardLabels(buildDeepResearchReviewCompleteParts(finalAnswer));
+  if (!restoredLabels.length) {
+    state.deepResearchReviewImportedFinalAnswer = "";
+    setStatus(els.deepResearchReviewImportStatus, "復元できる出口カードが見つかりませんでした。DR_REVIEW_* マーカー付きのFinal Judgeログを貼ってください。", "error");
+    render();
+    return;
+  }
   render();
-  setStatus(els.deepResearchReviewImportStatus, "出口カードを作成しました。下のレビュー完了画面を確認してください。");
+  setStatus(els.deepResearchReviewImportStatus, `復元しました: ${restoredLabels.join(" / ")}`);
   scrollToElement(els.deepResearchReviewCompletePanel);
 }
 
@@ -2988,7 +3036,7 @@ function clearDeepResearchReviewImportedLog() {
   if (els.deepResearchReviewImportLog) els.deepResearchReviewImportLog.value = "";
   persist("Deep Research reviewの読み込みをクリアしました");
   render();
-  setStatus(els.deepResearchReviewImportStatus, "読み込みをクリアしました。");
+  setStatus(els.deepResearchReviewImportStatus, "復元表示をクリアしました。現在の会議Step回答は変更していません。");
 }
 
 function hasDeepResearchReviewFormInput(values = readDeepResearchReviewForm()) {
@@ -3126,7 +3174,12 @@ ${notes}
 function persist(message) {
   state.updatedAt = new Date().toISOString();
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const snapshot = {
+      ...state,
+      deepResearchReviewImportLog: "",
+      deepResearchReviewImportedFinalAnswer: ""
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
     if (message) setStatus(els.saveStatus, message);
   } catch {
     setStatus(els.saveStatus, "localStorage保存に失敗しました。画面操作は継続できます。", "warn");
@@ -4407,8 +4460,8 @@ function extractDeepResearchReviewResearchBrief(text) {
   return hasResearchBriefSections(candidate) ? candidate : "";
 }
 
-function buildDeepResearchReviewCompleteParts() {
-  const full = getDeepResearchReviewFinalAnswer();
+function buildDeepResearchReviewCompleteParts(sourceOverride) {
+  const full = sourceOverride === undefined ? getDeepResearchReviewFinalAnswer() : String(sourceOverride || "").trim();
   const parts = {
     full,
     adoption: extractAiBoardBlock(full, "DR_REVIEW_DECISION") || extractAiBoardBlock(full, "DR_REVIEW_ADOPTION") || extractDeepResearchReviewSection(full, ["採用可否"]),
@@ -4433,6 +4486,12 @@ function buildDeepResearchReviewCompleteParts() {
   parts.proInternalArtifact = extractAiBoardBlock(full, "DR_REVIEW_PRO_INTERNAL_ARTIFACT") || buildDeepResearchReviewPurposeArtifact(parts, "professional");
   parts.handoffCard = extractAiBoardBlock(full, "DR_REVIEW_HANDOFF_CARD") || buildDeepResearchReviewHandoffCard(parts);
   return parts;
+}
+
+function getDeepResearchReviewRestoredCardLabels(parts) {
+  return deepResearchReviewRestoreCardConfigs
+    .filter(({ key }) => Boolean(String(parts?.[key] || "").trim()))
+    .map(({ label }) => label);
 }
 
 function buildDeepResearchReviewPurposeArtifact(parts, type) {
