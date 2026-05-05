@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.71";
+const APP_CACHE_NAME = "ai-board-static-v0.1.72";
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
 if ("serviceWorker" in navigator) {
@@ -1986,6 +1986,7 @@ const els = {
   setupPanel: document.getElementById("setupPanel"),
   setupDoneCheckbox: document.getElementById("setupDoneCheckbox"),
   resetButton: document.getElementById("resetButton"),
+  appCacheVersion: document.getElementById("appCacheVersion"),
   preparationBody: document.querySelector(".step-zero"),
   preparationPanel: document.querySelector(".step-zero") ? document.querySelector(".step-zero").closest(".panel") : null,
   stepActions: document.querySelector(".step-actions"),
@@ -2011,6 +2012,9 @@ function updateDeepResearchReviewImportCopy() {
 }
 
 function init() {
+  if (els.appCacheVersion) {
+    els.appCacheVersion.textContent = `App cache: ${APP_CACHE_NAME}`;
+  }
   els.topicCard.value = state.topicCard;
   els.modeSelect.value = state.mode;
   els.setupDoneCheckbox.checked = state.setupDone;
