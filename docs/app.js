@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.64";
+const APP_CACHE_NAME = "ai-board-static-v0.1.66";
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
 if ("serviceWorker" in navigator) {
@@ -1063,6 +1063,18 @@ Deep Research用プロンプトは、ユーザーがそのままコピーして�
 本文
 ---
 ここまで
+## 2回目以降用・軽量版プロンプト
+前回までのDeep Research結果や確定済み条件を同じ調査テーマの継続調査に使うための短いプロンプトです。
+必ず以下を含めてください。
+- Decision Ledger
+- Answer Ledgerの重要回答
+- 今回の調査テーマ
+- 前回までに確定した条件
+- 今回だけ深掘りする範囲
+- 除外範囲
+- 出力形式
+- 安全制約
+- 前回結果を前提に重複調査を避ける指示
 ## 矛盾検出
 Answer Ledger / Decision Ledgerと完成プロンプトが矛盾している場合は、矛盾内容を明示し、Decision Ledgerを優先して修正してください。矛盾がない場合は「なし」と書いてください。
 ## 避けるべき出力
@@ -1093,6 +1105,9 @@ Decision Ledgerで確定済みの主読者、副読者、専門度、用途、�
 <!-- AI_BOARD:DR_PROMPT_COMPLETE:START -->
 Deep Researchに貼る完成プロンプト
 <!-- AI_BOARD:DR_PROMPT_COMPLETE:END -->
+<!-- AI_BOARD:DR_PROMPT_LIGHTWEIGHT:START -->
+2回目以降用・軽量版プロンプト
+<!-- AI_BOARD:DR_PROMPT_LIGHTWEIGHT:END -->
 <!-- AI_BOARD:DR_PROMPT_ONE_SHOT:START -->
 一発版プロンプト
 <!-- AI_BOARD:DR_PROMPT_ONE_SHOT:END -->
@@ -1555,6 +1570,10 @@ const goldenCaseExitCardAliases = {
   "完成プロンプト": "completePrompt",
   "Deep Researchに貼る完成プロンプト": "completePrompt",
   "complete prompt": "completePrompt",
+  "2回目以降用・軽量版": "lightweight",
+  "軽量版": "lightweight",
+  "lightweight": "lightweight",
+  "light prompt": "lightweight",
   "一発版プロンプト": "oneShot",
   "分割版プロンプト": "split",
   "推奨する実行順": "order",
@@ -1587,6 +1606,7 @@ const goldenCaseExitCardAliases = {
   "情報源レビュー": "sourceReview",
   "source review": "sourceReview",
   "主張・根拠対応レビュー": "claimEvidence",
+  "claim evidence": "claimEvidence",
   "claim evidence review": "claimEvidence",
   "抜け漏れ": "gaps",
   "実用性レビュー": "practicality",
@@ -1683,7 +1703,11 @@ const deepResearchReviewFormDefs = {
 const state = loadState();
 
 const els = {
+  topicEntryTitle: document.getElementById("topicEntryTitle"),
+  roughTopicHint: document.getElementById("roughTopicHint"),
+  roughTopicLabel: document.getElementById("roughTopicLabel"),
   roughTopic: document.getElementById("roughTopic"),
+  topicPromptLabel: document.getElementById("topicPromptLabel"),
   topicPromptText: document.getElementById("topicPromptText"),
   copyTopicPromptButton: document.getElementById("copyTopicPromptButton"),
   openTopicChatGptButton: document.getElementById("openTopicChatGptButton"),
@@ -1703,9 +1727,11 @@ const els = {
   clearDeepResearchReviewImportButton: document.getElementById("clearDeepResearchReviewImportButton"),
   deepResearchReviewImportStatus: document.getElementById("deepResearchReviewImportStatus"),
   generatedTopicCard: document.getElementById("generatedTopicCard"),
+  generatedTopicCardLabel: document.getElementById("generatedTopicCardLabel"),
   applyGeneratedTopicButton: document.getElementById("applyGeneratedTopicButton"),
   generatedTopicStatus: document.getElementById("generatedTopicStatus"),
   modeSelect: document.getElementById("modeSelect"),
+  modeShortcutButtons: Array.from(document.querySelectorAll("[data-mode-shortcut]")),
   quickTopic: document.getElementById("quickTopic"),
   quickBackground: document.getElementById("quickBackground"),
   quickDecision: document.getElementById("quickDecision"),
@@ -1791,6 +1817,7 @@ const els = {
   deepResearchReviewHandoffCardText: document.getElementById("deepResearchReviewHandoffCardText"),
   deepResearchCopyPanel: document.getElementById("deepResearchCopyPanel"),
   copyDeepResearchPromptButton: document.getElementById("copyDeepResearchPromptButton"),
+  copyDeepResearchLightweightButton: document.getElementById("copyDeepResearchLightweightButton"),
   copyDeepResearchOneShotButton: document.getElementById("copyDeepResearchOneShotButton"),
   copyDeepResearchSplitButton: document.getElementById("copyDeepResearchSplitButton"),
   copyDeepResearchOrderButton: document.getElementById("copyDeepResearchOrderButton"),
@@ -1801,6 +1828,7 @@ const els = {
   copyDeepResearchAnswerLedgerButton: document.getElementById("copyDeepResearchAnswerLedgerButton"),
   deepResearchCopyStatus: document.getElementById("deepResearchCopyStatus"),
   deepResearchCompletePromptText: document.getElementById("deepResearchCompletePromptText"),
+  deepResearchLightweightText: document.getElementById("deepResearchLightweightText"),
   deepResearchOneShotText: document.getElementById("deepResearchOneShotText"),
   deepResearchSplitText: document.getElementById("deepResearchSplitText"),
   deepResearchOrderText: document.getElementById("deepResearchOrderText"),
@@ -1902,6 +1930,14 @@ function bindEvents() {
   }
   els.applyGeneratedTopicButton.addEventListener("click", applyGeneratedTopicCard);
   els.modeSelect.addEventListener("change", changeMode);
+  els.modeShortcutButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const mode = button.dataset.modeShortcut;
+      if (!modeSteps[mode]) return;
+      els.modeSelect.value = mode;
+      changeMode();
+    });
+  });
   quickFieldDefs.forEach((field) => {
     els[field.id].addEventListener("input", saveQuickFields);
   });
@@ -1993,6 +2029,9 @@ function bindEvents() {
   }
   if (els.copyDeepResearchOneShotButton) {
     els.copyDeepResearchOneShotButton.addEventListener("click", () => copyDeepResearchPromptCompletePart("oneShot"));
+  }
+  if (els.copyDeepResearchLightweightButton) {
+    els.copyDeepResearchLightweightButton.addEventListener("click", () => copyDeepResearchPromptCompletePart("lightweight"));
   }
   if (els.copyDeepResearchSplitButton) {
     els.copyDeepResearchSplitButton.addEventListener("click", () => copyDeepResearchPromptCompletePart("split"));
@@ -3111,6 +3150,8 @@ function render() {
   const complete = isComplete();
   els.modeSelect.value = state.mode;
   renderDeepResearchReviewInputPanel();
+  renderModeEntryCopy();
+  renderModeShortcuts();
   renderPromptContextModePanel(step);
   els.stepTitle.textContent = `Step ${state.currentStep}: ${step.role} - ${step.title}`;
   els.stepTarget.textContent = `推奨AI: ${step.target}`;
@@ -3137,6 +3178,64 @@ function render() {
 function renderDeepResearchReviewInputPanel() {
   if (!els.deepResearchReviewInputPanel) return;
   els.deepResearchReviewInputPanel.hidden = state.mode !== "deepResearchReview";
+}
+
+function renderModeShortcuts() {
+  els.modeShortcutButtons.forEach((button) => {
+    const active = button.dataset.modeShortcut === state.mode;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function renderModeEntryCopy() {
+  const reviewCopy = {
+    title: "Deep Research結果を貼る",
+    hint: "Deep Researchの出力、調査結果、レポート本文を貼ってください。不足・矛盾・根拠・追加調査候補をレビューします。",
+    roughLabel: "1. Deep Researchの出力・調査結果・レビュー依頼を貼る",
+    roughPlaceholder: "例）Deep Research結果本文を貼る\n例）元プロンプトと調査結果を貼る\n例）この調査結果を成果物化できるかレビューしたい",
+    promptLabel: "2. Deep Research review用の議題カード作成プロンプト",
+    draftButton: "AIを使わずレビュー用カードにする",
+    generatedLabel: "3. AIが作ったレビュー用議題カードを貼る",
+    applyButton: "レビューを開始",
+    reviewFormButton: "レビューを開始"
+  };
+  const promptCopy = {
+    title: "まずテーマを書く",
+    hint: "雑な一言でOKです。Deep Research用の調査設計カードに整えます。",
+    roughLabel: "1. 調べたいことを雑に書く",
+    roughPlaceholder: "例）漢方相談でDeep Researchをどう使うか\n例）線維筋痛症の漢方\n例）起立性調節障害の漢方相談",
+    promptLabel: "2. AIに貼る作成プロンプト（自動生成）",
+    draftButton: "AIを使わず仮カードにする",
+    generatedLabel: "3. AIが作った議題カードを貼る",
+    applyButton: "4. 議題カード欄へ反映",
+    reviewFormButton: "Deep Research review用議題カードを作る"
+  };
+  const defaultCopy = {
+    title: "まずテーマを書く",
+    hint: "雑な一言でOKです。AIが選択中の会議モードで使いやすい議題カードに整えます。",
+    roughLabel: "1. 話したいこと・調べたいこと・レビューしたい結果を雑に書く",
+    roughPlaceholder: "例）集客について\n例）LINE相談を増やしたい\n例）仕様をレビューしたい",
+    promptLabel: "2. AIに貼る作成プロンプト（自動生成）",
+    draftButton: "AIを使わず仮カードにする",
+    generatedLabel: "3. AIが作った議題カードを貼る",
+    applyButton: "4. 議題カード欄へ反映",
+    reviewFormButton: "Deep Research review用議題カードを作る"
+  };
+  const copy = state.mode === "deepResearchReview"
+    ? reviewCopy
+    : state.mode === "deepResearchPrompt"
+      ? promptCopy
+      : defaultCopy;
+  if (els.topicEntryTitle) els.topicEntryTitle.textContent = copy.title;
+  if (els.roughTopicHint) els.roughTopicHint.textContent = copy.hint;
+  if (els.roughTopicLabel) els.roughTopicLabel.textContent = copy.roughLabel;
+  if (els.roughTopic) els.roughTopic.placeholder = copy.roughPlaceholder;
+  if (els.topicPromptLabel) els.topicPromptLabel.textContent = copy.promptLabel;
+  if (els.draftTopicCardButton) els.draftTopicCardButton.textContent = copy.draftButton;
+  if (els.generatedTopicCardLabel) els.generatedTopicCardLabel.textContent = copy.generatedLabel;
+  if (els.applyGeneratedTopicButton) els.applyGeneratedTopicButton.textContent = copy.applyButton;
+  if (els.applyDeepResearchReviewFormButton) els.applyDeepResearchReviewFormButton.textContent = copy.reviewFormButton;
 }
 
 function renderPromptContextModePanel(step) {
@@ -3166,12 +3265,15 @@ function renderPromptContextModePanel(step) {
 
 const deepResearchPromptOpenExitCards = new Set([
   "deepResearchCompletePromptText",
+  "deepResearchLightweightText",
   "deepResearchOrderText"
 ]);
 
 const deepResearchReviewOpenExitCards = new Set([
   "deepResearchReviewAdoptionText",
-  "deepResearchReviewArtifactText"
+  "deepResearchReviewArtifactText",
+  "deepResearchReviewHandoffCardText",
+  "deepResearchReviewNextActionsText"
 ]);
 
 function applyExitCardDisclosures() {
@@ -4195,7 +4297,8 @@ function buildDeepResearchReviewHandoffCard(parts) {
 Deep Research reviewで、調査結果の採用可否・危険な内容・未解決Issue・追加調査案を確認した。次は、このレビュー結果をもとにDeep Researchプロンプト作成モードで次回調査プロンプトを設計する。
 
 # 由来
-前回のDeep Research review由来の次調査カード。新しいDeep Researchプロンプト作成モードの議題カードとして使う。
+前回のDeep Research review由来 / 2回目以降用・軽量版向けの次調査カード。新しいDeep Researchプロンプト作成モードの議題カードとして使う。
+Decision Ledger / Answer Ledger は新規Deep Research設計側で再構築する。
 
 # 元テーマ
 ${topic}
@@ -4351,7 +4454,7 @@ async function copyDeepResearchReviewCompletePart(kind) {
 
 function startDeepResearchPromptFromReviewHandoff() {
   const payload = getDeepResearchReviewCopyPayload("handoffCard");
-  const handoffCard = String(payload.text || "").trim();
+  const handoffCard = ensureDeepResearchReviewHandoffForDesign(String(payload.text || "").trim());
   if (!handoffCard) {
     setStatus(els.deepResearchReviewCompleteStatus, "新規Deep Research設計に使える次調査カードがまだありません。", "warn");
     return;
@@ -4376,6 +4479,19 @@ function startDeepResearchPromptFromReviewHandoff() {
   persist("次調査カードをDeep Researchプロンプト作成モードの議題カードとして読み込みました。");
   render();
   scrollToElement(els.promptPanel);
+}
+
+function ensureDeepResearchReviewHandoffForDesign(card) {
+  const text = String(card || "").trim();
+  if (!text) return "";
+  if (/Deep Research review由来/u.test(text) && /2回目以降用・軽量版向け/u.test(text)) return text;
+  return `# 引き継ぎ種別
+Deep Research review由来 / 2回目以降用・軽量版向け
+
+# 注意
+このカードは前回レビュー結果をもとに、次のDeep Researchプロンプト作成モードで新規議題カードとして使う。Decision Ledger / Answer Ledger は新規会議側で再構築する。
+
+${text}`;
 }
 
 function startNewDeepResearchReview() {
@@ -4457,6 +4573,7 @@ function renderDeepResearchCopyPanel() {
   }
   const parts = buildDeepResearchPromptCompleteParts();
   setReviewCompleteText(els.deepResearchCompletePromptText, parts.completePrompt);
+  setReviewCompleteText(els.deepResearchLightweightText, parts.lightweight);
   setReviewCompleteText(els.deepResearchOneShotText, parts.oneShot);
   setReviewCompleteText(els.deepResearchSplitText, parts.split);
   setReviewCompleteText(els.deepResearchOrderText, parts.order);
@@ -4483,6 +4600,7 @@ async function copyDeepResearchPrompt() {
 function clearDeepResearchPromptCompleteTexts() {
   [
     els.deepResearchCompletePromptText,
+    els.deepResearchLightweightText,
     els.deepResearchOneShotText,
     els.deepResearchSplitText,
     els.deepResearchOrderText,
@@ -4512,6 +4630,7 @@ function buildDeepResearchPromptCompleteParts() {
   const computedAnswerLedger = formatAnswerLedger(buildAnswerLedger(state.answers, state.steeringNotes, getTotalSteps()));
   const computedDecisionLedger = formatDecisionLedger(buildDecisionLedger(state.answers, state.steeringNotes, getTotalSteps()));
   const oneShot = extractAiBoardBlock(full, "DR_PROMPT_ONE_SHOT") || extractMarkdownSubsection(full, ["一発版", "一発版プロンプト", "一発版Deep Researchプロンプト"]);
+  const lightweight = extractAiBoardBlock(full, "DR_PROMPT_LIGHTWEIGHT") || extractMarkdownSubsection(full, ["2回目以降用・軽量版プロンプト", "2回目以降用・軽量版", "軽量版プロンプト"]);
   const split = extractAiBoardBlock(full, "DR_PROMPT_SPLIT") || extractMarkdownSubsection(full, ["分割版", "分割版プロンプト", "分割版Deep Researchプロンプト"]);
   const additional = extractAiBoardBlock(full, "DR_PROMPT_ADDITIONAL") || extractMarkdownSubsection(full, ["追加調査案", "追加Deep Researchプロンプト案", "追加Deep Researchプロンプト"]);
   const questions = extractAiBoardBlock(full, "DR_PROMPT_QUESTIONS") || extractMarkdownSubsection(full, ["ユーザーへの確認質問"]);
@@ -4523,6 +4642,7 @@ function buildDeepResearchPromptCompleteParts() {
   return {
     full,
     completePrompt,
+    lightweight,
     oneShot: oneShot || completePrompt,
     split,
     order: extractAiBoardBlock(full, "DR_PROMPT_ORDER") || extractMarkdownSubsection(full, ["推奨する調査構成", "推奨する実行順", "次アクション"]),
@@ -4559,6 +4679,7 @@ function getDeepResearchPromptCopyPayload(kind) {
   const fallback = parts.completePrompt || parts.full;
   const payloads = {
     complete: { text: parts.completePrompt || parts.oneShot || parts.full, label: "完成プロンプト" },
+    lightweight: { text: parts.lightweight || fallback, label: "2回目以降用・軽量版" },
     oneShot: { text: parts.oneShot || fallback, label: "一発版プロンプト" },
     split: { text: parts.split || fallback, label: "分割版プロンプト" },
     order: { text: parts.order || fallback, label: "推奨する実行順" },
@@ -4816,6 +4937,7 @@ function buildGoldenCaseActual(goldenCase) {
     const parts = buildDeepResearchPromptCompleteParts();
     const exitCardValues = {
       completePrompt: parts.completePrompt,
+      lightweight: parts.lightweight,
       oneShot: parts.oneShot,
       split: parts.split,
       order: parts.order,
@@ -4837,6 +4959,7 @@ function buildGoldenCaseActual(goldenCase) {
     ].join("\n\n");
     const exitCards = formatGoldenCaseExitCards([
       ["完成プロンプト", exitCardValues.completePrompt],
+      ["2回目以降用・軽量版", exitCardValues.lightweight],
       ["一発版プロンプト", exitCardValues.oneShot],
       ["分割版プロンプト", exitCardValues.split],
       ["推奨する実行順", exitCardValues.order],

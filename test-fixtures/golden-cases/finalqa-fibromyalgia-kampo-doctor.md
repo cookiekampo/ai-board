@@ -51,6 +51,18 @@
 - 線維筋痛症にはこの漢方、という断定表現を避ける。
 <!-- AI_BOARD:DR_PROMPT_COMPLETE:END -->
 
+<!-- AI_BOARD:DR_PROMPT_LIGHTWEIGHT:START -->
+## 2回目以降用・軽量版プロンプト
+
+前回までのDeep Research結果、Decision Ledger、Answer Ledgerを前提に、重複調査を避けて次の論点だけ深掘りしてください。
+- 今回の調査テーマ：線維筋痛症の漢方
+- 前回までに確定した条件：漢方医向け / 内部資料 / 上級者向け
+- 今回だけ深掘りする範囲：未解決論点または追加調査案から選ぶ
+- 除外範囲：診断、個別処方判断、服薬変更指示、病名処方、処方ランキング、販売促進
+- 出力形式：表、チェックリスト、追加Deep Researchプロンプト
+- 安全制約：根拠の弱い情報を推奨扱いしない
+<!-- AI_BOARD:DR_PROMPT_LIGHTWEIGHT:END -->
+
 <!-- AI_BOARD:DR_PROMPT_ONE_SHOT:START -->
 ## 一発版プロンプト
 

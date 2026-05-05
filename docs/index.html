@@ -47,6 +47,10 @@
     <section class="panel secondary-panel">
       <details open>
         <summary>まず会議モードを選びます</summary>
+        <div class="deep-research-shortcuts" aria-label="Deep Researchショートカット">
+          <button class="mode-shortcut primary" type="button" data-mode-shortcut="deepResearchPrompt">Deep Researchプロンプト作成</button>
+          <button class="mode-shortcut" type="button" data-mode-shortcut="deepResearchReview">Deep Research結果レビュー</button>
+        </div>
         <label for="modeSelect">会議モード</label>
         <select id="modeSelect">
           <option value="deepResearchPrompt">Deep Researchプロンプト作成</option>
@@ -60,10 +64,10 @@
     </section>
 
     <section class="panel">
-      <h2>まずテーマを書く</h2>
+      <h2 id="topicEntryTitle">まずテーマを書く</h2>
       <div class="step-zero">
-        <p class="hint">雑な一言でOKです。AIが選択中の会議モードで使いやすい議題カードに整えます。</p>
-        <label for="roughTopic">1. 話したいこと・調べたいこと・レビューしたい結果を雑に書く</label>
+        <p id="roughTopicHint" class="hint">雑な一言でOKです。AIが選択中の会議モードで使いやすい議題カードに整えます。</p>
+        <label id="roughTopicLabel" for="roughTopic">1. 話したいこと・調べたいこと・レビューしたい結果を雑に書く</label>
         <textarea id="roughTopic" class="rough-topic" placeholder="例）集客について&#10;例）LINE相談を増やしたい&#10;例）漢方相談でDeep Researchをどう使うか&#10;例）Deep Research結果をレビューしたい"></textarea>
         <p class="hint">長く書かなくて大丈夫です。足りない前提は、AIが「未入力」や「要確認」として整理します。</p>
         <div id="deepResearchReviewInputPanel" class="mode-specific-input" hidden>
@@ -123,7 +127,7 @@
             <p id="deepResearchReviewImportStatus" class="status" aria-live="polite"></p>
           </details>
         </div>
-        <label for="topicPromptText">2. AIに貼る作成プロンプト（自動生成）</label>
+        <label id="topicPromptLabel" for="topicPromptText">2. AIに貼る作成プロンプト（自動生成）</label>
         <textarea id="topicPromptText" class="prompt short" readonly></textarea>
         <div class="button-grid">
           <button id="copyTopicPromptButton" class="primary" type="button">2. 作成プロンプトをコピー</button>
@@ -138,7 +142,7 @@
           </div>
         </details>
         <p id="topicPromptStatus" class="status" aria-live="polite"></p>
-        <label for="generatedTopicCard">3. AIが作った議題カードを貼る</label>
+        <label id="generatedTopicCardLabel" for="generatedTopicCard">3. AIが作った議題カードを貼る</label>
         <textarea id="generatedTopicCard" class="topic-card" placeholder="ChatGPT / Claude / Gemini が作った議題カードをここに貼り付けます"></textarea>
         <button id="applyGeneratedTopicButton" class="primary wide" type="button">4. 議題カード欄へ反映</button>
         <p id="generatedTopicStatus" class="status" aria-live="polite"></p>
@@ -440,6 +444,17 @@
           </div>
           <p class="hint">Deep Researchにそのまま貼る完成版です。</p>
           <pre id="deepResearchCompletePromptText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card wide priority-card">
+          <div class="exit-card-header">
+            <div>
+              <p class="eyebrow">2回目以降</p>
+              <h3>2回目以降用・軽量版</h3>
+            </div>
+            <button id="copyDeepResearchLightweightButton" class="primary compact" type="button">コピー</button>
+          </div>
+          <p class="hint">前回までの結果と確定条件を前提に、重複調査を避けて次だけ深掘りする版です。</p>
+          <pre id="deepResearchLightweightText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card wide priority-card">
           <div class="exit-card-header">

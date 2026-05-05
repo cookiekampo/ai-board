@@ -448,6 +448,22 @@ button.wide {
   margin-top: 10px;
 }
 
+.deep-research-shortcuts {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 0 0 12px;
+}
+
+.mode-shortcut {
+  text-align: left;
+}
+
+.mode-shortcut.is-active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
 .step-actions {
   margin-top: 14px;
 }

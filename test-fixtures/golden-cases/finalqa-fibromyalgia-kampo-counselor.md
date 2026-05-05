@@ -50,6 +50,18 @@
 5. 専門家に確認すべき質問
 <!-- AI_BOARD:DR_PROMPT_COMPLETE:END -->
 
+<!-- AI_BOARD:DR_PROMPT_LIGHTWEIGHT:START -->
+## 2回目以降用・軽量版プロンプト
+
+前回までのDeep Research結果、Decision Ledger、Answer Ledgerを前提に、重複調査を避けて次の論点だけ深掘りしてください。
+- 今回の調査テーマ：線維筋痛症の漢方相談
+- 前回までに確定した条件：漢方相談員向け / 内部資料 / 安全確認・受診勧奨中心
+- 今回だけ深掘りする範囲：未解決論点または追加調査案から選ぶ
+- 除外範囲：診断、処方判断、服薬変更指示、病名処方
+- 出力形式：相談前チェックリスト、質問リスト、追加Deep Researchプロンプト
+- 安全制約：処方・生薬を深掘りしない
+<!-- AI_BOARD:DR_PROMPT_LIGHTWEIGHT:END -->
+
 <!-- AI_BOARD:DR_PROMPT_ONE_SHOT:START -->
 ## 一発版プロンプト
 

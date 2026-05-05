@@ -1,5 +1,13 @@
 # Golden Cases
 
+## Interstitial pneumonia kampo review Golden Case
+
+- `interstitial_pneumonia_kampo_review_public_memo` is a Deep Research review regression case for interstitial pneumonia and kampo consultation.
+- This case does not verify medical correctness.
+- It verifies review exit card structure, safety constraints, and the rewrite policy for public-facing user memos.
+- It checks that public-facing outputs do not overexpose formula names, crude drugs, or sho/pattern terminology.
+- Formula-specific safety should be handed off to a follow-up Deep Research task for PMDA, latest package insert, and interview form confirmation.
+
 このファイルは、AI会議室の重要な回帰テスト用ケースを記録する開発メモです。
 ブラウザUIの `Golden Case Runner / 開発者用` でも、同じ期待値の一部を確認できます。
 

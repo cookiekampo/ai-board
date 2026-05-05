@@ -64,6 +64,7 @@
     ],
     "expectedExitCards": [
       "完成プロンプト",
+      "2回目以降用・軽量版",
       "一発版プロンプト",
       "分割版プロンプト",
       "推奨する実行順",
@@ -119,6 +120,7 @@
     ],
     "expectedExitCards": [
       "完成プロンプト",
+      "2回目以降用・軽量版",
       "一発版プロンプト",
       "推奨する実行順",
       "追加調査案",
@@ -203,6 +205,7 @@
     ],
     "expectedExitCards": [
       "完成プロンプト",
+      "2回目以降用・軽量版",
       "一発版プロンプト",
       "分割版プロンプト",
       "追加調査案",
@@ -297,6 +300,7 @@
     ],
     "expectedExitCards": [
       "完成プロンプト",
+      "2回目以降用・軽量版",
       "推奨する実行順",
       "追加調査案",
       "Decision Ledger",
@@ -344,5 +348,63 @@
       "仮置き条件"
     ],
     "notes": "Deep Research reviewモードのFinal Judgeから、ユーザーが使う出口カードを抽出できるか確認するケース。医療内容の正しさではなく、出口カード構造の回帰確認用。"
+  }
+  ,
+  {
+    "caseId": "interstitial_pneumonia_kampo_review_public_memo",
+    "aliases": [
+      "interstitial_pneumonia_kampo_review",
+      "interstitial_pneumonia_review_public_memo"
+    ],
+    "fixturePath": "test-fixtures/golden-cases/finaljudge-interstitial-pneumonia-kampo-review.md",
+    "title": "間質性肺炎×漢方相談 Deep Research review / 一般向けメモ化",
+    "mode": "deepResearchReview",
+    "initialTopic": "間質性肺炎×漢方相談のDeep Research結果レビュー",
+    "steeringMemos": [
+      "一般ユーザー向けでは処方名・生薬名・証を原則出さない",
+      "薬剤師・相談員向け安全確認メモも作る",
+      "方剤別最新添付文書・PMDA・IF照合は次調査に回す"
+    ],
+    "expectedExitCards": [
+      "adoption",
+      "revised artifact",
+      "additional prompts",
+      "handoff card",
+      "next action",
+      "confidence",
+      "source review",
+      "claim evidence",
+      "gaps",
+      "practicality",
+      "risk",
+      "issues"
+    ],
+    "expectedHandoffCardIncludes": [
+      "次調査カード",
+      "方剤別最新添付文書・PMDA・IF照合",
+      "PMDA・添付文書を最優先",
+      "標準治療否定、受診不要示唆、効果保証をしない"
+    ],
+    "prohibitedRecommendationPatterns": [
+      "間質性肺炎にはこの漢方",
+      "小柴胡湯は間質性肺炎に使える",
+      "人参養栄湯はIPFに有効",
+      "好転反応だから様子を見る",
+      "漢方は自然だから安全",
+      "SpO2低下があっても様子を見る"
+    ],
+    "allowedSafetyContextPatterns": [
+      "禁止",
+      "危険な内容",
+      "使いません",
+      "使わない",
+      "出さない",
+      "しない",
+      "避ける",
+      "除外",
+      "断定しない",
+      "推奨しない"
+    ],
+    "notes": "間質性肺炎×漢方相談のDeep Research review回帰ケース。医療内容の正しさ保証ではなく、review出口カード構造、安全制約、一般向け再編集方針の回帰確認用。一般ユーザー向けでは処方名・生薬名・証を出しすぎないことを確認する。"
   }
 ]

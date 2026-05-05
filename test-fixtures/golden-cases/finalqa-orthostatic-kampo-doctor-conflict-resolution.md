@@ -87,6 +87,18 @@
 9. 後続Deep Research論点一覧
 <!-- AI_BOARD:DR_PROMPT_COMPLETE:END -->
 
+<!-- AI_BOARD:DR_PROMPT_LIGHTWEIGHT:START -->
+## 2回目以降用・軽量版プロンプト
+
+前回までのDeep Research結果、Decision Ledger、Answer Ledgerを前提に、重複調査を避けて次の論点だけ深掘りしてください。
+- 今回の調査テーマ：起立性調節障害の漢方相談
+- 前回までに確定した条件：漢方医向け / 内部資料 / 上級者向け / 第1回は安全確認・医療連携・問診設計中心
+- 今回だけ深掘りする範囲：未解決Issueまたは後続調査に回した項目
+- 除外範囲：患者配布、Web公開、販売促進、病名処方、処方ランキング、受診不要の示唆
+- 出力形式：表、チェックリスト、追加Deep Researchプロンプト
+- 安全制約：標準医療否定、診断、処方決定、服薬変更指示を行わない
+<!-- AI_BOARD:DR_PROMPT_LIGHTWEIGHT:END -->
+
 <!-- AI_BOARD:DR_PROMPT_ORDER:START -->
 ## 推奨する実行順
 
