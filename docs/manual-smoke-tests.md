@@ -145,4 +145,22 @@ Golden Caseでは拾えない、実ブラウザ上の初期導線と出口カー
 - `この次調査カードで新規Deep Research設計を開始` を押すと、Deep Researchプロンプト作成モードに切り替わる。
 - topicCard欄に次調査カード本文が入る。
 - 新規側のDecision Ledger / Answer Ledgerは、前回reviewのものを直接引き継がず、新規Deep Research設計側で再構築される。
+
+## Deep Research default strategy and canonical Golden Cases
+
+Deep Researchプロンプト作成モードは、初回導線として「一括で広く深く全体地図を作る」本命プロンプトを最上位に出すことを確認する。
+
+1. 画面上部から `Deep Researchプロンプト作成` にすぐ入れる。
+2. 画面上部から `Deep Research結果レビュー` にすぐ入れる。
+3. Deep Research reviewモード選択時、入力欄がレビュー対象向けの文言になる。
+4. Deep Researchプロンプト作成モードの出口カードで、`本命プロンプト` が最上位に表示される。
+5. 本命プロンプトには、一括版が最終確定資料ではなく `Deep Research review` 用の全体地図であることが明記される。
+6. `2回目以降用・軽量版` が表示される。
+7. `分割調査案` と `推奨する実行順` が表示される。
+8. Deep Research reviewモードで、専門職向けの濃い結果を一般向け安全メモや相談前メモへ変換できる。
+9. reviewの次調査カードから、新規Deep Research設計に渡せる。
+10. Golden Case Runnerでcanonical case `deep_research_wide_deep_one_shot` が表示される。
+11. Golden Case JSON再読み込みで、Loaded / fallback状態が分かり、固まらない。
+
+Golden Caseは医療内容の正しさを保証しない。出口カード、Ledger、完成プロンプト構造の回帰確認として扱う。
 - 既存ログを残すかクリアするかの確認ダイアログが必要な場合、表示とキャンセル動作を確認する。
