@@ -435,3 +435,15 @@ Golden Case Runner上部の読み込み状態を確認してください。
 
 Golden Case Runnerは医療内容の正しさを保証しません。
 確認対象は、出口カード、Ledger、完成プロンプト構造、マーカー抽出、期待文言の回帰です。
+
+### ChatGPT相談向けカード
+
+Deep Research系の出口カードには、全文ログを再送せずに意見をもらうための軽量カードを置きます。
+
+- Deep Researchプロンプト作成モード: `AI_BOARD:DR_PROMPT_OPINION_REQUEST`
+- Deep Research reviewモード: `AI_BOARD:DR_REVIEW_OPINION_REQUEST`
+
+このカードは、Research Brief、採用可否、使える内容、未解決Issue、次アクション候補、判断してほしい観点を短くまとめるためのものです。
+Pro制限や長文コンテキスト消費を避けるため、Final Judge全文や会議ログ全文ではなく、この軽量カードをChatGPT相談用に使います。
+
+Golden Caseでは `opinion request` / `ChatGPTに意見をもらう用カード` が抽出できることを確認します。

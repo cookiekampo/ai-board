@@ -213,3 +213,14 @@ Use this check when localStorage was cleared or the app is opened in a private b
 10. Confirm starting a new design fills `topicCard` with the handoff card and switches to Deep Researchプロンプト作成 mode.
 11. Confirm existing Step answers are not overwritten by restore. If a current review session has answers, they should remain until the user explicitly starts a new design or clears the session.
 12. Reload the page after restoring. The restored cards may disappear because restore is a temporary preview; the external Markdown log remains the source of truth.
+
+## Deep Research用途別コピー導線
+
+- Deep Researchプロンプト作成モードの出口カードで、本命プロンプトに `Deep Research向け / 重い / 初回・広く深く用` が表示される。
+- `2回目以降用・軽量版` に `Deep Research向け / 軽い / 2回目以降の推奨` が表示される。
+- `ChatGPTに意見をもらう用カード` が表示され、全文ログではなく軽量カードで相談する文言がある。
+- Deep Research review完了画面で `ChatGPTに意見をもらう用カード` が表示される。
+- ChatGPT相談向けカードには Research Brief、採用可否、未解決Issue、次アクション候補が含まれる。
+- 各カードのコピー按钮が動き、コピー後に `コピーしました` が表示される。
+- 保存済みログ復元で `DR_REVIEW_OPINION_REQUEST` マーカー付きログを貼ると、ChatGPT相談向けカードも復元される。
+- Golden Case Runner / CLIで `opinion request` がPassする。

@@ -369,6 +369,7 @@
       "adoption",
       "revised artifact",
       "research brief",
+      "opinion request",
       "additional prompts",
       "handoff card",
       "next action",
@@ -437,6 +438,14 @@
         "Next Research Prompts",
         "Decision Ledger",
         "Answer Ledger"
+      ],
+      "opinion request": [
+        "Research Brief",
+        "採用可否",
+        "未解決Issue",
+        "次アクション",
+        "全文ログではなく",
+        "軽量カード"
       ]
     }
   },

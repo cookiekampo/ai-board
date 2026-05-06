@@ -296,6 +296,14 @@
         <button id="startNewDeepResearchReviewButton" class="danger" type="button">新しいDeep Research reviewを開始</button>
       </div>
       <p id="deepResearchReviewCompleteStatus" class="status" aria-live="polite"></p>
+      <div class="exit-card-guide">
+        <h3>次に使うカード</h3>
+        <ul>
+          <li><strong>Research Brief / 改訂版成果物:</strong> 保存・共有する整理済み成果物。</li>
+          <li><strong>ChatGPTに意見をもらう用カード:</strong> 全文ログではなく、軽量カードで追加相談。</li>
+          <li><strong>次調査カード:</strong> Deep Research設計モードへ渡して次の調査を作る。</li>
+        </ul>
+      </div>
       <div class="review-complete-grid">
         <article class="review-complete-card wide priority-card">
           <div class="exit-card-header">
@@ -326,6 +334,21 @@
             <button id="copyDeepResearchReviewResearchBriefButton" class="primary compact" type="button">コピー</button>
           </div>
           <pre id="deepResearchReviewResearchBriefText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card wide priority-card">
+          <div class="exit-card-header">
+            <div>
+              <p class="eyebrow">軽く相談する</p>
+              <h3>ChatGPTに意見をもらう用カード</h3>
+            </div>
+            <button id="copyDeepResearchReviewOpinionRequestButton" class="primary compact" type="button">コピー</button>
+          </div>
+          <div class="exit-card-tags">
+            <span class="exit-card-tag recommended">ChatGPT相談向け</span>
+            <span class="exit-card-tag">軽い</span>
+            <span class="exit-card-tag">全文ログは通常再送しない</span>
+          </div>
+          <pre id="deepResearchReviewOpinionRequestText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card wide priority-card">
           <div class="exit-card-header">
@@ -474,6 +497,14 @@
       <p class="hint">Final QAの出力から、Deep Researchに貼るプロンプトや次の作業に使う項目だけを切り出します。</p>
       <p class="hint"><strong>まず使うもの:</strong> 本命プロンプト → 推奨する実行順。補助カードは必要なときだけコピーしてください。</p>
       <p id="deepResearchCopyStatus" class="status" aria-live="polite"></p>
+      <div class="exit-card-guide">
+        <h3>次に使うカード</h3>
+        <ul>
+          <li><strong>本命プロンプト:</strong> 初回・広く深く用。Deep Researchに貼る。</li>
+          <li><strong>2回目以降用・軽量版:</strong> review後や後続調査ではこちらを推奨。</li>
+          <li><strong>ChatGPTに意見をもらう用カード:</strong> 全文ログではなく軽量カードで相談する。</li>
+        </ul>
+      </div>
       <div class="review-complete-grid">
         <article class="review-complete-card wide priority-card">
           <div class="exit-card-header">
@@ -484,6 +515,11 @@
             <button id="copyDeepResearchPromptButton" class="primary compact" type="button">コピー</button>
           </div>
           <p class="hint">Deep Researchにそのまま貼る完成版です。</p>
+          <div class="exit-card-tags">
+            <span class="exit-card-tag recommended">Deep Research向け</span>
+            <span class="exit-card-tag">重い</span>
+            <span class="exit-card-tag">初回・広く深く用</span>
+          </div>
           <pre id="deepResearchCompletePromptText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card wide priority-card">
@@ -495,7 +531,27 @@
             <button id="copyDeepResearchLightweightButton" class="primary compact" type="button">コピー</button>
           </div>
           <p class="hint">前回までの結果と確定条件を前提に、重複調査を避けて次だけ深掘りする版です。</p>
+          <div class="exit-card-tags">
+            <span class="exit-card-tag recommended">Deep Research向け</span>
+            <span class="exit-card-tag">軽い</span>
+            <span class="exit-card-tag">2回目以降の推奨</span>
+          </div>
           <pre id="deepResearchLightweightText" class="review-complete-text"></pre>
+        </article>
+        <article class="review-complete-card wide priority-card">
+          <div class="exit-card-header">
+            <div>
+              <p class="eyebrow">軽く相談する</p>
+              <h3>ChatGPTに意見をもらう用カード</h3>
+            </div>
+            <button id="copyDeepResearchOpinionRequestButton" class="primary compact" type="button">コピー</button>
+          </div>
+          <div class="exit-card-tags">
+            <span class="exit-card-tag recommended">ChatGPT相談向け</span>
+            <span class="exit-card-tag">軽い</span>
+            <span class="exit-card-tag">全文ログは通常再送しない</span>
+          </div>
+          <pre id="deepResearchOpinionRequestText" class="review-complete-text"></pre>
         </article>
         <article class="review-complete-card wide priority-card">
           <div class="exit-card-header">

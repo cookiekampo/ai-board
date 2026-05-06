@@ -340,6 +340,47 @@ textarea {
   border-color: var(--accent);
 }
 
+.exit-card-guide {
+  background: rgba(66, 170, 150, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+}
+
+.exit-card-guide h3 {
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+
+.exit-card-guide ul {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.exit-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.exit-card-tag {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.3;
+  padding: 2px 8px;
+}
+
+.exit-card-tag.recommended {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .review-complete-card.wide {
   grid-column: 1 / -1;
 }
