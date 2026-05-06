@@ -1,7 +1,8 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.73";
+const APP_CACHE_NAME = "ai-board-static-v0.1.74";
+const APP_VERSION_LABEL = APP_CACHE_NAME.replace(/^ai-board-static-/, "");
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
 if ("serviceWorker" in navigator) {
@@ -2084,7 +2085,9 @@ function updateDeepResearchReviewImportCopy() {
 
 function init() {
   if (els.appCacheVersion) {
-    els.appCacheVersion.textContent = `App cache: ${APP_CACHE_NAME}`;
+    els.appCacheVersion.textContent = APP_VERSION_LABEL;
+    els.appCacheVersion.title = `App cache: ${APP_CACHE_NAME}`;
+    els.appCacheVersion.setAttribute("aria-label", `App cache: ${APP_CACHE_NAME}`);
   }
   els.topicCard.value = state.topicCard;
   els.modeSelect.value = state.mode;
@@ -2320,7 +2323,12 @@ function bindEvents() {
   els.copyMarkdownButton.addEventListener("click", () => copyText(els.markdownText.value, els.markdownText, els.markdownStatus));
   els.shareMarkdownButton.addEventListener("click", shareMarkdown);
   els.downloadMarkdownButton.addEventListener("click", downloadMarkdown);
-  els.setupToggleButton.addEventListener("click", toggleSetupPanel);
+  if (els.setupToggleButton) {
+    els.setupToggleButton.addEventListener("click", toggleSetupPanel);
+  }
+  if (els.appCacheVersion) {
+    els.appCacheVersion.addEventListener("click", showAppCacheVersionDetail);
+  }
   els.setupDoneCheckbox.addEventListener("change", changeSetupDone);
   els.resetButton.addEventListener("click", resetMeeting);
 }
@@ -3269,12 +3277,18 @@ function persist(message) {
 
 function renderSetupPanel() {
   els.setupDoneCheckbox.checked = state.setupDone;
-  els.setupToggleButton.textContent = state.setupDone ? "初期設定済み" : "初期設定";
-  els.setupToggleButton.classList.toggle("muted", state.setupDone);
+  if (els.setupToggleButton) {
+    els.setupToggleButton.textContent = state.setupDone ? "初期設定済み" : "初期設定";
+    els.setupToggleButton.classList.toggle("muted", state.setupDone);
+  }
 }
 
 function toggleSetupPanel() {
   els.setupPanel.hidden = !els.setupPanel.hidden;
+}
+
+function showAppCacheVersionDetail() {
+  alert(`App cache: ${APP_CACHE_NAME}`);
 }
 
 function changeSetupDone() {

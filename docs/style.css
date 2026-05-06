@@ -63,6 +63,15 @@ body {
   white-space: nowrap;
 }
 
+.app-cache-version-button {
+  align-self: flex-end;
+  border-color: var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  min-height: 32px;
+  padding: 5px 9px;
+}
+
 .header-actions {
   display: flex;
   flex-direction: column;
