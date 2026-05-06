@@ -509,16 +509,19 @@ button.wide {
 
 .deep-research-shortcuts {
   display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
-  margin: 0 0 12px;
-  overflow-x: auto;
-  padding-bottom: 2px;
+  gap: 6px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 10px;
+  overflow-x: visible;
 }
 
 .mode-shortcut {
-  text-align: left;
+  min-width: 0;
+  padding: 9px 6px;
+  text-align: center;
   white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .mode-shortcut.is-active {
@@ -541,9 +544,28 @@ button.wide {
   margin: 10px 0;
 }
 
+.deep-research-tab-description {
+  margin-top: 6px;
+}
+
+.mode-select-advanced {
+  margin-top: 10px;
+}
+
+.mode-select-advanced > summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+
 @media (max-width: 640px) {
   .deep-research-shortcuts {
-    grid-template-columns: repeat(4, minmax(136px, 1fr));
+    gap: 5px;
+  }
+
+  .mode-shortcut {
+    padding-inline: 4px;
+    font-size: 14px;
   }
 }
 

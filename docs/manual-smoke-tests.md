@@ -243,3 +243,26 @@ Use this checklist after changes to the Deep Research entry flow.
 8. Confirm both full and lightweight prompt cards are still present and copyable.
 9. Confirm the Golden Case category filter is visible and can filter cases by `First Run`, `Review`, and `Medical Kampo`.
 10. Confirm Golden Case JSON reload still shows Loaded/fallback status and does not hang.
+
+## Deep Research mobile tab labels
+
+Use this checklist after mobile tab UI changes.
+
+1. At iPhone width, confirm the Deep Research phase tabs fit on one row with short labels:
+   - `作成`
+   - `レビュー`
+   - `復元`
+   - `Cases`
+2. Confirm each tab has the correct full meaning via title / accessibility label:
+   - `作成`: Deep Researchプロンプト作成
+   - `レビュー`: Deep Research結果レビュー
+   - `復元`: 保存済みログから出口カードを復元
+   - `Cases`: Golden Case Runner
+3. Confirm the text below the tabs explains the selected phase.
+4. Confirm the `会議モード` select is not shown as the primary Deep Research path. It should be inside the `その他の会議モード` details area.
+5. Confirm opening `その他の会議モード` still allows basic / decision / review selection.
+6. Confirm `作成` opens Deep Researchプロンプト作成.
+7. Confirm `レビュー` opens Deep Research結果レビュー.
+8. Confirm `復元` scrolls to the saved review log restore area.
+9. Confirm `Cases` scrolls to Golden Case Runner.
+10. Confirm the app version display shows the current Service Worker cache version.

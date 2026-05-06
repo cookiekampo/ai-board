@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.75";
+const APP_CACHE_NAME = "ai-board-static-v0.1.76";
 const APP_VERSION_LABEL = APP_CACHE_NAME.replace(/^ai-board-static-/, "");
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
@@ -1924,6 +1924,8 @@ const els = {
   applyGeneratedTopicButton: document.getElementById("applyGeneratedTopicButton"),
   generatedTopicStatus: document.getElementById("generatedTopicStatus"),
   modeSelect: document.getElementById("modeSelect"),
+  modeSelectAdvanced: document.getElementById("modeSelectAdvanced"),
+  deepResearchTabDescription: document.getElementById("deepResearchTabDescription"),
   modeShortcutButtons: Array.from(document.querySelectorAll("[data-mode-shortcut]")),
   deepResearchTabButtons: Array.from(document.querySelectorAll("[data-deep-research-tab]")),
   quickTopic: document.getElementById("quickTopic"),
@@ -2090,6 +2092,73 @@ const els = {
   deepResearchReviewCompleteGrid: document.querySelector(".review-complete-grid")
 };
 
+const deepResearchTabMeta = {
+  prompt: {
+    label: "作成",
+    fullLabel: "Deep Researchプロンプト作成",
+    description: "Deep Researchプロンプト作成: 初回は広く深く、2回目以降は軽量版を自動推奨します。"
+  },
+  review: {
+    label: "レビュー",
+    fullLabel: "Deep Research結果レビュー",
+    description: "Deep Research結果レビュー: 出力を貼って、採用可否・根拠・抜け漏れ・次調査を確認します。"
+  },
+  restore: {
+    label: "復元",
+    fullLabel: "保存済みログから出口カードを復元",
+    description: "保存済みログから出口カードを復元: 保存したFinal JudgeログやAI会議ログから出口カードを再表示します。"
+  },
+  golden: {
+    label: "Cases",
+    fullLabel: "Golden Case Runner",
+    description: "Golden Case Runner: カテゴリ別にGolden Caseを確認します。"
+  }
+};
+
+function initializeDeepResearchTabUi() {
+  els.deepResearchTabButtons.forEach((button) => {
+    const meta = deepResearchTabMeta[button.dataset.deepResearchTab];
+    if (!meta) return;
+    button.textContent = meta.label;
+    button.title = meta.fullLabel;
+    button.setAttribute("aria-label", meta.fullLabel);
+  });
+
+  if (!els.deepResearchTabDescription && els.deepResearchTabButtons.length) {
+    const description = document.createElement("p");
+    description.id = "deepResearchTabDescription";
+    description.className = "hint deep-research-tab-description";
+    const shortcuts = els.deepResearchTabButtons[0].closest(".deep-research-shortcuts");
+    if (shortcuts) shortcuts.insertAdjacentElement("afterend", description);
+    els.deepResearchTabDescription = description;
+  }
+
+  if (!els.modeSelectAdvanced && els.modeSelect) {
+    const label = document.querySelector("label[for=\"modeSelect\"]");
+    const hint = els.modeSelect.nextElementSibling && els.modeSelect.nextElementSibling.classList.contains("hint")
+      ? els.modeSelect.nextElementSibling
+      : null;
+    const details = document.createElement("details");
+    details.id = "modeSelectAdvanced";
+    details.className = "mode-select-advanced";
+    const summary = document.createElement("summary");
+    summary.textContent = "その他の会議モード";
+    details.appendChild(summary);
+    if (label && label.parentElement) {
+      label.parentElement.insertBefore(details, label);
+      details.appendChild(label);
+    } else {
+      els.modeSelect.parentElement.insertBefore(details, els.modeSelect);
+    }
+    details.appendChild(els.modeSelect);
+    if (hint) {
+      hint.textContent = "通常のbasic / decision / reviewを使う場合だけ開いて選びます。Deep Research系は上のタブで切り替えます。";
+      details.appendChild(hint);
+    }
+    els.modeSelectAdvanced = details;
+  }
+}
+
 function updateDeepResearchReviewImportCopy() {
   const card = document.querySelector(".review-import-card");
   if (!card) return;
@@ -2114,6 +2183,7 @@ function init() {
     els.appCacheVersion.title = `App cache: ${APP_CACHE_NAME}`;
     els.appCacheVersion.setAttribute("aria-label", `App cache: ${APP_CACHE_NAME}`);
   }
+  initializeDeepResearchTabUi();
   els.topicCard.value = state.topicCard;
   els.modeSelect.value = state.mode;
   els.setupDoneCheckbox.checked = state.setupDone;
@@ -3518,6 +3588,7 @@ function renderDeepResearchReviewInputPanel() {
 }
 
 function renderModeShortcuts() {
+  const activeTab = state.deepResearchActiveTab || (state.mode === "deepResearchPrompt" ? "prompt" : state.mode === "deepResearchReview" ? "review" : "");
   els.modeShortcutButtons.forEach((button) => {
     const active = button.dataset.modeShortcut === state.mode;
     button.classList.toggle("is-active", active);
@@ -3525,15 +3596,27 @@ function renderModeShortcuts() {
   });
   els.deepResearchTabButtons.forEach((button) => {
     const tab = button.dataset.deepResearchTab;
-    const activeTab = state.deepResearchActiveTab || (state.mode === "deepResearchPrompt" ? "prompt" : state.mode === "deepResearchReview" ? "review" : "");
+    const meta = deepResearchTabMeta[tab];
+    if (meta) {
+      button.textContent = meta.label;
+      button.title = meta.fullLabel;
+      button.setAttribute("aria-label", meta.fullLabel);
+    }
     const active =
       (tab === "prompt" && state.mode === "deepResearchPrompt" && activeTab === "prompt") ||
       (tab === "review" && state.mode === "deepResearchReview" && activeTab === "review") ||
       (tab === "restore" && state.mode === "deepResearchReview" && activeTab === "restore") ||
       (tab === "golden" && activeTab === "golden");
     button.classList.toggle("is-active", active);
+    button.classList.toggle("primary", active);
     button.setAttribute("aria-selected", active ? "true" : "false");
   });
+  if (els.deepResearchTabDescription) {
+    els.deepResearchTabDescription.textContent = (deepResearchTabMeta[activeTab] || deepResearchTabMeta.prompt).description;
+  }
+  if (els.modeSelectAdvanced) {
+    els.modeSelectAdvanced.open = !["deepResearchPrompt", "deepResearchReview"].includes(state.mode);
+  }
 }
 
 function renderModeEntryCopy() {
