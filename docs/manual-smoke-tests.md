@@ -303,3 +303,16 @@ Use this checklist after changing Golden Case display metadata.
 9. Run `node scripts/check-golden-cases.mjs --list --use-case case-report-search`.
 10. Run `node scripts/check-golden-cases.mjs --all --use-case case-report-search`.
 11. Run `node scripts/check-golden-cases.mjs --list-categories` and confirm use-case counts are printed.
+
+## Golden Case mobile card layout smoke check
+
+Use this checklist after changing Golden Case Runner layout.
+
+1. Open the `Cases` tab on an iPhone-width viewport.
+2. Confirm each Golden Case card shows the display name first.
+3. Confirm the one-line purpose is readable and does not push the card outside the screen.
+4. Confirm the use-case / workflow / domain badges wrap cleanly.
+5. Confirm the `case:` line is small and does not dominate the card.
+6. Change the workflow, domain, and use-case filters and confirm the cards remain aligned.
+7. Confirm selecting a card updates the Golden Case details below.
+8. Confirm `node scripts/check-golden-cases.mjs --validate --min-cases 8` passes.

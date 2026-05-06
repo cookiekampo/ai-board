@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.78";
+const APP_CACHE_NAME = "ai-board-static-v0.1.79";
 const APP_VERSION_LABEL = APP_CACHE_NAME.replace(/^ai-board-static-/, "");
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
@@ -2232,6 +2232,7 @@ const els = {
   goldenCaseDomainSelect: document.getElementById("goldenCaseDomainSelect"),
   goldenCaseUseCaseSelect: document.getElementById("goldenCaseUseCaseSelect"),
   goldenCaseSummary: document.getElementById("goldenCaseSummary"),
+  goldenCaseList: document.getElementById("goldenCaseList"),
   goldenCaseSelect: document.getElementById("goldenCaseSelect"),
   reloadGoldenCasesButton: document.getElementById("reloadGoldenCasesButton"),
   loadGoldenCaseTopicButton: document.getElementById("loadGoldenCaseTopicButton"),
@@ -2334,28 +2335,41 @@ function initializeGoldenCaseFilterUi() {
   const workflowLabel = document.querySelector("label[for=\"goldenCaseCategorySelect\"]");
   if (workflowLabel) workflowLabel.textContent = "工程";
   els.goldenCaseCategorySelect.setAttribute("aria-label", "Golden Case workflow category");
+  if (controls && workflowLabel && workflowLabel.parentElement === controls) {
+    const field = document.createElement("div");
+    field.className = "golden-case-filter-field";
+    controls.insertBefore(field, workflowLabel);
+    field.appendChild(workflowLabel);
+    field.appendChild(els.goldenCaseCategorySelect);
+  }
 
   if (!els.goldenCaseDomainSelect && controls) {
+    const field = document.createElement("div");
+    field.className = "golden-case-filter-field";
     const domainLabel = document.createElement("label");
     domainLabel.htmlFor = "goldenCaseDomainSelect";
     domainLabel.textContent = "分野";
     const domainSelect = document.createElement("select");
     domainSelect.id = "goldenCaseDomainSelect";
     domainSelect.setAttribute("aria-label", "Golden Case domain category");
-    controls.appendChild(domainLabel);
-    controls.appendChild(domainSelect);
+    field.appendChild(domainLabel);
+    field.appendChild(domainSelect);
+    controls.appendChild(field);
     els.goldenCaseDomainSelect = domainSelect;
   }
 
   if (!els.goldenCaseUseCaseSelect && controls) {
+    const field = document.createElement("div");
+    field.className = "golden-case-filter-field";
     const useCaseLabel = document.createElement("label");
     useCaseLabel.htmlFor = "goldenCaseUseCaseSelect";
     useCaseLabel.textContent = "用途";
     const useCaseSelect = document.createElement("select");
     useCaseSelect.id = "goldenCaseUseCaseSelect";
     useCaseSelect.setAttribute("aria-label", "Golden Case use case");
-    controls.appendChild(useCaseLabel);
-    controls.appendChild(useCaseSelect);
+    field.appendChild(useCaseLabel);
+    field.appendChild(useCaseSelect);
+    controls.appendChild(field);
     els.goldenCaseUseCaseSelect = useCaseSelect;
   }
 
@@ -2365,6 +2379,15 @@ function initializeGoldenCaseFilterUi() {
     summary.className = "golden-case-summary";
     els.goldenCaseSelect.insertAdjacentElement("afterend", summary);
     els.goldenCaseSummary = summary;
+  }
+
+  if (!els.goldenCaseList && els.goldenCaseSummary) {
+    const list = document.createElement("div");
+    list.id = "goldenCaseList";
+    list.className = "golden-case-list";
+    list.setAttribute("aria-label", "Golden Case list");
+    els.goldenCaseSummary.insertAdjacentElement("afterend", list);
+    els.goldenCaseList = list;
   }
 }
 
@@ -5844,6 +5867,7 @@ function populateGoldenCaseSelect() {
     option.textContent = "該当するGolden Caseはありません";
     option.disabled = true;
     els.goldenCaseSelect.appendChild(option);
+    renderGoldenCaseList();
     return;
   }
   visibleCases.forEach((goldenCase) => {
@@ -5861,6 +5885,7 @@ function populateGoldenCaseSelect() {
   } else if (visibleCases[0]) {
     els.goldenCaseSelect.value = visibleCases[0].id;
   }
+  renderGoldenCaseList();
 }
 
 function getSelectedGoldenCase() {
@@ -5876,6 +5901,7 @@ function renderGoldenCasePanel() {
   renderGoldenCaseLoadInfo();
   const goldenCase = getSelectedGoldenCase();
   renderGoldenCaseSummary(goldenCase);
+  renderGoldenCaseList();
   if (!goldenCase) {
     [
       els.goldenCaseExpectedText,
@@ -5903,6 +5929,7 @@ function renderGoldenCaseSummary(goldenCase) {
     return;
   }
   const title = document.createElement("strong");
+  title.className = "golden-case-title";
   title.textContent = goldenCase.displayName || goldenCase.title || goldenCase.caseId || "";
   const purpose = document.createElement("p");
   purpose.className = "golden-case-purpose";
@@ -5920,8 +5947,65 @@ function renderGoldenCaseSummary(goldenCase) {
     badges.appendChild(badge);
   });
   const id = document.createElement("small");
-  id.textContent = `caseId: ${goldenCase.caseId || goldenCase.id}`;
+  id.className = "golden-case-id";
+  id.textContent = `case: ${goldenCase.caseId || goldenCase.id}`;
   els.goldenCaseSummary.replaceChildren(title, purpose, badges, id);
+}
+
+function createGoldenCaseBadge(label) {
+  const badge = document.createElement("span");
+  badge.className = "golden-case-badge";
+  badge.textContent = label;
+  return badge;
+}
+
+function renderGoldenCaseList() {
+  if (!els.goldenCaseList) return;
+  const visibleCases = getVisibleGoldenCases();
+  const selectedId = els.goldenCaseSelect ? els.goldenCaseSelect.value : "";
+  if (!visibleCases.length) {
+    const empty = document.createElement("p");
+    empty.className = "hint";
+    empty.textContent = "No Golden Case matches the selected filters.";
+    els.goldenCaseList.replaceChildren(empty);
+    return;
+  }
+  const cards = visibleCases.map((goldenCase) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "golden-case-list-card";
+    if (goldenCase.id === selectedId) card.classList.add("is-active");
+    card.setAttribute("aria-pressed", goldenCase.id === selectedId ? "true" : "false");
+    card.title = goldenCase.oneLinePurpose || goldenCase.title || goldenCase.id;
+    card.addEventListener("click", () => {
+      if (els.goldenCaseSelect) els.goldenCaseSelect.value = goldenCase.id;
+      renderGoldenCasePanel();
+    });
+
+    const title = document.createElement("strong");
+    title.className = "golden-case-title";
+    title.textContent = goldenCase.displayName || goldenCase.title || goldenCase.caseId || goldenCase.id;
+
+    const purpose = document.createElement("span");
+    purpose.className = "golden-case-purpose";
+    purpose.textContent = goldenCase.oneLinePurpose || "このGolden Caseの用途説明は未設定です。";
+
+    const badges = document.createElement("span");
+    badges.className = "golden-case-badges";
+    [
+      goldenCase.useCaseLabel || formatGoldenCaseUseCase(goldenCase.useCase),
+      formatGoldenCaseWorkflowCategory(goldenCase.workflowCategory),
+      formatGoldenCaseDomainCategory(goldenCase.domainCategory)
+    ].forEach((label) => badges.appendChild(createGoldenCaseBadge(label)));
+
+    const id = document.createElement("small");
+    id.className = "golden-case-id";
+    id.textContent = `case: ${goldenCase.caseId || goldenCase.id}`;
+
+    card.replaceChildren(title, purpose, badges, id);
+    return card;
+  });
+  els.goldenCaseList.replaceChildren(...cards);
 }
 
 function renderGoldenCaseLoadInfo() {
