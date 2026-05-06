@@ -47,9 +47,11 @@
     <section class="panel secondary-panel">
       <details open>
         <summary>まず会議モードを選びます</summary>
-        <div class="deep-research-shortcuts" aria-label="Deep Researchショートカット">
-          <button class="mode-shortcut primary" type="button" data-mode-shortcut="deepResearchPrompt">Deep Researchプロンプト作成</button>
-          <button class="mode-shortcut" type="button" data-mode-shortcut="deepResearchReview">Deep Research結果レビュー</button>
+        <div class="deep-research-shortcuts" role="tablist" aria-label="Deep Researchフェーズ">
+          <button class="mode-shortcut primary" type="button" data-deep-research-tab="prompt">Deep Researchプロンプト作成</button>
+          <button class="mode-shortcut" type="button" data-deep-research-tab="review">Deep Research結果レビュー</button>
+          <button class="mode-shortcut" type="button" data-deep-research-tab="restore">保存済みログ復元</button>
+          <button class="mode-shortcut" type="button" data-deep-research-tab="golden">Golden Case</button>
         </div>
         <label for="modeSelect">会議モード</label>
         <select id="modeSelect">
@@ -495,6 +497,7 @@
       <h2>出口カード</h2>
       <p class="hint">Final QAの出力から、Deep Researchに貼るプロンプトや次の作業に使う項目だけを切り出します。</p>
       <p class="hint"><strong>まず使うもの:</strong> 本命プロンプト → 推奨する実行順。補助カードは必要なときだけコピーしてください。</p>
+      <p id="deepResearchCopyRecommendation" class="status recommendation-status" aria-live="polite"></p>
       <p id="deepResearchCopyStatus" class="status" aria-live="polite"></p>
       <div class="exit-card-guide">
         <h3>次に使うカード</h3>
@@ -657,6 +660,10 @@
         <summary>Golden Case Runner / 開発者用</summary>
         <p class="hint">過去の失敗ケースの期待値と、現在のDecision Ledger / Answer Ledger / 出口カード抽出結果を並べて確認します。完全自動判定ではなく、手動回帰確認の補助です。</p>
         <div id="goldenCaseLoadInfo" class="golden-case-load-info" aria-live="polite"></div>
+        <div class="golden-case-controls">
+          <label for="goldenCaseCategorySelect">カテゴリ</label>
+          <select id="goldenCaseCategorySelect"></select>
+        </div>
         <label for="goldenCaseSelect">Golden Case</label>
         <select id="goldenCaseSelect"></select>
         <div class="button-grid">

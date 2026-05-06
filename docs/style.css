@@ -510,17 +510,41 @@ button.wide {
 .deep-research-shortcuts {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
   margin: 0 0 12px;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .mode-shortcut {
   text-align: left;
+  white-space: nowrap;
 }
 
 .mode-shortcut.is-active {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.recommendation-status {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.recommendation-status.warn {
+  color: var(--warn);
+}
+
+.golden-case-controls {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+@media (max-width: 640px) {
+  .deep-research-shortcuts {
+    grid-template-columns: repeat(4, minmax(136px, 1fr));
+  }
 }
 
 .step-actions {

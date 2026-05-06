@@ -189,7 +189,7 @@ function main() {
     const args = parseArgs(process.argv.slice(2));
     if (args.list) {
       const cases = readGoldenCases();
-      listGoldenCases(cases);
+      listGoldenCases(filterGoldenCasesByCategory(cases, args.category));
       return;
     }
     if (args.validate) {
@@ -201,7 +201,7 @@ function main() {
     }
     if (args.all) {
       const cases = readGoldenCases();
-      const evaluation = evaluateAllGoldenCases(cases);
+      const evaluation = evaluateAllGoldenCases(filterGoldenCasesByCategory(cases, args.category));
       if (args.json) {
         console.log(JSON.stringify(evaluation, null, 2));
       } else {
@@ -243,6 +243,7 @@ function parseArgs(argv) {
     caseId: "",
     actualPath: "",
     minCases: 4,
+    category: "",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
@@ -270,6 +271,10 @@ function parseArgs(argv) {
         throw usageError("--min-cases must be a non-negative integer.");
       }
       args.minCases = parsed;
+    } else if (token === "--category") {
+      index += 1;
+      if (!argv[index]) throw usageError("--category requires a category name.");
+      args.category = argv[index];
     } else if (token === "--help" || token === "-h") {
       throw usageError(usageText());
     } else {
@@ -287,9 +292,10 @@ function usageText() {
   return [
     "Usage:",
     "  node scripts/check-golden-cases.mjs --list",
+    "  node scripts/check-golden-cases.mjs --list --category <category>",
     "  node scripts/check-golden-cases.mjs --validate [--min-cases <n>]",
-    "  node scripts/check-golden-cases.mjs --all",
-    "  node scripts/check-golden-cases.mjs --all --json",
+    "  node scripts/check-golden-cases.mjs --all [--category <category>]",
+    "  node scripts/check-golden-cases.mjs --all --json [--category <category>]",
     "  node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md>",
     "  node scripts/check-golden-cases.mjs --case <caseId>",
     "  node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md> --json",
@@ -329,6 +335,16 @@ function resolveActualPath(caseDef, actualPath) {
     return path.resolve(repoRoot, caseDef.fixturePath);
   }
   throw usageError("--case requires --actual <path-to-finalqa.md> when fixturePath is not set.");
+}
+
+function filterGoldenCasesByCategory(cases, category) {
+  if (!category) return cases;
+  const normalizedCategory = normalizeCategory(category);
+  return cases.filter((caseDef) => normalizeCategory(caseDef.category || "") === normalizedCategory);
+}
+
+function normalizeCategory(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, "");
 }
 
 function evaluateAllGoldenCases(cases) {
@@ -413,11 +429,13 @@ function listGoldenCases(cases) {
     const id = getCaseId(caseDef) || "(missing caseId)";
     const title = caseDef.title || "(missing title)";
     const mode = caseDef.mode || "(missing mode)";
+    const category = caseDef.category || "(missing category)";
     const topic = caseDef.initialTopic || caseDef.theme || "(missing initialTopic)";
     const fixture = caseDef.fixturePath ? `\n  fixturePath: ${caseDef.fixturePath}` : "";
     const note = caseDef.notes ? `\n  notes: ${caseDef.notes}` : "";
     console.log(`${index + 1}. ${id}`);
     console.log(`  title: ${title}`);
+    console.log(`  category: ${category}`);
     console.log(`  mode: ${mode}`);
     console.log(`  initialTopic: ${topic}${fixture}${note}`);
   });
@@ -468,6 +486,14 @@ function validateGoldenCases(cases, options = {}) {
       failures.push(`${id || prefix}.initialTopic is required.`);
     } else {
       checkedItems.push(`${id || prefix}.initialTopic`);
+    }
+
+    if (caseDef.category !== undefined) {
+      if (typeof caseDef.category !== "string" || !caseDef.category.trim()) {
+        failures.push(`${id || prefix}.category must be a non-empty string when set.`);
+      } else {
+        checkedItems.push(`${id || prefix}.category`);
+      }
     }
 
     if (caseDef.steeringMemos !== undefined && !Array.isArray(caseDef.steeringMemos)) {

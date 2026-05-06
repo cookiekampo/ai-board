@@ -1,6 +1,7 @@
 [
   {
     "caseId": "drp-kampo-fibromyalgia-doctor",
+    "category": "Medical Kampo",
     "fixturePath": "test-fixtures/golden-cases/finalqa-fibromyalgia-kampo-doctor.md",
     "title": "線維筋痛症の漢方 / 漢方医向け",
     "mode": "deepResearchPrompt",
@@ -83,6 +84,7 @@
   },
   {
     "caseId": "drp-kampo-fibromyalgia-counselor",
+    "category": "Medical Kampo",
     "fixturePath": "test-fixtures/golden-cases/finalqa-fibromyalgia-kampo-counselor.md",
     "title": "線維筋痛症の漢方相談 / 漢方相談員向け",
     "mode": "deepResearchPrompt",
@@ -138,6 +140,7 @@
   },
   {
     "caseId": "dr-kampo-orthostatic-dysregulation-kampo-doctor",
+    "category": "Medical Kampo",
     "aliases": [
       "orthostatic_kampo_doctor"
     ],
@@ -224,6 +227,7 @@
   },
   {
     "caseId": "orthostatic_kampo_doctor_conflict_resolution",
+    "category": "Medical Kampo",
     "aliases": [
       "orthostatic_conflict_resolution",
       "orthostatic_kampo_conflict"
@@ -317,6 +321,7 @@
   },
   {
     "caseId": "drr-fibromyalgia-deep-research-review",
+    "category": "Review",
     "fixturePath": "test-fixtures/golden-cases/finaljudge-fibromyalgia-deep-research-review.md",
     "title": "線維筋痛症Deep Research結果レビュー",
     "mode": "deepResearchReview",
@@ -351,6 +356,7 @@
   },
   {
     "caseId": "interstitial_pneumonia_kampo_review_public_memo",
+    "category": "Review",
     "aliases": [
       "interstitial_pneumonia_kampo_review",
       "interstitial_pneumonia_review_public_memo",
@@ -451,6 +457,7 @@
   },
   {
     "caseId": "deep_research_wide_deep_one_shot",
+    "category": "First Run",
     "aliases": [
       "wide_deep_one_shot",
       "deep_research_strategy_c"

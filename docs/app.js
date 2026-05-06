@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.74";
+const APP_CACHE_NAME = "ai-board-static-v0.1.75";
 const APP_VERSION_LABEL = APP_CACHE_NAME.replace(/^ai-board-static-/, "");
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
@@ -1810,11 +1810,32 @@ const goldenCaseDefaultAllowedSafetyContextPatterns = [
   "含めない"
 ];
 
+const goldenCaseCategoryOptions = [
+  "All",
+  "Core",
+  "First Run",
+  "Review",
+  "Medical Kampo",
+  "Ads",
+  "Meta Research",
+  "Restore"
+];
+
+function inferGoldenCaseCategory(goldenCase = {}) {
+  const mode = goldenCase.mode || "";
+  const id = `${goldenCase.caseId || goldenCase.id || ""} ${goldenCase.title || ""} ${goldenCase.notes || ""}`;
+  if (/review/i.test(mode) || /review|レビュー|変換|間質性肺炎/i.test(id)) return "Review";
+  if (/wide|one.?shot|一括|初回/i.test(id)) return "First Run";
+  if (/kampo|漢方|線維筋痛|起立性|間質性肺炎/i.test(id)) return "Medical Kampo";
+  return "Core";
+}
+
 const goldenCaseFallbacks = [
   {
     id: "drp-kampo-fallback",
     caseId: "drp-kampo-fallback",
     title: "Fallback Golden Case: Deep Research設計",
+    category: "Core",
     mode: "deepResearchPrompt",
     theme: "線維筋痛症の漢方",
     initialTopic: "線維筋痛症の漢方",
@@ -1849,6 +1870,7 @@ function normalizeGoldenCaseDefinition(goldenCase) {
     ...goldenCase,
     id,
     caseId: goldenCase.caseId || id,
+    category: goldenCase.category || inferGoldenCaseCategory(goldenCase),
     theme,
     initialTopic: goldenCase.initialTopic || theme,
     steeringNotes: Array.isArray(steeringNotes) ? steeringNotes : [],
@@ -1903,6 +1925,7 @@ const els = {
   generatedTopicStatus: document.getElementById("generatedTopicStatus"),
   modeSelect: document.getElementById("modeSelect"),
   modeShortcutButtons: Array.from(document.querySelectorAll("[data-mode-shortcut]")),
+  deepResearchTabButtons: Array.from(document.querySelectorAll("[data-deep-research-tab]")),
   quickTopic: document.getElementById("quickTopic"),
   quickBackground: document.getElementById("quickBackground"),
   quickDecision: document.getElementById("quickDecision"),
@@ -1998,6 +2021,7 @@ const els = {
   deepResearchReviewHandoffText: document.getElementById("deepResearchReviewHandoffText"),
   deepResearchReviewHandoffCardText: document.getElementById("deepResearchReviewHandoffCardText"),
   deepResearchCopyPanel: document.getElementById("deepResearchCopyPanel"),
+  deepResearchCopyRecommendation: document.getElementById("deepResearchCopyRecommendation"),
   copyDeepResearchPromptButton: document.getElementById("copyDeepResearchPromptButton"),
   copyDeepResearchLightweightButton: document.getElementById("copyDeepResearchLightweightButton"),
   copyDeepResearchOpinionRequestButton: document.getElementById("copyDeepResearchOpinionRequestButton"),
@@ -2036,6 +2060,7 @@ const els = {
   deepResearchKampoProfessionalText: document.getElementById("deepResearchKampoProfessionalText"),
   goldenCasePanel: document.getElementById("goldenCasePanel"),
   goldenCaseLoadInfo: document.getElementById("goldenCaseLoadInfo"),
+  goldenCaseCategorySelect: document.getElementById("goldenCaseCategorySelect"),
   goldenCaseSelect: document.getElementById("goldenCaseSelect"),
   reloadGoldenCasesButton: document.getElementById("reloadGoldenCasesButton"),
   loadGoldenCaseTopicButton: document.getElementById("loadGoldenCaseTopicButton"),
@@ -2146,6 +2171,9 @@ function bindEvents() {
       els.modeSelect.value = mode;
       changeMode();
     });
+  });
+  els.deepResearchTabButtons.forEach((button) => {
+    button.addEventListener("click", () => handleDeepResearchTabClick(button.dataset.deepResearchTab));
   });
   quickFieldDefs.forEach((field) => {
     els[field.id].addEventListener("input", saveQuickFields);
@@ -2301,6 +2329,12 @@ function bindEvents() {
   }
   if (els.goldenCaseSelect) {
     els.goldenCaseSelect.addEventListener("change", renderGoldenCasePanel);
+  }
+  if (els.goldenCaseCategorySelect) {
+    els.goldenCaseCategorySelect.addEventListener("change", () => {
+      populateGoldenCaseSelect();
+      renderGoldenCasePanel();
+    });
   }
   if (els.reloadGoldenCasesButton) {
     els.reloadGoldenCasesButton.addEventListener("click", reloadGoldenCases);
@@ -3307,6 +3341,14 @@ function changeMode() {
     return;
   }
   state.mode = modeSteps[mode] ? mode : DEFAULT_MODE;
+  if (state.mode === "deepResearchPrompt") {
+    state.deepResearchActiveTab = "prompt";
+    state.promptContextMode = inferDeepResearchPromptContextMode();
+  } else if (state.mode === "deepResearchReview") {
+    state.deepResearchActiveTab = "review";
+  } else {
+    state.deepResearchActiveTab = "";
+  }
   state.currentStep = normalizeStep(state.currentStep, state.mode);
   els.modeSelect.value = state.mode;
   updateTopicPrompt();
@@ -3379,6 +3421,51 @@ function getStepsForMode(mode) {
   return modeSteps[mode] || modeSteps[DEFAULT_MODE] || modeSteps.basic;
 }
 
+function switchModeFromDeepResearchTab(mode) {
+  if (!modeSteps[mode]) return false;
+  const before = state.mode;
+  els.modeSelect.value = mode;
+  changeMode();
+  return state.mode === mode || before === mode;
+}
+
+function handleDeepResearchTabClick(tab) {
+  if (tab === "prompt") {
+    if (switchModeFromDeepResearchTab("deepResearchPrompt")) {
+      state.deepResearchActiveTab = "prompt";
+      state.promptContextMode = inferDeepResearchPromptContextMode();
+      persist();
+      render();
+      scrollToElement(els.topicEntryTitle);
+    }
+    return;
+  }
+  if (tab === "review") {
+    if (switchModeFromDeepResearchTab("deepResearchReview")) {
+      state.deepResearchActiveTab = "review";
+      persist();
+      render();
+      scrollToElement(els.deepResearchReviewInputPanel || els.topicEntryTitle);
+    }
+    return;
+  }
+  if (tab === "restore") {
+    if (switchModeFromDeepResearchTab("deepResearchReview")) {
+      state.deepResearchActiveTab = "restore";
+      persist();
+      render();
+      scrollToElement(els.deepResearchReviewImportLog || els.deepResearchReviewInputPanel);
+    }
+    return;
+  }
+  if (tab === "golden") {
+    state.deepResearchActiveTab = "golden";
+    persist();
+    renderModeShortcuts();
+    scrollToElement(els.goldenCasePanel);
+  }
+}
+
 function getSteps() {
   return getStepsForMode(state.mode);
 }
@@ -3435,6 +3522,17 @@ function renderModeShortcuts() {
     const active = button.dataset.modeShortcut === state.mode;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+  els.deepResearchTabButtons.forEach((button) => {
+    const tab = button.dataset.deepResearchTab;
+    const activeTab = state.deepResearchActiveTab || (state.mode === "deepResearchPrompt" ? "prompt" : state.mode === "deepResearchReview" ? "review" : "");
+    const active =
+      (tab === "prompt" && state.mode === "deepResearchPrompt" && activeTab === "prompt") ||
+      (tab === "review" && state.mode === "deepResearchReview" && activeTab === "review") ||
+      (tab === "restore" && state.mode === "deepResearchReview" && activeTab === "restore") ||
+      (tab === "golden" && activeTab === "golden");
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
   });
 }
 
@@ -3513,23 +3611,57 @@ function renderPromptContextModePanel(step) {
   }
 }
 
-const deepResearchPromptOpenExitCards = new Set([
-  "deepResearchCompletePromptText",
-  "deepResearchLightweightText",
-  "deepResearchOpinionRequestText",
-  "deepResearchOrderText"
-]);
+function isDeepResearchFollowupTopicCard() {
+  const text = [
+    state.topicCard,
+    els.topicCard ? els.topicCard.value : "",
+    state.deepResearchReviewImportedFinalAnswer
+  ].map((value) => String(value || "")).join("\n");
+  return /Deep Research review由来|2回目以降用|軽量版|次調査カード|Handoff Card|未解決Issue|前回レビュー|追加調査が必要|DR_REVIEW/u.test(text);
+}
+
+function inferDeepResearchPromptContextMode() {
+  return isDeepResearchFollowupTopicCard() ? "light" : "full";
+}
+
+function getDeepResearchPromptRecommendation() {
+  if (inferDeepResearchPromptContextMode() === "light") {
+    return {
+      mode: "light",
+      message: "推奨: 2回目以降・軽量版。review由来の次調査カードや未解決Issueを前提に、必要部分だけ深掘りします。"
+    };
+  }
+  return {
+    mode: "full",
+    message: "推奨: 初回・広く深く用。一括で全体地図を作り、Deep Research reviewで抜け漏れを確認します。"
+  };
+}
+
+function getDeepResearchPromptOpenExitCards() {
+  if (inferDeepResearchPromptContextMode() === "light") {
+    return new Set([
+      "deepResearchLightweightText",
+      "deepResearchSplitText",
+      "deepResearchOrderText"
+    ]);
+  }
+  return new Set([
+    "deepResearchCompletePromptText",
+    "deepResearchLightweightText",
+    "deepResearchOrderText"
+  ]);
+}
 
 const deepResearchPromptExitCardOrder = new Map([
   ["deepResearchCompletePromptText", 1],
   ["deepResearchLightweightText", 2],
-  ["deepResearchOpinionRequestText", 3],
-  ["deepResearchSplitText", 4],
-  ["deepResearchOrderText", 5],
-  ["deepResearchAdditionalText", 6],
-  ["deepResearchDecisionLedgerText", 7],
-  ["deepResearchAnswerLedgerText", 8],
-  ["deepResearchAssumptionsText", 9],
+  ["deepResearchSplitText", 3],
+  ["deepResearchOrderText", 4],
+  ["deepResearchAdditionalText", 5],
+  ["deepResearchDecisionLedgerText", 6],
+  ["deepResearchAnswerLedgerText", 7],
+  ["deepResearchAssumptionsText", 8],
+  ["deepResearchOpinionRequestText", 9],
   ["deepResearchOneShotText", 10],
   ["deepResearchQuestionsText", 11]
 ]);
@@ -3546,7 +3678,7 @@ const deepResearchReviewOpenExitCards = new Set([
 
 function applyExitCardDisclosures() {
   applyExitCardMetadata();
-  applyExitCardDisclosuresForPanel(els.deepResearchCopyPanel, deepResearchPromptOpenExitCards, deepResearchPromptExitCardOrder);
+  applyExitCardDisclosuresForPanel(els.deepResearchCopyPanel, getDeepResearchPromptOpenExitCards(), deepResearchPromptExitCardOrder);
   applyExitCardDisclosuresForPanel(els.deepResearchReviewCompletePanel, deepResearchReviewOpenExitCards);
 }
 
@@ -4929,7 +5061,8 @@ function startDeepResearchPromptFromReviewHandoff() {
   state.setupDone = true;
   state.answers = {};
   state.steeringNotes = {};
-  state.promptContextMode = "full";
+  state.promptContextMode = "light";
+  state.deepResearchActiveTab = "prompt";
   state.deepResearchReviewImportLog = "";
   state.deepResearchReviewImportedFinalAnswer = "";
   collapsePreparationAfterTopicApplied();
@@ -5029,7 +5162,13 @@ function renderDeepResearchCopyPanel() {
   if (!canCopy) {
     resetExitCardDisclosureState(els.deepResearchCopyPanel);
     clearDeepResearchPromptCompleteTexts();
+    if (els.deepResearchCopyRecommendation) els.deepResearchCopyRecommendation.textContent = "";
     return;
+  }
+  const recommendation = getDeepResearchPromptRecommendation();
+  if (els.deepResearchCopyRecommendation) {
+    els.deepResearchCopyRecommendation.textContent = recommendation.message;
+    els.deepResearchCopyRecommendation.classList.toggle("warn", recommendation.mode === "light");
   }
   const parts = buildDeepResearchPromptCompleteParts();
   setReviewCompleteText(els.deepResearchCompletePromptText, parts.completePrompt);
@@ -5311,25 +5450,55 @@ function formatGoldenCaseLoadError(error) {
   return `Golden Case internal error: ${message}`;
 }
 
+function getSelectedGoldenCaseCategory() {
+  return els.goldenCaseCategorySelect ? (els.goldenCaseCategorySelect.value || "All") : "All";
+}
+
+function getVisibleGoldenCases() {
+  const category = getSelectedGoldenCaseCategory();
+  if (!category || category === "All") return goldenCases;
+  return goldenCases.filter((goldenCase) => (goldenCase.category || inferGoldenCaseCategory(goldenCase)) === category);
+}
+
+function populateGoldenCaseCategorySelect() {
+  if (!els.goldenCaseCategorySelect) return;
+  const selected = els.goldenCaseCategorySelect.value || "All";
+  const categories = new Set(goldenCaseCategoryOptions);
+  goldenCases.forEach((goldenCase) => categories.add(goldenCase.category || inferGoldenCaseCategory(goldenCase)));
+  els.goldenCaseCategorySelect.textContent = "";
+  Array.from(categories).forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category === "All" ? "All categories" : category;
+    els.goldenCaseCategorySelect.appendChild(option);
+  });
+  els.goldenCaseCategorySelect.value = categories.has(selected) ? selected : "All";
+}
+
 function populateGoldenCaseSelect() {
   if (!els.goldenCaseSelect) return;
   const selected = els.goldenCaseSelect.value || (goldenCases[0] ? goldenCases[0].id : "");
+  populateGoldenCaseCategorySelect();
+  const visibleCases = getVisibleGoldenCases();
   els.goldenCaseSelect.textContent = "";
-  goldenCases.forEach((goldenCase) => {
+  visibleCases.forEach((goldenCase) => {
     const option = document.createElement("option");
     option.value = goldenCase.id;
-    option.textContent = goldenCase.title;
+    option.textContent = goldenCase.category ? `[${goldenCase.category}] ${goldenCase.title}` : goldenCase.title;
     els.goldenCaseSelect.appendChild(option);
   });
-  if (goldenCases.some((goldenCase) => goldenCase.id === selected)) {
+  if (visibleCases.some((goldenCase) => goldenCase.id === selected)) {
     els.goldenCaseSelect.value = selected;
+  } else if (visibleCases[0]) {
+    els.goldenCaseSelect.value = visibleCases[0].id;
   }
 }
 
 function getSelectedGoldenCase() {
   if (!goldenCases.length) return null;
   const selectedId = els.goldenCaseSelect ? els.goldenCaseSelect.value : goldenCases[0].id;
-  return goldenCases.find((goldenCase) => goldenCase.id === selectedId) || goldenCases[0];
+  const visibleCases = getVisibleGoldenCases();
+  return goldenCases.find((goldenCase) => goldenCase.id === selectedId) || visibleCases[0] || goldenCases[0];
 }
 
 function renderGoldenCasePanel() {
