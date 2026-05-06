@@ -282,3 +282,24 @@ Use this checklist after changing Golden Case categorization.
 10. Run `node scripts/check-golden-cases.mjs --category Review` and confirm it exits successfully.
 11. Run `node scripts/check-golden-cases.mjs --category Medical` and confirm medical kampo cases are listed.
 12. Run `node scripts/check-golden-cases.mjs --all` and confirm all existing Golden Cases pass.
+
+## Golden Case readable use-case labels smoke check
+
+Use this checklist after changing Golden Case display metadata.
+
+1. Open the `Cases` Deep Research tab.
+2. Confirm Golden Case options show readable names such as `症例検索：脂肪肝×漢方`.
+3. Confirm the selected Golden Case expected panel shows:
+   - 用途 / use-case label
+   - one-line purpose
+   - workflow category
+   - domain category
+   - caseId
+4. Confirm each case has visible badges or labels for use case, workflow, and domain.
+5. Confirm iPhone width keeps the case selector and filter controls usable; wrapping is acceptable, but labels and selected values must not be clipped.
+6. Confirm the use-case filter can show `症例検索` cases.
+7. Confirm workflow and domain filters still work together with the use-case filter.
+8. Confirm the new `fatty_liver_kampo_case_report_search` case is visible.
+9. Run `node scripts/check-golden-cases.mjs --list --use-case case-report-search`.
+10. Run `node scripts/check-golden-cases.mjs --all --use-case case-report-search`.
+11. Run `node scripts/check-golden-cases.mjs --list-categories` and confirm use-case counts are printed.

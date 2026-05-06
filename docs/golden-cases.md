@@ -465,3 +465,24 @@ node scripts/check-golden-cases.mjs --category Medical
 ```
 
 `--category` remains a compatibility filter and can match the old `category`, `workflowCategory`, or `domainCategory`. Use `--workflow-category` and `--domain-category` for more precise checks.
+
+## Readable Golden Case labels
+
+Golden Case definitions can include display-oriented metadata so the Runner is understandable at a glance:
+
+- `displayName`: short user-facing name, such as `症例検索：脂肪肝×漢方`
+- `useCase`: machine-readable use case ID, such as `case-report-search`
+- `useCaseLabel`: UI label, such as `症例検索`
+- `oneLinePurpose`: one sentence explaining what the case verifies
+
+These fields do not replace `category`, `workflowCategory`, or `domainCategory`; they sit on top of those compatibility fields. The browser Runner shows the display name, purpose, use-case label, workflow, and domain so cases remain easy to find as the list grows.
+
+CLI checks can filter by use case:
+
+```bash
+node scripts/check-golden-cases.mjs --list --use-case case-report-search
+node scripts/check-golden-cases.mjs --all --use-case first-run-map
+node scripts/check-golden-cases.mjs --list-categories
+```
+
+`--list-categories` prints workflow, domain, use-case, and legacy category counts.

@@ -203,6 +203,22 @@ const domainCategoryLabels = {
   uncategorized: "Uncategorized",
 };
 
+const useCaseLabels = {
+  all: "All",
+  "first-run-map": "First Run Map",
+  "case-report-search": "Case Report Search",
+  "safety-check": "Safety Check",
+  "review-public-safe-conversion": "Public Safe Conversion",
+  "restore-log": "Restore Log",
+  "opinion-request": "Opinion Request",
+  "codex-implementation": "Codex Implementation",
+  "business-review": "Business Review",
+  "deep-research-meta-review": "Deep Research Meta Review",
+  "review-exit-cards": "Review Exit Cards",
+  "answer-ledger-conflict-resolution": "Answer Ledger Conflict Resolution",
+  uncategorized: "Uncategorized",
+};
+
 const categoryAliases = {
   all: "all",
   allcategories: "all",
@@ -214,6 +230,30 @@ const categoryAliases = {
   prompt: "prompt",
   exit: "exit-card",
   exitcard: "exit-card",
+  firstrunmap: "first-run-map",
+  "first-run-map": "first-run-map",
+  casereportsearch: "case-report-search",
+  "case-report-search": "case-report-search",
+  safetycheck: "safety-check",
+  "safety-check": "safety-check",
+  publicsafeconversion: "review-public-safe-conversion",
+  "public-safe-conversion": "review-public-safe-conversion",
+  reviewpublicsafeconversion: "review-public-safe-conversion",
+  "review-public-safe-conversion": "review-public-safe-conversion",
+  restorelog: "restore-log",
+  "restore-log": "restore-log",
+  opinionrequest: "opinion-request",
+  "opinion-request": "opinion-request",
+  codeximplementation: "codex-implementation",
+  "codex-implementation": "codex-implementation",
+  businessreview: "business-review",
+  "business-review": "business-review",
+  deepresearchmetareview: "deep-research-meta-review",
+  "deep-research-meta-review": "deep-research-meta-review",
+  reviewexitcards: "review-exit-cards",
+  "review-exit-cards": "review-exit-cards",
+  answerledgerconflictresolution: "answer-ledger-conflict-resolution",
+  "answer-ledger-conflict-resolution": "answer-ledger-conflict-resolution",
   medical: "medical-kampo",
   kampo: "medical-kampo",
   medicalkampo: "medical-kampo",
@@ -296,6 +336,7 @@ function parseArgs(argv) {
     category: "",
     workflowCategory: "",
     domainCategory: "",
+    useCase: "",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
@@ -337,6 +378,10 @@ function parseArgs(argv) {
       index += 1;
       if (!argv[index]) throw usageError("--domain-category requires a category name.");
       args.domainCategory = argv[index];
+    } else if (token === "--use-case") {
+      index += 1;
+      if (!argv[index]) throw usageError("--use-case requires a use case name.");
+      args.useCase = argv[index];
     } else if (token === "--help" || token === "-h") {
       throw usageError(usageText());
     } else {
@@ -344,7 +389,7 @@ function parseArgs(argv) {
     }
   }
   if (!args.list && !args.validate && !args.all && !args.listCategories && !args.caseId
-    && (args.category || args.workflowCategory || args.domainCategory)) {
+    && (args.category || args.workflowCategory || args.domainCategory || args.useCase)) {
     args.list = true;
   }
   const commandCount = [args.list, args.validate, args.all, args.listCategories, Boolean(args.caseId)].filter(Boolean).length;
@@ -361,10 +406,11 @@ function usageText() {
     "  node scripts/check-golden-cases.mjs --list --category <category>",
     "  node scripts/check-golden-cases.mjs --list --workflow-category <category>",
     "  node scripts/check-golden-cases.mjs --list --domain-category <category>",
+    "  node scripts/check-golden-cases.mjs --list --use-case <useCase>",
     "  node scripts/check-golden-cases.mjs --list-categories",
     "  node scripts/check-golden-cases.mjs --validate [--min-cases <n>]",
     "  node scripts/check-golden-cases.mjs --all [--category <category>]",
-    "  node scripts/check-golden-cases.mjs --all [--workflow-category <category>] [--domain-category <category>]",
+    "  node scripts/check-golden-cases.mjs --all [--workflow-category <category>] [--domain-category <category>] [--use-case <useCase>]",
     "  node scripts/check-golden-cases.mjs --all --json [--category <category>]",
     "  node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md>",
     "  node scripts/check-golden-cases.mjs --case <caseId>",
@@ -414,7 +460,9 @@ function filterGoldenCases(cases, filters = {}) {
       || getCaseWorkflowCategory(caseDef) === normalizeCategory(filters.workflowCategory);
     const domainMatches = !filters.domainCategory
       || getCaseDomainCategory(caseDef) === normalizeCategory(filters.domainCategory);
-    return legacyMatches && workflowMatches && domainMatches;
+    const useCaseMatches = !filters.useCase
+      || getCaseUseCase(caseDef) === normalizeCategory(filters.useCase);
+    return legacyMatches && workflowMatches && domainMatches && useCaseMatches;
   });
 }
 
@@ -424,7 +472,8 @@ function matchesAnyCategory(caseDef, requestedCategory) {
   const legacyCategory = normalizeCategory(caseDef.category || "");
   const workflowCategory = getCaseWorkflowCategory(caseDef);
   const domainCategory = getCaseDomainCategory(caseDef);
-  return [legacyCategory, workflowCategory, domainCategory].some((category) => category === expected);
+  const useCase = getCaseUseCase(caseDef);
+  return [legacyCategory, workflowCategory, domainCategory, useCase].some((category) => category === expected);
 }
 
 function normalizeCategory(value) {
@@ -445,6 +494,10 @@ function getCaseWorkflowCategory(caseDef) {
 
 function getCaseDomainCategory(caseDef) {
   return normalizeCategory(caseDef.domainCategory || inferCaseDomainCategory(caseDef));
+}
+
+function getCaseUseCase(caseDef) {
+  return normalizeCategory(caseDef.useCase || inferCaseUseCase(caseDef));
 }
 
 function inferCaseWorkflowCategory(caseDef) {
@@ -479,6 +532,30 @@ function inferCaseDomainCategory(caseDef) {
   return "general";
 }
 
+function inferCaseUseCase(caseDef) {
+  const haystack = [
+    caseDef.useCase,
+    caseDef.useCaseLabel,
+    caseDef.displayName,
+    caseDef.caseId,
+    caseDef.title,
+    caseDef.notes,
+    ...(Array.isArray(caseDef.aliases) ? caseDef.aliases : []),
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (/case[-\s]?report|症例/.test(haystack)) return "case-report-search";
+  if (/safety|安全/.test(haystack)) return "safety-check";
+  if (/public|一般向け|safe[-\s]?conversion|安全変換/.test(haystack)) return "review-public-safe-conversion";
+  if (/restore|復元/.test(haystack)) return "restore-log";
+  if (/opinion|意見/.test(haystack)) return "opinion-request";
+  if (/codex|implementation|実装/.test(haystack)) return "codex-implementation";
+  if (/google|広告|business/.test(haystack)) return "business-review";
+  if (/quality|meta|品質|メタ/.test(haystack)) return "deep-research-meta-review";
+  if (/exit[-\s]?card|出口/.test(haystack)) return "review-exit-cards";
+  if (/conflict|矛盾/.test(haystack)) return "answer-ledger-conflict-resolution";
+  if (/first|wide|one[-\s]?shot|初回|一括/.test(haystack)) return "first-run-map";
+  return "uncategorized";
+}
+
 function formatWorkflowCategory(category) {
   const normalized = normalizeCategory(category || "uncategorized");
   return workflowCategoryLabels[normalized] || category || "Uncategorized";
@@ -487,6 +564,11 @@ function formatWorkflowCategory(category) {
 function formatDomainCategory(category) {
   const normalized = normalizeCategory(category || "uncategorized");
   return domainCategoryLabels[normalized] || category || "Uncategorized";
+}
+
+function formatUseCase(useCase) {
+  const normalized = normalizeCategory(useCase || "uncategorized");
+  return useCaseLabels[normalized] || useCase || "Uncategorized";
 }
 
 function evaluateAllGoldenCases(cases) {
@@ -570,6 +652,9 @@ function listGoldenCases(cases) {
   cases.forEach((caseDef, index) => {
     const id = getCaseId(caseDef) || "(missing caseId)";
     const title = caseDef.title || "(missing title)";
+    const displayName = caseDef.displayName || title;
+    const useCase = caseDef.useCaseLabel || formatUseCase(getCaseUseCase(caseDef));
+    const purpose = caseDef.oneLinePurpose || "";
     const mode = caseDef.mode || "(missing mode)";
     const category = caseDef.category || "(missing category)";
     const workflowCategory = formatWorkflowCategory(getCaseWorkflowCategory(caseDef));
@@ -578,6 +663,9 @@ function listGoldenCases(cases) {
     const fixture = caseDef.fixturePath ? `\n  fixturePath: ${caseDef.fixturePath}` : "";
     const note = caseDef.notes ? `\n  notes: ${caseDef.notes}` : "";
     console.log(`${index + 1}. ${id}`);
+    console.log(`  displayName: ${displayName}`);
+    console.log(`  useCase: ${useCase}`);
+    if (purpose) console.log(`  purpose: ${purpose}`);
     console.log(`  title: ${title}`);
     console.log(`  category: ${category}`);
     console.log(`  workflowCategory: ${workflowCategory}`);
@@ -593,6 +681,7 @@ function listGoldenCaseCategories(cases) {
   }
   const workflowCounts = countBy(cases, getCaseWorkflowCategory);
   const domainCounts = countBy(cases, getCaseDomainCategory);
+  const useCaseCounts = countBy(cases, getCaseUseCase);
   const legacyCounts = countBy(cases, (caseDef) => caseDef.category || "uncategorized");
   console.log(`Golden Case categories (${cases.length} cases)`);
   console.log("");
@@ -601,6 +690,9 @@ function listGoldenCaseCategories(cases) {
   console.log("");
   console.log("Domain categories:");
   printCounts(domainCounts, formatDomainCategory);
+  console.log("");
+  console.log("Use cases:");
+  printCounts(useCaseCounts, formatUseCase);
   console.log("");
   console.log("Legacy categories:");
   printCounts(legacyCounts, (value) => value);
@@ -692,6 +784,16 @@ function validateGoldenCases(cases, options = {}) {
         checkedItems.push(`${id || prefix}.domainCategory`);
       }
     }
+
+    ["displayName", "useCase", "useCaseLabel", "oneLinePurpose"].forEach((field) => {
+      if (caseDef[field] !== undefined) {
+        if (typeof caseDef[field] !== "string" || !caseDef[field].trim()) {
+          failures.push(`${id || prefix}.${field} must be a non-empty string when set.`);
+        } else {
+          checkedItems.push(`${id || prefix}.${field}`);
+        }
+      }
+    });
 
     if (caseDef.steeringMemos !== undefined && !Array.isArray(caseDef.steeringMemos)) {
       failures.push(`${id || prefix}.steeringMemos must be an array.`);

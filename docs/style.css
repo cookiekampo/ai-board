@@ -540,7 +540,7 @@ button.wide {
 
 .golden-case-controls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
   align-items: end;
   gap: 6px;
   margin: 10px 0;
@@ -553,6 +553,48 @@ button.wide {
 
 .golden-case-controls select {
   width: 100%;
+}
+
+.golden-case-summary {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 8px 0 12px;
+  padding: 10px;
+}
+
+.golden-case-summary strong {
+  display: block;
+  font-size: 15px;
+}
+
+.golden-case-purpose {
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 13px;
+  margin: 4px 0 8px;
+  overflow: hidden;
+}
+
+.golden-case-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.golden-case-badge {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.golden-case-summary small {
+  color: var(--muted);
 }
 
 .deep-research-tab-description {

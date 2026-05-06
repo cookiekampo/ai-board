@@ -82,7 +82,11 @@
     ],
     "notes": "漢方医向け内部資料として、初回から処方・生薬・証の概観を含めるケース。",
     "workflowCategory": "first-run",
-    "domainCategory": "medical-kampo"
+    "domainCategory": "medical-kampo",
+    "displayName": "初回全体地図：線維筋痛症×漢方（漢方医向け）",
+    "useCase": "first-run-map",
+    "useCaseLabel": "初回全体地図",
+    "oneLinePurpose": "漢方医向け内部資料として、初回から医学的基礎・安全確認・証・処方群・生薬の概観を含められるか確認する"
   },
   {
     "caseId": "drp-kampo-fibromyalgia-counselor",
@@ -140,7 +144,11 @@
     ],
     "notes": "医師ではない漢方相談員向けに、安全確認・受診勧奨を中心へ寄せるケース。",
     "workflowCategory": "first-run",
-    "domainCategory": "medical-kampo"
+    "domainCategory": "medical-kampo",
+    "displayName": "安全性確認：線維筋痛症×漢方相談",
+    "useCase": "safety-check",
+    "useCaseLabel": "安全性確認",
+    "oneLinePurpose": "医師ではない漢方相談員向けに、処方・生薬の深掘りを避けて安全確認と受診勧奨へ寄せられるか確認する"
   },
   {
     "caseId": "dr-kampo-orthostatic-dysregulation-kampo-doctor",
@@ -229,7 +237,11 @@
     ],
     "notes": "初回では方剤候補名を出さず、病名処方やランキングを明示的に禁止するケース。",
     "workflowCategory": "first-run",
-    "domainCategory": "medical-kampo"
+    "domainCategory": "medical-kampo",
+    "displayName": "初回全体地図：起立性調節障害×漢方",
+    "useCase": "first-run-map",
+    "useCaseLabel": "初回全体地図",
+    "oneLinePurpose": "初回では方剤候補名を出さず、内部向けに安全確認・医療連携・問診設計を優先できるか確認する"
   },
   {
     "caseId": "orthostatic_kampo_doctor_conflict_resolution",
@@ -325,7 +337,11 @@
     ],
     "notes": "Answer Ledger内の矛盾をDecision Ledger優先で解決し、第1回は安全確認・医療連携・問診設計中心、処方・生薬は論点出しまでに寄せるケース。",
     "workflowCategory": "first-run",
-    "domainCategory": "medical-kampo"
+    "domainCategory": "medical-kampo",
+    "displayName": "矛盾解決：起立性調節障害×漢方相談",
+    "useCase": "answer-ledger-conflict-resolution",
+    "useCaseLabel": "矛盾解決",
+    "oneLinePurpose": "Answer Ledger内の矛盾をDecision Ledger優先で解決し、初回範囲を安全確認・医療連携・問診設計中心へ修正できるか確認する"
   },
   {
     "caseId": "drr-fibromyalgia-deep-research-review",
@@ -362,7 +378,11 @@
     ],
     "notes": "Deep Research reviewモードのFinal Judgeから、ユーザーが使う出口カードを抽出できるか確認するケース。医療内容の正しさではなく、出口カード構造の回帰確認用。",
     "workflowCategory": "review",
-    "domainCategory": "medical-kampo"
+    "domainCategory": "medical-kampo",
+    "displayName": "Review出口カード：線維筋痛症Deep Research",
+    "useCase": "review-exit-cards",
+    "useCaseLabel": "Review出口",
+    "oneLinePurpose": "Deep Research reviewのFinal Judgeから採用可否・改訂版成果物・追加調査案・次調査カードを抽出できるか確認する"
   },
   {
     "caseId": "interstitial_pneumonia_kampo_review_public_memo",
@@ -465,7 +485,11 @@
       ]
     },
     "workflowCategory": "review",
-    "domainCategory": "medical-kampo"
+    "domainCategory": "medical-kampo",
+    "displayName": "一般向け安全変換：間質性肺炎×漢方",
+    "useCase": "review-public-safe-conversion",
+    "useCaseLabel": "一般向け変換",
+    "oneLinePurpose": "専門職向けの濃いreview結果を、処方名や証を出しすぎず一般向け相談前メモへ安全変換できるか確認する"
   },
   {
     "caseId": "deep_research_wide_deep_one_shot",
@@ -539,6 +563,100 @@
     ],
     "notes": "Deep Researchプロンプト作成モードのcanonical case。一括で広く深く全体地図を作り、review後に必要部分だけ分割する推奨戦略を確認する。",
     "workflowCategory": "first-run",
-    "domainCategory": "deep-research-meta"
+    "domainCategory": "deep-research-meta",
+    "displayName": "初回全体地図：Deep Research",
+    "useCase": "first-run-map",
+    "useCaseLabel": "初回全体地図",
+    "oneLinePurpose": "一括で広く深く全体地図を作り、review後に必要部分だけ分割する推奨戦略を確認する"
+  },
+  {
+    "caseId": "fatty_liver_kampo_case_report_search",
+    "category": "Medical Kampo",
+    "workflowCategory": "first-run",
+    "domainCategory": "medical-kampo",
+    "displayName": "症例検索：脂肪肝×漢方",
+    "useCase": "case-report-search",
+    "useCaseLabel": "症例検索",
+    "oneLinePurpose": "脂肪肝/MASLD/MASHに関する漢方の症例報告・有害事象例を、一般化せず仮説生成として整理できるか確認する",
+    "aliases": [
+      "fatty_liver_kampo_case_search",
+      "masld_mash_kampo_case_report_search"
+    ],
+    "fixturePath": "test-fixtures/golden-cases/finalqa-fatty-liver-kampo-case-report-search.md",
+    "title": "脂肪肝/MASLD/MASH×漢方 症例検索",
+    "mode": "deepResearchPrompt",
+    "initialTopic": "脂肪肝/MASLD/MASHに関する漢方の症例報告・有害事象例",
+    "steeringMemos": [
+      "症例報告は仮説生成に限定する",
+      "改善例だけでなく有害事象例も探す",
+      "処方推奨・病名処方・効果保証は禁止"
+    ],
+    "expectedDecisionLedger": [
+      "対象：脂肪肝/MASLD/MASH",
+      "症例報告は仮説生成に限定",
+      "改善例と有害事象例を分ける",
+      "標準医療・肝臓専門医・線維化評価を優先",
+      "薬剤性肝障害を独立して扱う"
+    ],
+    "expectedAnswerLedger": [
+      "症例報告",
+      "有害事象例",
+      "仮説生成"
+    ],
+    "expectedPromptIncludes": [
+      "MASLD",
+      "MASH",
+      "脂肪肝",
+      "標準医療",
+      "肝臓専門医",
+      "線維化評価",
+      "症例報告は仮説生成に限定",
+      "改善例だけでなく有害事象例",
+      "薬剤性肝障害",
+      "PubMed",
+      "医中誌",
+      "J-STAGE",
+      "CiNii",
+      "PMDA",
+      "添付文書",
+      "体験談・販売ページ・SNSを根拠にしない",
+      "処方推奨・病名処方・効果保証を禁止"
+    ],
+    "expectedPromptExcludes": [
+      "脂肪肝にはこの漢方がおすすめ",
+      "MASLDにはこの漢方が第一選択",
+      "MASHにはこの漢方で治る"
+    ],
+    "prohibitedRecommendationPatterns": [
+      "脂肪肝には.*漢方",
+      "MASLDには.*漢方",
+      "MASHには.*漢方",
+      "おすすめ",
+      "治る",
+      "必ず改善",
+      "処方ランキング",
+      "標準医療を否定"
+    ],
+    "allowedSafetyContextPatterns": [
+      "禁止",
+      "避ける",
+      "しない",
+      "行わない",
+      "書かない",
+      "除外",
+      "断定しない",
+      "推奨しない",
+      "根拠にしない"
+    ],
+    "expectedExitCards": [
+      "complete prompt",
+      "lightweight prompt",
+      "order",
+      "additional prompts",
+      "decision ledger",
+      "answer ledger",
+      "assumptions"
+    ],
+    "notes": "症例報告・有害事象例を改善例と分け、仮説生成として扱えるか確認するケース。"
   }
 ]

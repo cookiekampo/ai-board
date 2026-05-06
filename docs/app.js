@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.77";
+const APP_CACHE_NAME = "ai-board-static-v0.1.78";
 const APP_VERSION_LABEL = APP_CACHE_NAME.replace(/^ai-board-static-/, "");
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
@@ -1812,6 +1812,21 @@ const goldenCaseDefaultAllowedSafetyContextPatterns = [
 
 const goldenCaseWorkflowOptions = ["all", "core", "first-run", "review", "restore", "prompt", "exit-card"];
 const goldenCaseDomainOptions = ["all", "medical-kampo", "ads-business", "deep-research-meta", "general", "uncategorized"];
+const goldenCaseUseCaseOptions = [
+  "all",
+  "first-run-map",
+  "case-report-search",
+  "safety-check",
+  "review-public-safe-conversion",
+  "restore-log",
+  "opinion-request",
+  "codex-implementation",
+  "business-review",
+  "deep-research-meta-review",
+  "review-exit-cards",
+  "answer-ledger-conflict-resolution",
+  "uncategorized"
+];
 const goldenCaseWorkflowLabels = {
   all: "すべて",
   core: "Core",
@@ -1827,6 +1842,21 @@ const goldenCaseDomainLabels = {
   "ads-business": "広告",
   "deep-research-meta": "メタ",
   general: "一般",
+  uncategorized: "未分類"
+};
+const goldenCaseUseCaseLabels = {
+  all: "すべて",
+  "first-run-map": "初回全体地図",
+  "case-report-search": "症例検索",
+  "safety-check": "安全性確認",
+  "review-public-safe-conversion": "一般向け変換",
+  "restore-log": "復元",
+  "opinion-request": "意見相談",
+  "codex-implementation": "実装指示",
+  "business-review": "実務レビュー",
+  "deep-research-meta-review": "メタレビュー",
+  "review-exit-cards": "Review出口",
+  "answer-ledger-conflict-resolution": "矛盾解決",
   uncategorized: "未分類"
 };
 
@@ -1845,6 +1875,28 @@ function normalizeGoldenCaseCategoryId(value) {
     prompt: "prompt",
     "exit-card": "exit-card",
     exitcard: "exit-card",
+    "first-run-map": "first-run-map",
+    firstrunmap: "first-run-map",
+    "case-report-search": "case-report-search",
+    casereportsearch: "case-report-search",
+    "safety-check": "safety-check",
+    safetycheck: "safety-check",
+    "review-public-safe-conversion": "review-public-safe-conversion",
+    publicsafeconversion: "review-public-safe-conversion",
+    "restore-log": "restore-log",
+    restorelog: "restore-log",
+    "opinion-request": "opinion-request",
+    opinionrequest: "opinion-request",
+    "codex-implementation": "codex-implementation",
+    codeximplementation: "codex-implementation",
+    "business-review": "business-review",
+    businessreview: "business-review",
+    "deep-research-meta-review": "deep-research-meta-review",
+    deepresearchmetareview: "deep-research-meta-review",
+    "review-exit-cards": "review-exit-cards",
+    reviewexitcards: "review-exit-cards",
+    "answer-ledger-conflict-resolution": "answer-ledger-conflict-resolution",
+    answerledgerconflictresolution: "answer-ledger-conflict-resolution",
     medical: "medical-kampo",
     kampo: "medical-kampo",
     "medical-kampo": "medical-kampo",
@@ -1872,6 +1924,10 @@ function getGoldenCaseDomainCategory(goldenCase = {}) {
   return normalizeGoldenCaseCategoryId(goldenCase.domainCategory || inferGoldenCaseDomainCategory(goldenCase));
 }
 
+function getGoldenCaseUseCase(goldenCase = {}) {
+  return normalizeGoldenCaseCategoryId(goldenCase.useCase || inferGoldenCaseUseCase(goldenCase));
+}
+
 function formatGoldenCaseWorkflowCategory(value) {
   const normalized = normalizeGoldenCaseCategoryId(value);
   return goldenCaseWorkflowLabels[normalized] || String(value || "未分類");
@@ -1880,6 +1936,11 @@ function formatGoldenCaseWorkflowCategory(value) {
 function formatGoldenCaseDomainCategory(value) {
   const normalized = normalizeGoldenCaseCategoryId(value);
   return goldenCaseDomainLabels[normalized] || String(value || "未分類");
+}
+
+function formatGoldenCaseUseCase(value) {
+  const normalized = normalizeGoldenCaseCategoryId(value);
+  return goldenCaseUseCaseLabels[normalized] || String(value || "未分類");
 }
 
 function inferGoldenCaseCategory(goldenCase = {}) {
@@ -1911,6 +1972,22 @@ function inferGoldenCaseDomainCategory(goldenCase = {}) {
   if (/meta|quality|golden|research.*strategy|deep research/i.test(legacy + id)) return "deep-research-meta";
   if (!legacy && !id.trim()) return "uncategorized";
   return "general";
+}
+
+function inferGoldenCaseUseCase(goldenCase = {}) {
+  const id = `${goldenCase.caseId || goldenCase.id || ""} ${goldenCase.title || ""} ${goldenCase.notes || ""}`;
+  if (/case.?report|症例/i.test(id)) return "case-report-search";
+  if (/safety|安全/i.test(id)) return "safety-check";
+  if (/public|一般向け|safe.?conversion|安全変換/i.test(id)) return "review-public-safe-conversion";
+  if (/restore|復元/i.test(id)) return "restore-log";
+  if (/opinion|意見/i.test(id)) return "opinion-request";
+  if (/codex|implementation|実装/i.test(id)) return "codex-implementation";
+  if (/google|広告|business/i.test(id)) return "business-review";
+  if (/quality|meta|品質|メタ/i.test(id)) return "deep-research-meta-review";
+  if (/exit.?card|出口/i.test(id)) return "review-exit-cards";
+  if (/conflict|矛盾/i.test(id)) return "answer-ledger-conflict-resolution";
+  if (/first|wide|one.?shot|初回|一括/i.test(id)) return "first-run-map";
+  return "uncategorized";
 }
 
 const goldenCaseFallbacks = [
@@ -1956,6 +2033,10 @@ function normalizeGoldenCaseDefinition(goldenCase) {
     category: goldenCase.category || inferGoldenCaseCategory(goldenCase),
     workflowCategory: getGoldenCaseWorkflowCategory(goldenCase),
     domainCategory: getGoldenCaseDomainCategory(goldenCase),
+    displayName: goldenCase.displayName || goldenCase.title || goldenCase.caseId || id,
+    useCase: getGoldenCaseUseCase(goldenCase),
+    useCaseLabel: goldenCase.useCaseLabel || formatGoldenCaseUseCase(getGoldenCaseUseCase(goldenCase)),
+    oneLinePurpose: goldenCase.oneLinePurpose || goldenCase.notes || "",
     theme,
     initialTopic: goldenCase.initialTopic || theme,
     steeringNotes: Array.isArray(steeringNotes) ? steeringNotes : [],
@@ -2149,6 +2230,8 @@ const els = {
   goldenCaseLoadInfo: document.getElementById("goldenCaseLoadInfo"),
   goldenCaseCategorySelect: document.getElementById("goldenCaseCategorySelect"),
   goldenCaseDomainSelect: document.getElementById("goldenCaseDomainSelect"),
+  goldenCaseUseCaseSelect: document.getElementById("goldenCaseUseCaseSelect"),
+  goldenCaseSummary: document.getElementById("goldenCaseSummary"),
   goldenCaseSelect: document.getElementById("goldenCaseSelect"),
   reloadGoldenCasesButton: document.getElementById("reloadGoldenCasesButton"),
   loadGoldenCaseTopicButton: document.getElementById("loadGoldenCaseTopicButton"),
@@ -2262,6 +2345,26 @@ function initializeGoldenCaseFilterUi() {
     controls.appendChild(domainLabel);
     controls.appendChild(domainSelect);
     els.goldenCaseDomainSelect = domainSelect;
+  }
+
+  if (!els.goldenCaseUseCaseSelect && controls) {
+    const useCaseLabel = document.createElement("label");
+    useCaseLabel.htmlFor = "goldenCaseUseCaseSelect";
+    useCaseLabel.textContent = "用途";
+    const useCaseSelect = document.createElement("select");
+    useCaseSelect.id = "goldenCaseUseCaseSelect";
+    useCaseSelect.setAttribute("aria-label", "Golden Case use case");
+    controls.appendChild(useCaseLabel);
+    controls.appendChild(useCaseSelect);
+    els.goldenCaseUseCaseSelect = useCaseSelect;
+  }
+
+  if (!els.goldenCaseSummary && els.goldenCaseSelect) {
+    const summary = document.createElement("div");
+    summary.id = "goldenCaseSummary";
+    summary.className = "golden-case-summary";
+    els.goldenCaseSelect.insertAdjacentElement("afterend", summary);
+    els.goldenCaseSummary = summary;
   }
 }
 
@@ -2515,6 +2618,12 @@ function bindEvents() {
   }
   if (els.goldenCaseDomainSelect) {
     els.goldenCaseDomainSelect.addEventListener("change", () => {
+      populateGoldenCaseSelect();
+      renderGoldenCasePanel();
+    });
+  }
+  if (els.goldenCaseUseCaseSelect) {
+    els.goldenCaseUseCaseSelect.addEventListener("change", () => {
       populateGoldenCaseSelect();
       renderGoldenCasePanel();
     });
@@ -5654,13 +5763,19 @@ function getSelectedGoldenCaseDomainCategory() {
   return els.goldenCaseDomainSelect ? (els.goldenCaseDomainSelect.value || "all") : "all";
 }
 
+function getSelectedGoldenCaseUseCase() {
+  return els.goldenCaseUseCaseSelect ? (els.goldenCaseUseCaseSelect.value || "all") : "all";
+}
+
 function getVisibleGoldenCases() {
   const workflow = normalizeGoldenCaseCategoryId(getSelectedGoldenCaseCategory());
   const domain = normalizeGoldenCaseCategoryId(getSelectedGoldenCaseDomainCategory());
+  const useCase = normalizeGoldenCaseCategoryId(getSelectedGoldenCaseUseCase());
   return goldenCases.filter((goldenCase) => {
     const workflowMatches = !workflow || workflow === "all" || getGoldenCaseWorkflowCategory(goldenCase) === workflow;
     const domainMatches = !domain || domain === "all" || getGoldenCaseDomainCategory(goldenCase) === domain;
-    return workflowMatches && domainMatches;
+    const useCaseMatches = !useCase || useCase === "all" || getGoldenCaseUseCase(goldenCase) === useCase;
+    return workflowMatches && domainMatches && useCaseMatches;
   });
 }
 
@@ -5692,6 +5807,20 @@ function populateGoldenCaseDomainCategorySelect() {
   els.goldenCaseDomainSelect.value = goldenCaseDomainOptions.includes(selected) ? selected : "all";
 }
 
+function populateGoldenCaseUseCaseSelect() {
+  if (!els.goldenCaseUseCaseSelect) return;
+  const selected = normalizeGoldenCaseCategoryId(els.goldenCaseUseCaseSelect.value || "all");
+  const counts = countGoldenCaseCategories(goldenCases, getGoldenCaseUseCase);
+  els.goldenCaseUseCaseSelect.textContent = "";
+  goldenCaseUseCaseOptions.forEach((useCase) => {
+    const option = document.createElement("option");
+    option.value = useCase;
+    option.textContent = `${formatGoldenCaseUseCase(useCase)} ${counts[useCase] || 0}`;
+    els.goldenCaseUseCaseSelect.appendChild(option);
+  });
+  els.goldenCaseUseCaseSelect.value = goldenCaseUseCaseOptions.includes(selected) ? selected : "all";
+}
+
 function countGoldenCaseCategories(cases, getter) {
   const counts = { all: cases.length };
   cases.forEach((goldenCase) => {
@@ -5706,6 +5835,7 @@ function populateGoldenCaseSelect() {
   const selected = els.goldenCaseSelect.value || (goldenCases[0] ? goldenCases[0].id : "");
   populateGoldenCaseCategorySelect();
   populateGoldenCaseDomainCategorySelect();
+  populateGoldenCaseUseCaseSelect();
   const visibleCases = getVisibleGoldenCases();
   els.goldenCaseSelect.textContent = "";
   if (visibleCases.length === 0) {
@@ -5721,7 +5851,9 @@ function populateGoldenCaseSelect() {
     option.value = goldenCase.id;
     const workflow = formatGoldenCaseWorkflowCategory(goldenCase.workflowCategory);
     const domain = formatGoldenCaseDomainCategory(goldenCase.domainCategory);
-    option.textContent = `[${workflow} / ${domain}] ${goldenCase.title}`;
+    const useCase = goldenCase.useCaseLabel || formatGoldenCaseUseCase(goldenCase.useCase);
+    option.textContent = `[${useCase} / ${workflow} / ${domain}] ${goldenCase.displayName || goldenCase.title}`;
+    if (goldenCase.oneLinePurpose) option.title = goldenCase.oneLinePurpose;
     els.goldenCaseSelect.appendChild(option);
   });
   if (visibleCases.some((goldenCase) => goldenCase.id === selected)) {
@@ -5743,6 +5875,7 @@ function renderGoldenCasePanel() {
   if (!els.goldenCasePanel) return;
   renderGoldenCaseLoadInfo();
   const goldenCase = getSelectedGoldenCase();
+  renderGoldenCaseSummary(goldenCase);
   if (!goldenCase) {
     [
       els.goldenCaseExpectedText,
@@ -5761,6 +5894,34 @@ function renderGoldenCasePanel() {
   setReviewCompleteText(els.goldenCaseActualExitCardsText, actual.exitCards);
   setReviewCompleteText(els.goldenCaseFinalQaText, actual.finalQa);
   setReviewCompleteText(els.goldenCaseCheckText, formatGoldenCaseEvaluation(goldenCase, actual, evaluation));
+}
+
+function renderGoldenCaseSummary(goldenCase) {
+  if (!els.goldenCaseSummary) return;
+  if (!goldenCase) {
+    els.goldenCaseSummary.textContent = "";
+    return;
+  }
+  const title = document.createElement("strong");
+  title.textContent = goldenCase.displayName || goldenCase.title || goldenCase.caseId || "";
+  const purpose = document.createElement("p");
+  purpose.className = "golden-case-purpose";
+  purpose.textContent = goldenCase.oneLinePurpose || "このGolden Caseの用途説明は未設定です。";
+  const badges = document.createElement("div");
+  badges.className = "golden-case-badges";
+  [
+    goldenCase.useCaseLabel || formatGoldenCaseUseCase(goldenCase.useCase),
+    formatGoldenCaseWorkflowCategory(goldenCase.workflowCategory),
+    formatGoldenCaseDomainCategory(goldenCase.domainCategory)
+  ].forEach((label) => {
+    const badge = document.createElement("span");
+    badge.className = "golden-case-badge";
+    badge.textContent = label;
+    badges.appendChild(badge);
+  });
+  const id = document.createElement("small");
+  id.textContent = `caseId: ${goldenCase.caseId || goldenCase.id}`;
+  els.goldenCaseSummary.replaceChildren(title, purpose, badges, id);
 }
 
 function renderGoldenCaseLoadInfo() {
@@ -5803,7 +5964,9 @@ function formatGoldenCaseExpected(goldenCase) {
   const prohibitedPatterns = goldenCase.prohibitedRecommendationPatterns || [];
   const expectedFinalQa = goldenCase.expectedFinalQa || [];
   return [
-    `# ${goldenCase.title}`,
+    `# ${goldenCase.displayName || goldenCase.title}`,
+    "",
+    `## 用途\n- 用途: ${goldenCase.useCaseLabel || formatGoldenCaseUseCase(goldenCase.useCase)}\n- 説明: ${goldenCase.oneLinePurpose || "未設定"}\n- caseId: ${goldenCase.caseId || goldenCase.id}`,
     "",
     `## カテゴリ\n- 工程: ${formatGoldenCaseWorkflowCategory(goldenCase.workflowCategory)}\n- 分野: ${formatGoldenCaseDomainCategory(goldenCase.domainCategory)}\n- 互換カテゴリ: ${goldenCase.category || "未設定"}`,
     "",
