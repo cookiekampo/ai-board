@@ -75,6 +75,42 @@
         <div id="deepResearchReviewInputPanel" class="mode-specific-input" hidden>
           <h3>Deep Research結果レビュー用フォーム</h3>
           <p class="hint">Deep Research結果・元プロンプト・使いたい目的を分けて貼れます。調査結果をそのまま採用せず、情報源・根拠・安全性・実用性を確認します。</p>
+          <details class="compact-card research-brief-draft-card" open>
+            <summary>Research Brief生成 / 原本保存</summary>
+            <p class="hint">Deep Research全文をMarkdown原本として保存し、AI会議にはResearch Brief・未解決論点・判断したいことだけを渡します。</p>
+            <div class="research-brief-meta-grid">
+              <label for="researchBriefTheme">調査テーマ</label>
+              <input id="researchBriefTheme" type="text" placeholder="例）間質性肺炎と漢方相談">
+              <label for="researchBriefPurpose">用途</label>
+              <input id="researchBriefPurpose" type="text" placeholder="例）一般向け相談前メモにする / 薬剤師確認用にする">
+              <label for="researchBriefAudience">読者</label>
+              <input id="researchBriefAudience" type="text" placeholder="例）一般ユーザー / 薬剤師 / 漢方相談員">
+              <label for="researchBriefExternal">外部公開有無</label>
+              <select id="researchBriefExternal">
+                <option value="外部公開しない">外部公開しない</option>
+                <option value="内部利用のみ">内部利用のみ</option>
+                <option value="一般公開予定">一般公開予定</option>
+                <option value="未定">未定</option>
+              </select>
+            </div>
+            <label for="researchBriefRaw">Deep Research結果原本（AI会議には直接渡しません）</label>
+            <textarea id="researchBriefRaw" class="review-field large" placeholder="Deep Researchの全文Markdownを貼ります。原本として保存し、Brief生成プロンプトの材料にします。"></textarea>
+            <div class="button-grid">
+              <button id="researchBriefSaveRawButton" type="button">原本を保存</button>
+              <button id="researchBriefCopyPromptButton" type="button">Brief生成プロンプトをコピー</button>
+            </div>
+            <label for="researchBriefPrompt">Research Brief生成用プロンプト</label>
+            <textarea id="researchBriefPrompt" class="review-field" readonly></textarea>
+            <label for="researchBriefOutput">Research Brief出力</label>
+            <textarea id="researchBriefOutput" class="review-field large" placeholder="AIが作ったResearch Briefをここに貼ります。"></textarea>
+            <div class="button-grid">
+              <button id="researchBriefSaveBriefButton" type="button">Briefを保存</button>
+              <button id="researchBriefCopyBriefButton" type="button">Brief Markdownをコピー</button>
+              <button id="researchBriefDownloadButton" type="button">Brief Markdownを保存</button>
+              <button id="researchBriefTopicCardButton" class="primary" type="button">AI会議用議題カードを生成</button>
+            </div>
+            <p id="researchBriefStatus" class="status" aria-live="polite"></p>
+          </details>
           <label for="deepResearchReviewOriginalPrompt">元のDeep Researchプロンプト（任意）</label>
           <textarea id="deepResearchReviewOriginalPrompt" class="review-field" placeholder="Deep Researchに投げた元プロンプトを貼ります。空欄なら「未入力」として扱います。"></textarea>
           <label for="deepResearchReviewResult">Deep Research結果（必須）</label>

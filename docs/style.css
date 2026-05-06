@@ -178,12 +178,14 @@ label {
 
 select,
 textarea,
+input,
 button {
   font: inherit;
 }
 
 select,
-textarea {
+textarea,
+input {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -216,6 +218,31 @@ textarea {
 
 .mode-specific-input[hidden] {
   display: none;
+}
+
+.research-brief-draft-card {
+  margin: 12px 0;
+}
+
+.research-brief-meta-grid {
+  display: grid;
+  gap: 8px 12px;
+  grid-template-columns: minmax(120px, 0.35fr) minmax(0, 1fr);
+}
+
+.research-brief-meta-grid label {
+  align-self: center;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .research-brief-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .research-brief-meta-grid label {
+    margin-top: 6px;
+  }
 }
 
 .mode-specific-input h3 {

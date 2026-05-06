@@ -1,9 +1,14 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.79";
+const APP_CACHE_NAME = "ai-board-static-v0.1.80";
 const APP_VERSION_LABEL = APP_CACHE_NAME.replace(/^ai-board-static-/, "");
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
+const RESEARCH_BRIEF_DB_NAME = "ai-board-research-briefs";
+const RESEARCH_BRIEF_DB_VERSION = 1;
+const RESEARCH_BRIEF_STORE = "briefs";
+const RESEARCH_BRIEF_LATEST_ID = "latest";
+const RESEARCH_BRIEF_FALLBACK_KEY = "ai-board-research-brief-latest";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -2079,6 +2084,20 @@ const els = {
   deepResearchReviewResult: document.getElementById("deepResearchReviewResult"),
   deepResearchReviewPurpose: document.getElementById("deepResearchReviewPurpose"),
   deepResearchReviewNotes: document.getElementById("deepResearchReviewNotes"),
+  researchBriefTheme: document.getElementById("researchBriefTheme"),
+  researchBriefPurpose: document.getElementById("researchBriefPurpose"),
+  researchBriefAudience: document.getElementById("researchBriefAudience"),
+  researchBriefExternal: document.getElementById("researchBriefExternal"),
+  researchBriefRaw: document.getElementById("researchBriefRaw"),
+  researchBriefPrompt: document.getElementById("researchBriefPrompt"),
+  researchBriefOutput: document.getElementById("researchBriefOutput"),
+  researchBriefSaveRawButton: document.getElementById("researchBriefSaveRawButton"),
+  researchBriefCopyPromptButton: document.getElementById("researchBriefCopyPromptButton"),
+  researchBriefSaveBriefButton: document.getElementById("researchBriefSaveBriefButton"),
+  researchBriefCopyBriefButton: document.getElementById("researchBriefCopyBriefButton"),
+  researchBriefDownloadButton: document.getElementById("researchBriefDownloadButton"),
+  researchBriefTopicCardButton: document.getElementById("researchBriefTopicCardButton"),
+  researchBriefStatus: document.getElementById("researchBriefStatus"),
   applyDeepResearchReviewFormButton: document.getElementById("applyDeepResearchReviewFormButton"),
   deepResearchReviewFormStatus: document.getElementById("deepResearchReviewFormStatus"),
   deepResearchReviewImportLog: document.getElementById("deepResearchReviewImportLog"),
@@ -2422,6 +2441,8 @@ function init() {
   els.setupDoneCheckbox.checked = state.setupDone;
   fillQuickFields(state.quickFields);
   fillDeepResearchReviewForm(state.deepResearchReviewForm);
+  updateResearchBriefPromptPreview();
+  void loadResearchBriefDraft();
   updateDeepResearchReviewImportCopy();
   if (els.deepResearchReviewImportLog) els.deepResearchReviewImportLog.value = state.deepResearchReviewImportLog || "";
   if (els.promptContextModeSelect) els.promptContextModeSelect.value = state.promptContextMode || "full";
@@ -2455,6 +2476,35 @@ function bindEvents() {
   });
   if (els.applyDeepResearchReviewFormButton) {
     els.applyDeepResearchReviewFormButton.addEventListener("click", applyDeepResearchReviewFormCard);
+  }
+  [
+    els.researchBriefTheme,
+    els.researchBriefPurpose,
+    els.researchBriefAudience,
+    els.researchBriefExternal,
+    els.researchBriefRaw,
+    els.researchBriefOutput
+  ].forEach((el) => {
+    if (el) el.addEventListener("input", updateResearchBriefPromptPreview);
+    if (el && el.tagName === "SELECT") el.addEventListener("change", updateResearchBriefPromptPreview);
+  });
+  if (els.researchBriefSaveRawButton) {
+    els.researchBriefSaveRawButton.addEventListener("click", saveResearchBriefRaw);
+  }
+  if (els.researchBriefCopyPromptButton) {
+    els.researchBriefCopyPromptButton.addEventListener("click", copyResearchBriefPrompt);
+  }
+  if (els.researchBriefSaveBriefButton) {
+    els.researchBriefSaveBriefButton.addEventListener("click", saveResearchBriefOutput);
+  }
+  if (els.researchBriefCopyBriefButton) {
+    els.researchBriefCopyBriefButton.addEventListener("click", copyResearchBriefMarkdown);
+  }
+  if (els.researchBriefDownloadButton) {
+    els.researchBriefDownloadButton.addEventListener("click", downloadResearchBriefMarkdown);
+  }
+  if (els.researchBriefTopicCardButton) {
+    els.researchBriefTopicCardButton.addEventListener("click", applyResearchBriefTopicCard);
   }
   if (els.deepResearchReviewImportLog) {
     els.deepResearchReviewImportLog.addEventListener("input", saveDeepResearchReviewImportLog);
@@ -3411,6 +3461,317 @@ function saveDeepResearchReviewForm() {
 function saveDeepResearchReviewImportLog() {
   state.deepResearchReviewImportLog = els.deepResearchReviewImportLog ? els.deepResearchReviewImportLog.value : "";
   persist();
+}
+
+function readResearchBriefDraft() {
+  return {
+    id: RESEARCH_BRIEF_LATEST_ID,
+    theme: els.researchBriefTheme ? els.researchBriefTheme.value.trim() : "",
+    purpose: els.researchBriefPurpose ? els.researchBriefPurpose.value.trim() : "",
+    audience: els.researchBriefAudience ? els.researchBriefAudience.value.trim() : "",
+    externalUse: els.researchBriefExternal ? els.researchBriefExternal.value : "外部公開しない",
+    raw: els.researchBriefRaw ? els.researchBriefRaw.value : "",
+    brief: els.researchBriefOutput ? els.researchBriefOutput.value : "",
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function fillResearchBriefDraft(draft = {}) {
+  if (els.researchBriefTheme) els.researchBriefTheme.value = draft.theme || "";
+  if (els.researchBriefPurpose) els.researchBriefPurpose.value = draft.purpose || "";
+  if (els.researchBriefAudience) els.researchBriefAudience.value = draft.audience || "";
+  if (els.researchBriefExternal) els.researchBriefExternal.value = draft.externalUse || "外部公開しない";
+  if (els.researchBriefRaw) els.researchBriefRaw.value = draft.raw || "";
+  if (els.researchBriefOutput) els.researchBriefOutput.value = draft.brief || "";
+  updateResearchBriefPromptPreview();
+}
+
+function buildResearchBriefPrompt(draft = readResearchBriefDraft()) {
+  const theme = draft.theme || "未入力";
+  const purpose = draft.purpose || "未入力";
+  const audience = draft.audience || "未入力";
+  const externalUse = draft.externalUse || "未入力";
+  const raw = String(draft.raw || "").trim() || "未入力";
+  return `あなたはDeep Research結果をResearch Briefへ圧縮する編集担当です。
+
+目的:
+Deep Research全文をそのままAI会議に渡さず、再利用しやすい短いResearch Briefに変換してください。
+
+調査テーマ:
+${theme}
+
+用途:
+${purpose}
+
+想定読者:
+${audience}
+
+外部公開有無:
+${externalUse}
+
+重要ルール:
+- 原文の主張を無批判に採用しない
+- 事実、推論、未確認事項を分ける
+- Claim / Evidence Table は「検証済みの真実」ではなく、原文とレビュー用の整理として書く
+- 医療・健康・安全に関わる内容では、推奨や断定に見える表現を避ける
+- What Can Be Used と What Cannot Be Used を必ず分離する
+- Open Questions と Next Research Prompts を必ず残す
+- Decision Ledger / Answer Ledger が原文に存在する場合のみ反映する。なければ「未提供」と書く
+- Deep Research原文全文を要約しすぎず、AI会議に渡すための判断材料だけを抽出する
+
+出力形式:
+# Research Brief
+
+## Executive Summary
+
+## Research Question
+
+## Key Findings
+
+## Claim / Evidence Table
+| Claim | Evidence / Source Mentioned | Evidence Strength | Review Note |
+|---|---|---|---|
+
+## Source Quality
+
+## Risk / Safety Notes
+
+## What Can Be Used
+
+## What Cannot Be Used
+
+## Open Questions
+
+## Next Research Prompts
+
+## Decision Ledger
+
+## Answer Ledger
+
+Deep Research原文:
+${raw}`;
+}
+
+function updateResearchBriefPromptPreview() {
+  if (!els.researchBriefPrompt) return;
+  els.researchBriefPrompt.value = buildResearchBriefPrompt(readResearchBriefDraft());
+}
+
+function openResearchBriefDb() {
+  return new Promise((resolve, reject) => {
+    if (!("indexedDB" in window)) {
+      reject(new Error("IndexedDB is not available"));
+      return;
+    }
+    const request = indexedDB.open(RESEARCH_BRIEF_DB_NAME, RESEARCH_BRIEF_DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(RESEARCH_BRIEF_STORE)) {
+        db.createObjectStore(RESEARCH_BRIEF_STORE, { keyPath: "id" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("IndexedDB open failed"));
+  });
+}
+
+async function saveResearchBriefDraftToStorage(draft) {
+  const payload = { ...draft, id: RESEARCH_BRIEF_LATEST_ID, updatedAt: new Date().toISOString() };
+  try {
+    const db = await openResearchBriefDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(RESEARCH_BRIEF_STORE, "readwrite");
+      tx.objectStore(RESEARCH_BRIEF_STORE).put(payload);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error || new Error("IndexedDB write failed"));
+    });
+    db.close();
+    return "IndexedDB";
+  } catch {
+    try {
+      localStorage.setItem(RESEARCH_BRIEF_FALLBACK_KEY, JSON.stringify(payload));
+      return "localStorage";
+    } catch {
+      throw new Error("Research Brief storage failed");
+    }
+  }
+}
+
+async function loadResearchBriefDraftFromStorage() {
+  try {
+    const db = await openResearchBriefDb();
+    const result = await new Promise((resolve, reject) => {
+      const tx = db.transaction(RESEARCH_BRIEF_STORE, "readonly");
+      const request = tx.objectStore(RESEARCH_BRIEF_STORE).get(RESEARCH_BRIEF_LATEST_ID);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error || new Error("IndexedDB read failed"));
+    });
+    db.close();
+    if (result) return result;
+  } catch {
+    // Fall back below.
+  }
+  try {
+    return JSON.parse(localStorage.getItem(RESEARCH_BRIEF_FALLBACK_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+async function loadResearchBriefDraft() {
+  const draft = await loadResearchBriefDraftFromStorage();
+  if (!draft) {
+    updateResearchBriefPromptPreview();
+    return;
+  }
+  fillResearchBriefDraft(draft);
+  setStatus(els.researchBriefStatus, "保存済みResearch Brief下書きを読み込みました。");
+}
+
+async function saveResearchBriefRaw() {
+  const draft = readResearchBriefDraft();
+  if (!draft.raw.trim()) {
+    setStatus(els.researchBriefStatus, "Deep Research結果原本を貼ってください。", "error");
+    return;
+  }
+  try {
+    const savedTo = await saveResearchBriefDraftToStorage(draft);
+    updateResearchBriefPromptPreview();
+    setStatus(els.researchBriefStatus, `Deep Research原本を保存しました（${savedTo}）。AI会議にはまだ渡していません。`);
+  } catch {
+    setStatus(els.researchBriefStatus, "保存に失敗しました。原本が長すぎる場合はMarkdownファイルとして外部保存してください。", "error");
+  }
+}
+
+async function copyResearchBriefPrompt() {
+  updateResearchBriefPromptPreview();
+  await copyPlainText(els.researchBriefPrompt ? els.researchBriefPrompt.value : "", els.researchBriefStatus, "Brief生成プロンプトをコピーしました。");
+}
+
+async function saveResearchBriefOutput() {
+  const draft = readResearchBriefDraft();
+  if (!draft.brief.trim()) {
+    setStatus(els.researchBriefStatus, "Research Brief出力を貼ってください。", "error");
+    return;
+  }
+  try {
+    const savedTo = await saveResearchBriefDraftToStorage(draft);
+    setStatus(els.researchBriefStatus, `Research Briefを保存しました（${savedTo}）。`);
+  } catch {
+    setStatus(els.researchBriefStatus, "保存に失敗しました。BriefをMarkdownとしてコピーまたは保存してください。", "error");
+  }
+}
+
+function buildResearchBriefMarkdown(draft = readResearchBriefDraft()) {
+  const brief = String(draft.brief || "").trim() || "# Research Brief\n\n未入力";
+  return `---
+theme: ${draft.theme || "未入力"}
+purpose: ${draft.purpose || "未入力"}
+audience: ${draft.audience || "未入力"}
+externalUse: ${draft.externalUse || "未入力"}
+updatedAt: ${new Date().toISOString()}
+---
+
+${brief}`;
+}
+
+async function copyResearchBriefMarkdown() {
+  await copyPlainText(buildResearchBriefMarkdown(), els.researchBriefStatus, "Research Brief Markdownをコピーしました。");
+}
+
+function downloadResearchBriefMarkdown() {
+  const draft = readResearchBriefDraft();
+  const title = safeFilename(draft.theme || "research_brief");
+  const blob = new Blob([buildResearchBriefMarkdown(draft)], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${formatDate(new Date())}_${title}_research_brief.md`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  setStatus(els.researchBriefStatus, "Research Brief Markdownを保存しました。");
+}
+
+function buildResearchBriefTopicCard(draft = readResearchBriefDraft()) {
+  const brief = String(draft.brief || "").trim();
+  return `# 議題
+Research BriefをもとにDeep Research結果をレビューする
+
+# 背景
+Deep Research全文は原本として別途保存済みです。
+このAI会議には、Deep Research全文ではなくResearch Brief、未解決論点、判断したいことだけを渡します。
+
+# 調査テーマ
+${draft.theme || "未入力"}
+
+# 用途
+${draft.purpose || "未入力"}
+
+# 読者
+${draft.audience || "未入力"}
+
+# 外部公開有無
+${draft.externalUse || "未入力"}
+
+# Research Brief
+${brief || "未入力"}
+
+# 未解決論点
+- Research BriefのOpen Questionsを確認する
+- 根拠が弱い主張を分ける
+- 追加Deep Researchが必要な範囲を決める
+
+# 判断したいこと
+- Briefだけで採用判断できる内容は何か
+- Deep Research原文に戻って確認すべき内容は何か
+- 危険な内容、根拠の弱い内容、使える内容は何か
+- 次に作る成果物は何か
+
+# 制約
+- Deep Research全文をAI会議に直接渡さない
+- Briefにない主張は採用しない
+- 医療・安全に関わる内容は断定しない
+- 必要なら原本・情報源・追加Deep Researchで確認する
+- 使える内容、使えない内容、未確認事項を分ける
+
+# 出力形式
+- 採用可否
+- 使える内容
+- 使えない内容
+- 未解決論点
+- 追加Deep Researchプロンプト案
+- 次アクション`;
+}
+
+async function applyResearchBriefTopicCard() {
+  const draft = readResearchBriefDraft();
+  if (!draft.brief.trim()) {
+    setStatus(els.researchBriefStatus, "AI会議に渡す前に、Research Brief出力を貼ってください。Deep Research全文は直接渡しません。", "error");
+    return;
+  }
+  state.mode = "deepResearchReview";
+  state.topicCard = buildResearchBriefTopicCard(draft);
+  state.currentStep = 1;
+  state.answers = {};
+  state.steeringNotes = {};
+  state.deepResearchReviewImportedFinalAnswer = "";
+  state.deepResearchReviewImportLog = "";
+  state.preparationCollapsed = true;
+  state.reviewResultsCollapsed = false;
+  if (els.modeSelect) els.modeSelect.value = state.mode;
+  if (els.topicCard) els.topicCard.value = state.topicCard;
+  updateTopicPrompt();
+  try {
+    await saveResearchBriefDraftToStorage(draft);
+  } catch {
+    // The topic card is still usable even if local draft persistence fails.
+  }
+  persist("Research BriefからAI会議用の議題カードを生成しました。");
+  setStatus(els.researchBriefStatus, "AI会議用議題カードを生成しました。Deep Research全文は含めていません。");
+  render();
+  scrollToElement(els.promptPanel);
 }
 
 function extractDeepResearchReviewFinalJudgeAnswer(text) {
