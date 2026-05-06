@@ -540,8 +540,19 @@ button.wide {
 
 .golden-case-controls {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  align-items: end;
   gap: 6px;
   margin: 10px 0;
+}
+
+.golden-case-controls label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.golden-case-controls select {
+  width: 100%;
 }
 
 .deep-research-tab-description {

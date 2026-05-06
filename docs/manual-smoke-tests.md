@@ -266,3 +266,19 @@ Use this checklist after mobile tab UI changes.
 8. Confirm `復元` scrolls to the saved review log restore area.
 9. Confirm `Cases` scrolls to Golden Case Runner.
 10. Confirm the app version display shows the current Service Worker cache version.
+## Golden Case category filter smoke check
+
+Use this checklist after changing Golden Case categorization.
+
+1. Open the `Cases` Deep Research tab.
+2. Confirm the workflow filter and domain filter are visible near the Golden Case selector.
+3. Confirm iPhone width does not break the filter row; controls may wrap, but labels and selects remain usable.
+4. Select `Review` in the workflow filter and confirm the visible case count is reduced to review cases.
+5. Select `医療漢方` / `Medical Kampo` in the domain filter and confirm medical kampo cases are shown.
+6. If an ads/business case exists, select the ads/business domain and confirm only that domain is shown.
+7. If a meta research case exists, select the meta domain and confirm only that domain is shown.
+8. Reset both filters to `すべて` / `All` and confirm all Golden Cases are visible again.
+9. Run `node scripts/check-golden-cases.mjs --list-categories` and confirm workflow/domain counts are printed.
+10. Run `node scripts/check-golden-cases.mjs --category Review` and confirm it exits successfully.
+11. Run `node scripts/check-golden-cases.mjs --category Medical` and confirm medical kampo cases are listed.
+12. Run `node scripts/check-golden-cases.mjs --all` and confirm all existing Golden Cases pass.

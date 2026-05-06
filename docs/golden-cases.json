@@ -80,7 +80,9 @@
       "answer ledger",
       "assumptions"
     ],
-    "notes": "漢方医向け内部資料として、初回から処方・生薬・証の概観を含めるケース。"
+    "notes": "漢方医向け内部資料として、初回から処方・生薬・証の概観を含めるケース。",
+    "workflowCategory": "first-run",
+    "domainCategory": "medical-kampo"
   },
   {
     "caseId": "drp-kampo-fibromyalgia-counselor",
@@ -136,7 +138,9 @@
       "answer ledger",
       "assumptions"
     ],
-    "notes": "医師ではない漢方相談員向けに、安全確認・受診勧奨を中心へ寄せるケース。"
+    "notes": "医師ではない漢方相談員向けに、安全確認・受診勧奨を中心へ寄せるケース。",
+    "workflowCategory": "first-run",
+    "domainCategory": "medical-kampo"
   },
   {
     "caseId": "dr-kampo-orthostatic-dysregulation-kampo-doctor",
@@ -223,7 +227,9 @@
       "answer ledger",
       "assumptions"
     ],
-    "notes": "初回では方剤候補名を出さず、病名処方やランキングを明示的に禁止するケース。"
+    "notes": "初回では方剤候補名を出さず、病名処方やランキングを明示的に禁止するケース。",
+    "workflowCategory": "first-run",
+    "domainCategory": "medical-kampo"
   },
   {
     "caseId": "orthostatic_kampo_doctor_conflict_resolution",
@@ -317,7 +323,9 @@
       "answer ledger",
       "assumptions"
     ],
-    "notes": "Answer Ledger内の矛盾をDecision Ledger優先で解決し、第1回は安全確認・医療連携・問診設計中心、処方・生薬は論点出しまでに寄せるケース。"
+    "notes": "Answer Ledger内の矛盾をDecision Ledger優先で解決し、第1回は安全確認・医療連携・問診設計中心、処方・生薬は論点出しまでに寄せるケース。",
+    "workflowCategory": "first-run",
+    "domainCategory": "medical-kampo"
   },
   {
     "caseId": "drr-fibromyalgia-deep-research-review",
@@ -352,7 +360,9 @@
       "未解決Issue",
       "仮置き条件"
     ],
-    "notes": "Deep Research reviewモードのFinal Judgeから、ユーザーが使う出口カードを抽出できるか確認するケース。医療内容の正しさではなく、出口カード構造の回帰確認用。"
+    "notes": "Deep Research reviewモードのFinal Judgeから、ユーザーが使う出口カードを抽出できるか確認するケース。医療内容の正しさではなく、出口カード構造の回帰確認用。",
+    "workflowCategory": "review",
+    "domainCategory": "medical-kampo"
   },
   {
     "caseId": "interstitial_pneumonia_kampo_review_public_memo",
@@ -453,7 +463,9 @@
         "全文ログではなく",
         "軽量カード"
       ]
-    }
+    },
+    "workflowCategory": "review",
+    "domainCategory": "medical-kampo"
   },
   {
     "caseId": "deep_research_wide_deep_one_shot",
@@ -525,6 +537,8 @@
       "answer ledger",
       "assumptions"
     ],
-    "notes": "Deep Researchプロンプト作成モードのcanonical case。一括で広く深く全体地図を作り、review後に必要部分だけ分割する推奨戦略を確認する。"
+    "notes": "Deep Researchプロンプト作成モードのcanonical case。一括で広く深く全体地図を作り、review後に必要部分だけ分割する推奨戦略を確認する。",
+    "workflowCategory": "first-run",
+    "domainCategory": "deep-research-meta"
   }
 ]

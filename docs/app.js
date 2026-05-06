@@ -1,7 +1,7 @@
 const STORAGE_KEY = "ai-board-static-v0.1";
 const DEFAULT_TOTAL_STEPS = 6;
 const DEFAULT_MODE = "deepResearchPrompt";
-const APP_CACHE_NAME = "ai-board-static-v0.1.76";
+const APP_CACHE_NAME = "ai-board-static-v0.1.77";
 const APP_VERSION_LABEL = APP_CACHE_NAME.replace(/^ai-board-static-/, "");
 const GOLDEN_CASE_FETCH_TIMEOUT_MS = 8000;
 
@@ -1810,16 +1810,77 @@ const goldenCaseDefaultAllowedSafetyContextPatterns = [
   "含めない"
 ];
 
-const goldenCaseCategoryOptions = [
-  "All",
-  "Core",
-  "First Run",
-  "Review",
-  "Medical Kampo",
-  "Ads",
-  "Meta Research",
-  "Restore"
-];
+const goldenCaseWorkflowOptions = ["all", "core", "first-run", "review", "restore", "prompt", "exit-card"];
+const goldenCaseDomainOptions = ["all", "medical-kampo", "ads-business", "deep-research-meta", "general", "uncategorized"];
+const goldenCaseWorkflowLabels = {
+  all: "すべて",
+  core: "Core",
+  "first-run": "初回",
+  review: "Review",
+  restore: "復元",
+  prompt: "Prompt",
+  "exit-card": "出口"
+};
+const goldenCaseDomainLabels = {
+  all: "すべて",
+  "medical-kampo": "医療漢方",
+  "ads-business": "広告",
+  "deep-research-meta": "メタ",
+  general: "一般",
+  uncategorized: "未分類"
+};
+
+function normalizeGoldenCaseCategoryId(value) {
+  const normalized = String(value || "").trim().toLowerCase().replace(/[_\s]+/g, "-");
+  const aliases = {
+    all: "all",
+    "all-categories": "all",
+    core: "core",
+    first: "first-run",
+    "first-run": "first-run",
+    firstrun: "first-run",
+    "firstrun": "first-run",
+    review: "review",
+    restore: "restore",
+    prompt: "prompt",
+    "exit-card": "exit-card",
+    exitcard: "exit-card",
+    medical: "medical-kampo",
+    kampo: "medical-kampo",
+    "medical-kampo": "medical-kampo",
+    medicalkampo: "medical-kampo",
+    ads: "ads-business",
+    ad: "ads-business",
+    "ads-business": "ads-business",
+    adsbusiness: "ads-business",
+    business: "ads-business",
+    meta: "deep-research-meta",
+    "meta-research": "deep-research-meta",
+    "deep-research-meta": "deep-research-meta",
+    deepresearchmeta: "deep-research-meta",
+    general: "general",
+    uncategorized: "uncategorized"
+  };
+  return aliases[normalized] || normalized;
+}
+
+function getGoldenCaseWorkflowCategory(goldenCase = {}) {
+  return normalizeGoldenCaseCategoryId(goldenCase.workflowCategory || inferGoldenCaseWorkflowCategory(goldenCase));
+}
+
+function getGoldenCaseDomainCategory(goldenCase = {}) {
+  return normalizeGoldenCaseCategoryId(goldenCase.domainCategory || inferGoldenCaseDomainCategory(goldenCase));
+}
+
+function formatGoldenCaseWorkflowCategory(value) {
+  const normalized = normalizeGoldenCaseCategoryId(value);
+  return goldenCaseWorkflowLabels[normalized] || String(value || "未分類");
+}
+
+function formatGoldenCaseDomainCategory(value) {
+  const normalized = normalizeGoldenCaseCategoryId(value);
+  return goldenCaseDomainLabels[normalized] || String(value || "未分類");
+}
 
 function inferGoldenCaseCategory(goldenCase = {}) {
   const mode = goldenCase.mode || "";
@@ -1828,6 +1889,28 @@ function inferGoldenCaseCategory(goldenCase = {}) {
   if (/wide|one.?shot|一括|初回/i.test(id)) return "First Run";
   if (/kampo|漢方|線維筋痛|起立性|間質性肺炎/i.test(id)) return "Medical Kampo";
   return "Core";
+}
+
+function inferGoldenCaseWorkflowCategory(goldenCase = {}) {
+  const legacy = String(goldenCase.category || "");
+  const mode = String(goldenCase.mode || "");
+  const id = `${goldenCase.caseId || goldenCase.id || ""} ${goldenCase.title || ""} ${goldenCase.notes || ""}`;
+  if (/review/i.test(legacy) || /review/i.test(mode) || /review|レビュー|変換/i.test(id)) return "review";
+  if (/restore|復元/i.test(legacy + id)) return "restore";
+  if (/first|初回|wide|one.?shot|一括/i.test(legacy + id)) return "first-run";
+  if (/prompt/i.test(legacy + id)) return "prompt";
+  if (/exit/i.test(legacy + id)) return "exit-card";
+  return "core";
+}
+
+function inferGoldenCaseDomainCategory(goldenCase = {}) {
+  const legacy = String(goldenCase.category || "");
+  const id = `${goldenCase.caseId || goldenCase.id || ""} ${goldenCase.title || ""} ${goldenCase.notes || ""} ${goldenCase.initialTopic || ""}`;
+  if (/medical|kampo|漢方|線維筋痛|起立性|間質性肺炎/i.test(legacy + id)) return "medical-kampo";
+  if (/ads|広告|google/i.test(legacy + id)) return "ads-business";
+  if (/meta|quality|golden|research.*strategy|deep research/i.test(legacy + id)) return "deep-research-meta";
+  if (!legacy && !id.trim()) return "uncategorized";
+  return "general";
 }
 
 const goldenCaseFallbacks = [
@@ -1871,6 +1954,8 @@ function normalizeGoldenCaseDefinition(goldenCase) {
     id,
     caseId: goldenCase.caseId || id,
     category: goldenCase.category || inferGoldenCaseCategory(goldenCase),
+    workflowCategory: getGoldenCaseWorkflowCategory(goldenCase),
+    domainCategory: getGoldenCaseDomainCategory(goldenCase),
     theme,
     initialTopic: goldenCase.initialTopic || theme,
     steeringNotes: Array.isArray(steeringNotes) ? steeringNotes : [],
@@ -2063,6 +2148,7 @@ const els = {
   goldenCasePanel: document.getElementById("goldenCasePanel"),
   goldenCaseLoadInfo: document.getElementById("goldenCaseLoadInfo"),
   goldenCaseCategorySelect: document.getElementById("goldenCaseCategorySelect"),
+  goldenCaseDomainSelect: document.getElementById("goldenCaseDomainSelect"),
   goldenCaseSelect: document.getElementById("goldenCaseSelect"),
   reloadGoldenCasesButton: document.getElementById("reloadGoldenCasesButton"),
   loadGoldenCaseTopicButton: document.getElementById("loadGoldenCaseTopicButton"),
@@ -2159,6 +2245,26 @@ function initializeDeepResearchTabUi() {
   }
 }
 
+function initializeGoldenCaseFilterUi() {
+  if (!els.goldenCaseCategorySelect) return;
+  const controls = els.goldenCaseCategorySelect.closest(".golden-case-controls");
+  const workflowLabel = document.querySelector("label[for=\"goldenCaseCategorySelect\"]");
+  if (workflowLabel) workflowLabel.textContent = "工程";
+  els.goldenCaseCategorySelect.setAttribute("aria-label", "Golden Case workflow category");
+
+  if (!els.goldenCaseDomainSelect && controls) {
+    const domainLabel = document.createElement("label");
+    domainLabel.htmlFor = "goldenCaseDomainSelect";
+    domainLabel.textContent = "分野";
+    const domainSelect = document.createElement("select");
+    domainSelect.id = "goldenCaseDomainSelect";
+    domainSelect.setAttribute("aria-label", "Golden Case domain category");
+    controls.appendChild(domainLabel);
+    controls.appendChild(domainSelect);
+    els.goldenCaseDomainSelect = domainSelect;
+  }
+}
+
 function updateDeepResearchReviewImportCopy() {
   const card = document.querySelector(".review-import-card");
   if (!card) return;
@@ -2184,6 +2290,7 @@ function init() {
     els.appCacheVersion.setAttribute("aria-label", `App cache: ${APP_CACHE_NAME}`);
   }
   initializeDeepResearchTabUi();
+  initializeGoldenCaseFilterUi();
   els.topicCard.value = state.topicCard;
   els.modeSelect.value = state.mode;
   els.setupDoneCheckbox.checked = state.setupDone;
@@ -2402,6 +2509,12 @@ function bindEvents() {
   }
   if (els.goldenCaseCategorySelect) {
     els.goldenCaseCategorySelect.addEventListener("change", () => {
+      populateGoldenCaseSelect();
+      renderGoldenCasePanel();
+    });
+  }
+  if (els.goldenCaseDomainSelect) {
+    els.goldenCaseDomainSelect.addEventListener("change", () => {
       populateGoldenCaseSelect();
       renderGoldenCasePanel();
     });
@@ -5534,40 +5647,81 @@ function formatGoldenCaseLoadError(error) {
 }
 
 function getSelectedGoldenCaseCategory() {
-  return els.goldenCaseCategorySelect ? (els.goldenCaseCategorySelect.value || "All") : "All";
+  return els.goldenCaseCategorySelect ? (els.goldenCaseCategorySelect.value || "all") : "all";
+}
+
+function getSelectedGoldenCaseDomainCategory() {
+  return els.goldenCaseDomainSelect ? (els.goldenCaseDomainSelect.value || "all") : "all";
 }
 
 function getVisibleGoldenCases() {
-  const category = getSelectedGoldenCaseCategory();
-  if (!category || category === "All") return goldenCases;
-  return goldenCases.filter((goldenCase) => (goldenCase.category || inferGoldenCaseCategory(goldenCase)) === category);
+  const workflow = normalizeGoldenCaseCategoryId(getSelectedGoldenCaseCategory());
+  const domain = normalizeGoldenCaseCategoryId(getSelectedGoldenCaseDomainCategory());
+  return goldenCases.filter((goldenCase) => {
+    const workflowMatches = !workflow || workflow === "all" || getGoldenCaseWorkflowCategory(goldenCase) === workflow;
+    const domainMatches = !domain || domain === "all" || getGoldenCaseDomainCategory(goldenCase) === domain;
+    return workflowMatches && domainMatches;
+  });
 }
 
 function populateGoldenCaseCategorySelect() {
   if (!els.goldenCaseCategorySelect) return;
-  const selected = els.goldenCaseCategorySelect.value || "All";
-  const categories = new Set(goldenCaseCategoryOptions);
-  goldenCases.forEach((goldenCase) => categories.add(goldenCase.category || inferGoldenCaseCategory(goldenCase)));
+  const selected = normalizeGoldenCaseCategoryId(els.goldenCaseCategorySelect.value || "all");
+  const counts = countGoldenCaseCategories(goldenCases, getGoldenCaseWorkflowCategory);
   els.goldenCaseCategorySelect.textContent = "";
-  Array.from(categories).forEach((category) => {
+  goldenCaseWorkflowOptions.forEach((category) => {
     const option = document.createElement("option");
     option.value = category;
-    option.textContent = category === "All" ? "All categories" : category;
+    option.textContent = `${formatGoldenCaseWorkflowCategory(category)} ${counts[category] || 0}`;
     els.goldenCaseCategorySelect.appendChild(option);
   });
-  els.goldenCaseCategorySelect.value = categories.has(selected) ? selected : "All";
+  els.goldenCaseCategorySelect.value = goldenCaseWorkflowOptions.includes(selected) ? selected : "all";
+}
+
+function populateGoldenCaseDomainCategorySelect() {
+  if (!els.goldenCaseDomainSelect) return;
+  const selected = normalizeGoldenCaseCategoryId(els.goldenCaseDomainSelect.value || "all");
+  const counts = countGoldenCaseCategories(goldenCases, getGoldenCaseDomainCategory);
+  els.goldenCaseDomainSelect.textContent = "";
+  goldenCaseDomainOptions.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = `${formatGoldenCaseDomainCategory(category)} ${counts[category] || 0}`;
+    els.goldenCaseDomainSelect.appendChild(option);
+  });
+  els.goldenCaseDomainSelect.value = goldenCaseDomainOptions.includes(selected) ? selected : "all";
+}
+
+function countGoldenCaseCategories(cases, getter) {
+  const counts = { all: cases.length };
+  cases.forEach((goldenCase) => {
+    const category = normalizeGoldenCaseCategoryId(getter(goldenCase) || "uncategorized");
+    counts[category] = (counts[category] || 0) + 1;
+  });
+  return counts;
 }
 
 function populateGoldenCaseSelect() {
   if (!els.goldenCaseSelect) return;
   const selected = els.goldenCaseSelect.value || (goldenCases[0] ? goldenCases[0].id : "");
   populateGoldenCaseCategorySelect();
+  populateGoldenCaseDomainCategorySelect();
   const visibleCases = getVisibleGoldenCases();
   els.goldenCaseSelect.textContent = "";
+  if (visibleCases.length === 0) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "該当するGolden Caseはありません";
+    option.disabled = true;
+    els.goldenCaseSelect.appendChild(option);
+    return;
+  }
   visibleCases.forEach((goldenCase) => {
     const option = document.createElement("option");
     option.value = goldenCase.id;
-    option.textContent = goldenCase.category ? `[${goldenCase.category}] ${goldenCase.title}` : goldenCase.title;
+    const workflow = formatGoldenCaseWorkflowCategory(goldenCase.workflowCategory);
+    const domain = formatGoldenCaseDomainCategory(goldenCase.domainCategory);
+    option.textContent = `[${workflow} / ${domain}] ${goldenCase.title}`;
     els.goldenCaseSelect.appendChild(option);
   });
   if (visibleCases.some((goldenCase) => goldenCase.id === selected)) {
@@ -5581,6 +5735,7 @@ function getSelectedGoldenCase() {
   if (!goldenCases.length) return null;
   const selectedId = els.goldenCaseSelect ? els.goldenCaseSelect.value : goldenCases[0].id;
   const visibleCases = getVisibleGoldenCases();
+  if (visibleCases.length === 0) return null;
   return goldenCases.find((goldenCase) => goldenCase.id === selectedId) || visibleCases[0] || goldenCases[0];
 }
 
@@ -5649,6 +5804,8 @@ function formatGoldenCaseExpected(goldenCase) {
   const expectedFinalQa = goldenCase.expectedFinalQa || [];
   return [
     `# ${goldenCase.title}`,
+    "",
+    `## カテゴリ\n- 工程: ${formatGoldenCaseWorkflowCategory(goldenCase.workflowCategory)}\n- 分野: ${formatGoldenCaseDomainCategory(goldenCase.domainCategory)}\n- 互換カテゴリ: ${goldenCase.category || "未設定"}`,
     "",
     `## 入力テーマ\n${goldenCase.theme || goldenCase.initialTopic || ""}`,
     "",

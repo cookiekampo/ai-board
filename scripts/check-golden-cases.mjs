@@ -184,12 +184,61 @@ const defaultSafetyContextPatterns = [
   "扱わない",
 ];
 
+const workflowCategoryLabels = {
+  all: "All",
+  core: "Core",
+  "first-run": "First Run",
+  review: "Review",
+  restore: "Restore",
+  prompt: "Prompt",
+  "exit-card": "Exit Card",
+};
+
+const domainCategoryLabels = {
+  all: "All",
+  "medical-kampo": "Medical Kampo",
+  "ads-business": "Ads/Business",
+  "deep-research-meta": "Deep Research Meta",
+  general: "General",
+  uncategorized: "Uncategorized",
+};
+
+const categoryAliases = {
+  all: "all",
+  allcategories: "all",
+  core: "core",
+  first: "first-run",
+  firstrun: "first-run",
+  review: "review",
+  restore: "restore",
+  prompt: "prompt",
+  exit: "exit-card",
+  exitcard: "exit-card",
+  medical: "medical-kampo",
+  kampo: "medical-kampo",
+  medicalkampo: "medical-kampo",
+  ads: "ads-business",
+  ad: "ads-business",
+  business: "ads-business",
+  adsbusiness: "ads-business",
+  meta: "deep-research-meta",
+  metaresearch: "deep-research-meta",
+  deepresearchmeta: "deep-research-meta",
+  general: "general",
+  uncategorized: "uncategorized",
+};
+
 function main() {
   try {
     const args = parseArgs(process.argv.slice(2));
     if (args.list) {
       const cases = readGoldenCases();
-      listGoldenCases(filterGoldenCasesByCategory(cases, args.category));
+      listGoldenCases(filterGoldenCases(cases, args));
+      return;
+    }
+    if (args.listCategories) {
+      const cases = readGoldenCases();
+      listGoldenCaseCategories(cases);
       return;
     }
     if (args.validate) {
@@ -201,7 +250,7 @@ function main() {
     }
     if (args.all) {
       const cases = readGoldenCases();
-      const evaluation = evaluateAllGoldenCases(filterGoldenCasesByCategory(cases, args.category));
+      const evaluation = evaluateAllGoldenCases(filterGoldenCases(cases, args));
       if (args.json) {
         console.log(JSON.stringify(evaluation, null, 2));
       } else {
@@ -240,10 +289,13 @@ function parseArgs(argv) {
     validate: false,
     json: false,
     all: false,
+    listCategories: false,
     caseId: "",
     actualPath: "",
     minCases: 4,
     category: "",
+    workflowCategory: "",
+    domainCategory: "",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
@@ -255,6 +307,8 @@ function parseArgs(argv) {
       args.json = true;
     } else if (token === "--all") {
       args.all = true;
+    } else if (token === "--list-categories") {
+      args.listCategories = true;
     } else if (token === "--case") {
       index += 1;
       if (!argv[index]) throw usageError("--case requires a caseId.");
@@ -275,15 +329,27 @@ function parseArgs(argv) {
       index += 1;
       if (!argv[index]) throw usageError("--category requires a category name.");
       args.category = argv[index];
+    } else if (token === "--workflow-category") {
+      index += 1;
+      if (!argv[index]) throw usageError("--workflow-category requires a category name.");
+      args.workflowCategory = argv[index];
+    } else if (token === "--domain-category") {
+      index += 1;
+      if (!argv[index]) throw usageError("--domain-category requires a category name.");
+      args.domainCategory = argv[index];
     } else if (token === "--help" || token === "-h") {
       throw usageError(usageText());
     } else {
       throw usageError(`Unknown argument: ${token}`);
     }
   }
-  const commandCount = [args.list, args.validate, args.all, Boolean(args.caseId)].filter(Boolean).length;
+  if (!args.list && !args.validate && !args.all && !args.listCategories && !args.caseId
+    && (args.category || args.workflowCategory || args.domainCategory)) {
+    args.list = true;
+  }
+  const commandCount = [args.list, args.validate, args.all, args.listCategories, Boolean(args.caseId)].filter(Boolean).length;
   if (commandCount !== 1) {
-    throw usageError("Use exactly one command: --list, --validate, --all, or --case.");
+    throw usageError("Use exactly one command: --list, --list-categories, --validate, --all, or --case.");
   }
   return args;
 }
@@ -293,8 +359,12 @@ function usageText() {
     "Usage:",
     "  node scripts/check-golden-cases.mjs --list",
     "  node scripts/check-golden-cases.mjs --list --category <category>",
+    "  node scripts/check-golden-cases.mjs --list --workflow-category <category>",
+    "  node scripts/check-golden-cases.mjs --list --domain-category <category>",
+    "  node scripts/check-golden-cases.mjs --list-categories",
     "  node scripts/check-golden-cases.mjs --validate [--min-cases <n>]",
     "  node scripts/check-golden-cases.mjs --all [--category <category>]",
+    "  node scripts/check-golden-cases.mjs --all [--workflow-category <category>] [--domain-category <category>]",
     "  node scripts/check-golden-cases.mjs --all --json [--category <category>]",
     "  node scripts/check-golden-cases.mjs --case <caseId> --actual <path-to-finalqa.md>",
     "  node scripts/check-golden-cases.mjs --case <caseId>",
@@ -337,14 +407,86 @@ function resolveActualPath(caseDef, actualPath) {
   throw usageError("--case requires --actual <path-to-finalqa.md> when fixturePath is not set.");
 }
 
-function filterGoldenCasesByCategory(cases, category) {
-  if (!category) return cases;
-  const normalizedCategory = normalizeCategory(category);
-  return cases.filter((caseDef) => normalizeCategory(caseDef.category || "") === normalizedCategory);
+function filterGoldenCases(cases, filters = {}) {
+  return cases.filter((caseDef) => {
+    const legacyMatches = matchesAnyCategory(caseDef, filters.category);
+    const workflowMatches = !filters.workflowCategory
+      || getCaseWorkflowCategory(caseDef) === normalizeCategory(filters.workflowCategory);
+    const domainMatches = !filters.domainCategory
+      || getCaseDomainCategory(caseDef) === normalizeCategory(filters.domainCategory);
+    return legacyMatches && workflowMatches && domainMatches;
+  });
+}
+
+function matchesAnyCategory(caseDef, requestedCategory) {
+  if (!requestedCategory) return true;
+  const expected = normalizeCategory(requestedCategory);
+  const legacyCategory = normalizeCategory(caseDef.category || "");
+  const workflowCategory = getCaseWorkflowCategory(caseDef);
+  const domainCategory = getCaseDomainCategory(caseDef);
+  return [legacyCategory, workflowCategory, domainCategory].some((category) => category === expected);
 }
 
 function normalizeCategory(value) {
-  return String(value || "").trim().toLowerCase().replace(/\s+/g, "");
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[＿_]+/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  const compact = normalized.replace(/-/g, "");
+  return categoryAliases[normalized] || categoryAliases[compact] || normalized;
+}
+
+function getCaseWorkflowCategory(caseDef) {
+  return normalizeCategory(caseDef.workflowCategory || inferCaseWorkflowCategory(caseDef));
+}
+
+function getCaseDomainCategory(caseDef) {
+  return normalizeCategory(caseDef.domainCategory || inferCaseDomainCategory(caseDef));
+}
+
+function inferCaseWorkflowCategory(caseDef) {
+  const haystack = [
+    caseDef.category,
+    caseDef.mode,
+    caseDef.caseId,
+    caseDef.title,
+    ...(Array.isArray(caseDef.aliases) ? caseDef.aliases : []),
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (/review|レビュー/.test(haystack)) return "review";
+  if (/restore|復元/.test(haystack)) return "restore";
+  if (/first|初回|wide|one[-\s]?shot|一括/.test(haystack)) return "first-run";
+  if (/prompt|プロンプト/.test(haystack)) return "prompt";
+  if (/exit|出口/.test(haystack)) return "exit-card";
+  return "core";
+}
+
+function inferCaseDomainCategory(caseDef) {
+  const haystack = [
+    caseDef.category,
+    caseDef.mode,
+    caseDef.caseId,
+    caseDef.title,
+    caseDef.initialTopic,
+    ...(Array.isArray(caseDef.aliases) ? caseDef.aliases : []),
+  ].filter(Boolean).join(" ").toLowerCase();
+  if (/kampo|medical|漢方|線維筋痛|起立性|間質性肺炎/.test(haystack)) return "medical-kampo";
+  if (/ads|advertis|google|広告|lp|business/.test(haystack)) return "ads-business";
+  if (/meta|quality|golden|research strategy|deep research/.test(haystack)) return "deep-research-meta";
+  if (!haystack.trim()) return "uncategorized";
+  return "general";
+}
+
+function formatWorkflowCategory(category) {
+  const normalized = normalizeCategory(category || "uncategorized");
+  return workflowCategoryLabels[normalized] || category || "Uncategorized";
+}
+
+function formatDomainCategory(category) {
+  const normalized = normalizeCategory(category || "uncategorized");
+  return domainCategoryLabels[normalized] || category || "Uncategorized";
 }
 
 function evaluateAllGoldenCases(cases) {
@@ -430,15 +572,54 @@ function listGoldenCases(cases) {
     const title = caseDef.title || "(missing title)";
     const mode = caseDef.mode || "(missing mode)";
     const category = caseDef.category || "(missing category)";
+    const workflowCategory = formatWorkflowCategory(getCaseWorkflowCategory(caseDef));
+    const domainCategory = formatDomainCategory(getCaseDomainCategory(caseDef));
     const topic = caseDef.initialTopic || caseDef.theme || "(missing initialTopic)";
     const fixture = caseDef.fixturePath ? `\n  fixturePath: ${caseDef.fixturePath}` : "";
     const note = caseDef.notes ? `\n  notes: ${caseDef.notes}` : "";
     console.log(`${index + 1}. ${id}`);
     console.log(`  title: ${title}`);
     console.log(`  category: ${category}`);
+    console.log(`  workflowCategory: ${workflowCategory}`);
+    console.log(`  domainCategory: ${domainCategory}`);
     console.log(`  mode: ${mode}`);
     console.log(`  initialTopic: ${topic}${fixture}${note}`);
   });
+}
+
+function listGoldenCaseCategories(cases) {
+  if (!Array.isArray(cases)) {
+    throw usageError("Golden Case JSON must be an array.");
+  }
+  const workflowCounts = countBy(cases, getCaseWorkflowCategory);
+  const domainCounts = countBy(cases, getCaseDomainCategory);
+  const legacyCounts = countBy(cases, (caseDef) => caseDef.category || "uncategorized");
+  console.log(`Golden Case categories (${cases.length} cases)`);
+  console.log("");
+  console.log("Workflow categories:");
+  printCounts(workflowCounts, formatWorkflowCategory);
+  console.log("");
+  console.log("Domain categories:");
+  printCounts(domainCounts, formatDomainCategory);
+  console.log("");
+  console.log("Legacy categories:");
+  printCounts(legacyCounts, (value) => value);
+}
+
+function countBy(items, getter) {
+  return items.reduce((counts, item) => {
+    const key = getter(item) || "uncategorized";
+    counts.set(key, (counts.get(key) || 0) + 1);
+    return counts;
+  }, new Map());
+}
+
+function printCounts(counts, formatter) {
+  [...counts.entries()]
+    .sort((a, b) => String(formatter(a[0])).localeCompare(String(formatter(b[0]))))
+    .forEach(([category, count]) => {
+      console.log(`  ${formatter(category)}: ${count}`);
+    });
 }
 
 function validateGoldenCases(cases, options = {}) {
@@ -493,6 +674,22 @@ function validateGoldenCases(cases, options = {}) {
         failures.push(`${id || prefix}.category must be a non-empty string when set.`);
       } else {
         checkedItems.push(`${id || prefix}.category`);
+      }
+    }
+
+    if (caseDef.workflowCategory !== undefined) {
+      if (typeof caseDef.workflowCategory !== "string" || !caseDef.workflowCategory.trim()) {
+        failures.push(`${id || prefix}.workflowCategory must be a non-empty string when set.`);
+      } else {
+        checkedItems.push(`${id || prefix}.workflowCategory`);
+      }
+    }
+
+    if (caseDef.domainCategory !== undefined) {
+      if (typeof caseDef.domainCategory !== "string" || !caseDef.domainCategory.trim()) {
+        failures.push(`${id || prefix}.domainCategory must be a non-empty string when set.`);
+      } else {
+        checkedItems.push(`${id || prefix}.domainCategory`);
       }
     }
 
