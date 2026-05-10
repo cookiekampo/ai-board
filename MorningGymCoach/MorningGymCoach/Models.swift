@@ -8,6 +8,12 @@ enum ExerciseType: String, Codable, CaseIterable {
     case bodyweight
 }
 
+enum LoadType: String, Codable, CaseIterable {
+    case barbellTotal = "barbell_total"
+    case dumbbellEachHand = "dumbbell_each_hand"
+    case machineStack = "machine_stack"
+}
+
 enum RIRLevel: String, Codable, CaseIterable, Identifiable {
     case fourPlus = "4+"
     case three = "3"
@@ -23,6 +29,7 @@ struct Exercise: Identifiable, Codable {
     let id: String
     let name: String
     let type: ExerciseType
+    let loadType: LoadType
     let weightStepKg: Double
     let defaultRepRange: String
     let allOutAllowed: Bool
